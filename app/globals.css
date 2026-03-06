@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Smooth theme transitions */
+body {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Custom scrollbar for chart containers */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 8px;
+}
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: rgba(113, 113, 122, 0.4);
+  border-radius: 4px;
+}
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(113, 113, 122, 0.6);
+}
