@@ -2,16 +2,83 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo, createContext, useContext } from "react";
 import * as d3 from "d3";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Activity, Heart, Weight, Smile, Calendar, Maximize2, Minimize2,
-  ChevronLeft, ChevronRight, Download, Table2, LineChart,
-  Pill, Phone, AlertTriangle, FileHeart, Eye, EyeOff, Info,
-  TrendingUp, TrendingDown, Minus, X, ArrowUpRight, ArrowDownRight,
-  ShieldAlert, ChevronUp, ChevronDown, Clock, BarChart3,
-  ZoomIn, ZoomOut, ExternalLink, CheckCircle, XCircle, RotateCcw,
-  ToggleLeft, ToggleRight, Bell, BellOff, Sun, Moon, Stethoscope,
-  Keyboard, User, Cpu, Radio, Bluetooth, Battery, Link2, Wifi
-} from "lucide-react";
+  Activity01Icon, HeartCheckIcon, WeightScaleIcon, SmileIcon, Calendar01Icon,
+  Maximize01Icon, Minimize01Icon, ArrowLeft01Icon, ArrowRight01Icon,
+  Download01Icon, Table01Icon, ChartLineData01Icon,
+  PillIcon, CallIcon, Alert01Icon, PulseRectangle01Icon,
+  ViewIcon, ViewOffIcon, InformationCircleIcon,
+  ChartIncreaseIcon, ChartDecreaseIcon, MinusSignIcon,
+  Cancel01Icon, ArrowUpRight01Icon, ArrowDownRight01Icon,
+  ShieldBanIcon, ArrowUp01Icon, ArrowDown01Icon,
+  Clock01Icon, BarChartIcon, ZoomInAreaIcon, ZoomOutAreaIcon,
+  Link01Icon, CheckmarkCircle01Icon, CancelCircleIcon, RotateLeft01Icon,
+  ToggleOnIcon, ToggleOffIcon, Notification01Icon, NotificationOff01Icon,
+  Sun01Icon, Moon01Icon, Stethoscope02Icon, KeyboardIcon,
+  UserIcon, CpuIcon, Radio01Icon, BluetoothIcon, BatteryFullIcon, Wifi01Icon
+} from "@hugeicons/core-free-icons";
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   HUGEICONS WRAPPERS — map to Lucide-style API for drop-in replacement
+   ═══════════════════════════════════════════════════════════════════════════════ */
+const hi = (icon: any) => {
+  const Comp = ({ size = 24, color, style, className }: { size?: number; color?: string; style?: React.CSSProperties; className?: string }) => (
+    <HugeiconsIcon icon={icon} size={size} color={color} style={style} className={className} strokeWidth={1.5} />
+  );
+  return Comp;
+};
+const Activity = hi(Activity01Icon);
+const Heart = hi(HeartCheckIcon);
+const Weight = hi(WeightScaleIcon);
+const Smile = hi(SmileIcon);
+const Calendar = hi(Calendar01Icon);
+const Maximize2 = hi(Maximize01Icon);
+const Minimize2 = hi(Minimize01Icon);
+const ChevronLeft = hi(ArrowLeft01Icon);
+const ChevronRight = hi(ArrowRight01Icon);
+const Download = hi(Download01Icon);
+const Table2 = hi(Table01Icon);
+const LineChart = hi(ChartLineData01Icon);
+const Pill = hi(PillIcon);
+const Phone = hi(CallIcon);
+const AlertTriangle = hi(Alert01Icon);
+const FileHeart = hi(PulseRectangle01Icon);
+const Eye = hi(ViewIcon);
+const EyeOff = hi(ViewOffIcon);
+const Info = hi(InformationCircleIcon);
+const TrendingUp = hi(ChartIncreaseIcon);
+const TrendingDown = hi(ChartDecreaseIcon);
+const Minus = hi(MinusSignIcon);
+const X = hi(Cancel01Icon);
+const ArrowUpRight = hi(ArrowUpRight01Icon);
+const ArrowDownRight = hi(ArrowDownRight01Icon);
+const ShieldAlert = hi(ShieldBanIcon);
+const ChevronUp = hi(ArrowUp01Icon);
+const ChevronDown = hi(ArrowDown01Icon);
+const Clock = hi(Clock01Icon);
+const BarChart3 = hi(BarChartIcon);
+const ZoomIn = hi(ZoomInAreaIcon);
+const ZoomOut = hi(ZoomOutAreaIcon);
+const ExternalLink = hi(Link01Icon);
+const CheckCircle = hi(CheckmarkCircle01Icon);
+const XCircle = hi(CancelCircleIcon);
+const RotateCcw = hi(RotateLeft01Icon);
+const ToggleLeft = hi(ToggleOffIcon);
+const ToggleRight = hi(ToggleOnIcon);
+const Bell = hi(Notification01Icon);
+const BellOff = hi(NotificationOff01Icon);
+const Sun = hi(Sun01Icon);
+const Moon = hi(Moon01Icon);
+const Stethoscope = hi(Stethoscope02Icon);
+const Keyboard = hi(KeyboardIcon);
+const User = hi(UserIcon);
+const Cpu = hi(CpuIcon);
+const Radio = hi(Radio01Icon);
+const Bluetooth = hi(BluetoothIcon);
+const Battery = hi(BatteryFullIcon);
+const Link2 = hi(Link01Icon);
+const Wifi = hi(Wifi01Icon);
 
 /* ═══════════════════════════════════════════════════════════════════════════════
    THEME SYSTEM — dark / light mode
