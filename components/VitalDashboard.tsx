@@ -553,6 +553,7 @@ export default function VitalDashboard() {
   const [patientTab, setPatientTab] = useState<string>("dashboard");
   const [calendarSelectedDay, setCalendarSelectedDay] = useState<string | null>(null);
   const [calendarHoverDay, setCalendarHoverDay] = useState<{ dateStr: string; cx: number; cy: number } | null>(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   /* ── Threshold settings state ── */
   const [templates, setTemplates] = useState<ThresholdTemplate[]>(() => [createDefaultTemplate()]);
@@ -1000,6 +1001,14 @@ export default function VitalDashboard() {
   const nonEcgEvents = filteredData.events;
   const alarmEcgAsEvents = filteredData.ecgs.filter(e => e.alarm);
 
+  const eventCounts = useMemo(() => {
+    const medCount = filteredData.events.filter(e => e.type === "medication").length;
+    const examCount = filteredData.events.filter(e => e.type === "examination").length;
+    const abCount = filteredData.events.filter(e => e.type === "atrialBurden").length;
+    const ecgCount = filteredData.ecgs.length;
+    return { medCount, examCount, abCount, ecgCount };
+  }, [filteredData.events, filteredData.ecgs]);
+
   const calendarData = useMemo(() => {
     const map: Record<string, { events: EventItem[]; ecgs: EcgEvent[] }> = {};
     for (const ev of filteredData.events) {
@@ -1030,16 +1039,43 @@ export default function VitalDashboard() {
 
   const calendarView = (
     <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
-      {/* Header */}
-      <div className="flex items-center gap-3 px-5 py-3" style={{ borderBottom: `1px solid ${P.border}` }}>
+      {/* Header — clickable toggle */}
+      <button
+        className="w-full flex items-center gap-3 px-5 py-3 text-left transition-colors"
+        style={{ borderBottom: calendarOpen ? `1px solid ${P.border}` : "none" }}
+        onClick={() => setCalendarOpen(!calendarOpen)}
+      >
+        <span className="transition-transform" style={{ transform: calendarOpen ? "rotate(90deg)" : "rotate(0deg)", color: P.textMuted }}>
+          <ChevronRight size={16} />
+        </span>
         <Calendar size={18} color={P.textMuted} />
         <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>Ereignisse & EKG</span>
-        <span className="text-sm" style={{ color: P.textMuted }}>
-          {nonEcgEvents.length + filteredData.ecgs.length} Einträge
-        </span>
-      </div>
+        <div className="flex items-center gap-2 ml-2">
+          {eventCounts.medCount > 0 && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${P.medication}22`, color: P.medication }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: P.medication }} />{eventCounts.medCount}
+            </span>
+          )}
+          {eventCounts.examCount > 0 && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${P.examination}22`, color: P.examination }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: P.examination }} />{eventCounts.examCount}
+            </span>
+          )}
+          {eventCounts.abCount > 0 && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${P.alert}22`, color: P.alert }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: P.alert }} />{eventCounts.abCount}
+            </span>
+          )}
+          {eventCounts.ecgCount > 0 && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${P.ecg}22`, color: P.ecg }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: P.ecg }} />{eventCounts.ecgCount}
+            </span>
+          )}
+        </div>
+      </button>
 
-      {/* Calendar months side by side */}
+      {/* Calendar body — collapsible */}
+      {calendarOpen && <>
       <div className="p-4 flex flex-wrap gap-6">
         {calendarMonths.map(({ year, month }) => {
           const monthName = new Date(year, month).toLocaleDateString("de-DE", { month: "long", year: "numeric" });
@@ -1215,6 +1251,8 @@ export default function VitalDashboard() {
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.alert }} /> Alarm</span>
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.ecg }} /> EKG</span>
       </div>
+      {/* end calendarOpen */}
+      </>}
     </div>
   );
 
