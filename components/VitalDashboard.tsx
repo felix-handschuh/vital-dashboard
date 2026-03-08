@@ -551,6 +551,8 @@ export default function VitalDashboard() {
   const [page, setPage] = useState<"dashboard" | "thresholds">("dashboard");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [patientTab, setPatientTab] = useState<string>("dashboard");
+  const [calendarSelectedDay, setCalendarSelectedDay] = useState<string | null>(null);
+  const [calendarHoverDay, setCalendarHoverDay] = useState<{ dateStr: string; cx: number; cy: number } | null>(null);
 
   /* ── Threshold settings state ── */
   const [templates, setTemplates] = useState<ThresholdTemplate[]>(() => [createDefaultTemplate()]);
@@ -994,114 +996,224 @@ export default function VitalDashboard() {
     [0.5, 5.5], "", undefined
   );
 
-  /* ─── ECG Timeline ─── */
-  const ecgTimelineH = 52;
-  const ecgTimeline = (
-    <div className="rounded-md overflow-visible relative shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
-      <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: `1px solid ${P.border}` }}>
-        <div className="flex items-center gap-3">
-          <FileHeart size={18} color={P.ecg} />
-          <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>EKG-Aufzeichnungen</span>
-          <span className="text-sm" style={{ color: P.textMuted }}>Hover = Vorschau · Klick = Detail</span>
-        </div>
-      </div>
-      <div>
-        <svg width="100%" height={ecgTimelineH} viewBox={`0 0 ${chartW} ${ecgTimelineH}`} preserveAspectRatio="xMidYMid meet">
-          <g transform={`translate(${margin.left},8)`}>
-            <line x1={0} x2={innerW} y1={18} y2={18} stroke={P.grid} strokeWidth={1} />
-            {filteredData.ecgs.map((ecg, i) => {
-              const x = xScale(new Date(ecg.date));
-              const color = ecg.alarm ? ALARM_COLORS[ecg.alarm] : P.ecg;
-              const abSize = ecg.atrialBurden ? Math.min(12, 4 + ecg.atrialBurden / 4) : 6;
-              return (
-                <g key={i}
-                  onMouseEnter={(e) => setEcgHover({ ecg, cx: e.clientX, cy: e.clientY })}
-                  onMouseMove={(e) => setEcgHover(prev => prev ? { ...prev, cx: e.clientX, cy: e.clientY } : null)}
-                  onMouseLeave={() => setEcgHover(null)}
-                  onClick={() => setEcgDrawer(ecg)}
-                  className="cursor-pointer">
-                  <circle cx={x} cy={18} r={abSize + 5} fill="transparent" />
-                  <circle cx={x} cy={18} r={abSize} fill={color} opacity={0.8} />
-                  {ecg.atrialBurden && ecg.atrialBurden > 10 && (
-                    <text x={x} y={18} textAnchor="middle" dy="0.35em" fill="white" fontSize={8} fontWeight="bold">
-                      {ecg.atrialBurden}%
-                    </text>
-                  )}
-                </g>
-              );
-            })}
-          </g>
-        </svg>
-      </div>
-      {ecgHover && ecgHover.ecg.waveform && (
-        <div className="fixed z-[200] rounded-md p-4 shadow-2xl pointer-events-none"
-          style={{ left: ecgHover.cx + 16, top: ecgHover.cy - 80, backgroundColor: P.bgPanel, border: `1px solid ${P.borderStrong}`, backdropFilter: "blur(8px)" }}>
-          <div className="text-sm mb-1 font-medium" style={{ color: P.textSecondary }}>{ecgHover.ecg.date} {ecgHover.ecg.time} · {ecgHover.ecg.duration}s</div>
-          {ecgHover.ecg.atrialBurden !== undefined && ecgHover.ecg.atrialBurden > 0 && (
-            <div className="text-sm mb-1" style={{ color: ecgHover.ecg.atrialBurden > 15 ? P.atrialHigh : ecgHover.ecg.atrialBurden > 5 ? P.atrialMod : P.atrialLow }}>
-              Atrial Burden: {ecgHover.ecg.atrialBurden}% {ecgHover.ecg.atrialUncertain ? "(unsicher)" : ""}
-            </div>
-          )}
-          <svg width={280} height={60}>
-            <path d={ecgHover.ecg.waveform!.slice(0, 700).map((v, j) => `${j === 0 ? "M" : "L"}${j * 0.4},${30 - v * 20}`).join(" ")} fill="none" stroke={P.ecg} strokeWidth={1.2} />
-          </svg>
-        </div>
-      )}
-    </div>
-  );
-
-  /* ─── Events Row — with x-axis dates, no badges ─── */
-  const eventsH = 96;
-  const eventsInnerH = eventsH - margin.top - 20;
+  /* ─── Calendar View (Events + ECG) ─── */
   const nonEcgEvents = filteredData.events;
   const alarmEcgAsEvents = filteredData.ecgs.filter(e => e.alarm);
 
-  const eventsRow = (
+  const calendarData = useMemo(() => {
+    const map: Record<string, { events: EventItem[]; ecgs: EcgEvent[] }> = {};
+    for (const ev of filteredData.events) {
+      const key = ev.date.slice(0, 10);
+      if (!map[key]) map[key] = { events: [], ecgs: [] };
+      map[key].events.push(ev);
+    }
+    for (const ecg of filteredData.ecgs) {
+      const key = ecg.date.slice(0, 10);
+      if (!map[key]) map[key] = { events: [], ecgs: [] };
+      map[key].ecgs.push(ecg);
+    }
+    return map;
+  }, [filteredData.events, filteredData.ecgs]);
+
+  const calendarMonths = useMemo(() => {
+    const start = new Date(xDomain[0]);
+    const end = new Date(xDomain[1]);
+    start.setDate(1);
+    const months: { year: number; month: number }[] = [];
+    const cur = new Date(start);
+    while (cur <= end) {
+      months.push({ year: cur.getFullYear(), month: cur.getMonth() });
+      cur.setMonth(cur.getMonth() + 1);
+    }
+    return months;
+  }, [xDomain]);
+
+  const calendarView = (
     <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
+      {/* Header */}
       <div className="flex items-center gap-3 px-5 py-3" style={{ borderBottom: `1px solid ${P.border}` }}>
-        <ShieldAlert size={18} color={P.alert} />
-        <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>Ereignisse</span>
-        <span className="text-sm" style={{ color: P.textMuted }}>{nonEcgEvents.length + alarmEcgAsEvents.length} Einträge</span>
+        <Calendar size={18} color={P.textMuted} />
+        <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>Ereignisse & EKG</span>
+        <span className="text-sm" style={{ color: P.textMuted }}>
+          {nonEcgEvents.length + filteredData.ecgs.length} Einträge
+        </span>
       </div>
-      <div>
-        <svg width="100%" height={eventsH} viewBox={`0 0 ${chartW} ${eventsH}`} preserveAspectRatio="xMidYMid meet">
-          <g transform={`translate(${margin.left},12)`}>
-            <line x1={0} x2={innerW} y1={eventsInnerH / 2} y2={eventsInnerH / 2} stroke={P.grid} strokeWidth={1} />
-            {/* X-axis date labels */}
-            {xScale.ticks(range <= 14 ? 14 : range <= 30 ? 30 : range <= 60 ? 30 : 45).map(t => (
-              <text key={t.getTime()} x={xScale(t)} y={eventsInnerH + 16} textAnchor="middle" fill={P.gridLabel} fontSize={12} fontFamily="IBM Plex Sans">
-                {d3.timeFormat("%-d.%-m.")(t)}
-              </text>
+
+      {/* Calendar months side by side */}
+      <div className="p-4 flex flex-wrap gap-6">
+        {calendarMonths.map(({ year, month }) => {
+          const monthName = new Date(year, month).toLocaleDateString("de-DE", { month: "long", year: "numeric" });
+          const firstDay = new Date(year, month, 1);
+          const lastDay = new Date(year, month + 1, 0);
+          const startWeekday = (firstDay.getDay() + 6) % 7;
+          const daysInMonth = lastDay.getDate();
+
+          return (
+            <div key={`${year}-${month}`}>
+              <div className="text-sm font-semibold mb-2" style={{ color: P.text }}>{monthName}</div>
+              {/* Weekday headers */}
+              <div className="grid grid-cols-7 gap-px text-center text-[10px] font-medium mb-1" style={{ color: P.textMuted }}>
+                {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map(d => <div key={d} className="w-9 py-0.5">{d}</div>)}
+              </div>
+              {/* Day cells */}
+              <div className="grid grid-cols-7 gap-px">
+                {/* Empty cells before first day */}
+                {Array.from({ length: startWeekday }).map((_, i) => <div key={`e-${i}`} className="w-9 h-9" />)}
+                {/* Day cells */}
+                {Array.from({ length: daysInMonth }).map((_, d) => {
+                  const dayNum = d + 1;
+                  const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
+                  const dateObj = new Date(year, month, dayNum);
+                  const inRange = dateObj >= xDomain[0] && dateObj <= xDomain[1];
+                  const dayData = calendarData[dateStr];
+                  const hasEvents = dayData && (dayData.events.length > 0 || dayData.ecgs.length > 0);
+                  const isSelected = calendarSelectedDay === dateStr;
+                  const isToday = dateStr === d3.timeFormat("%Y-%m-%d")(NOW);
+
+                  return (
+                    <div
+                      key={dayNum}
+                      className="w-9 h-9 flex flex-col items-center justify-center rounded-md text-xs cursor-pointer transition-colors relative"
+                      style={{
+                        backgroundColor: isSelected ? P.bgInput : "transparent",
+                        color: !inRange ? P.textDim : isToday ? P.accent : P.text,
+                        fontWeight: isToday ? 700 : hasEvents ? 500 : 400,
+                        opacity: inRange ? 1 : 0.35,
+                        border: isToday ? `1px solid ${P.accent}` : isSelected ? `1px solid ${P.border}` : "1px solid transparent",
+                      }}
+                      onClick={() => hasEvents && setCalendarSelectedDay(isSelected ? null : dateStr)}
+                      onMouseEnter={(e) => {
+                        if (hasEvents) {
+                          setCalendarHoverDay({ dateStr, cx: e.clientX, cy: e.clientY });
+                        }
+                      }}
+                      onMouseMove={(e) => {
+                        if (calendarHoverDay) setCalendarHoverDay(prev => prev ? { ...prev, cx: e.clientX, cy: e.clientY } : null);
+                      }}
+                      onMouseLeave={() => setCalendarHoverDay(null)}
+                    >
+                      <span>{dayNum}</span>
+                      {/* Event dots */}
+                      {hasEvents && (
+                        <div className="flex gap-px mt-0.5">
+                          {dayData.events.some(e => e.type === "medication") && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: P.medication }} />}
+                          {dayData.events.some(e => e.type === "examination") && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: P.examination }} />}
+                          {dayData.events.some(e => e.type === "atrialBurden") && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: P.alert }} />}
+                          {dayData.events.some(e => e.alarm === "critical") && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: P.alarmRed }} />}
+                          {dayData.ecgs.length > 0 && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: P.ecg }} />}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Hover tooltip for day */}
+      {calendarHoverDay && calendarData[calendarHoverDay.dateStr] && (
+        <div className="fixed z-[200] rounded-lg p-4 shadow-2xl pointer-events-none max-w-xs"
+          style={{
+            left: calendarHoverDay.cx + 16,
+            top: calendarHoverDay.cy - 16,
+            backgroundColor: P.bgPanel,
+            border: `1px solid ${P.borderStrong}`,
+            backdropFilter: "blur(8px)",
+          }}>
+          <div className="text-sm font-semibold mb-2" style={{ color: P.text }}>
+            {new Date(calendarHoverDay.dateStr).toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" })}
+          </div>
+          <div className="space-y-1.5">
+            {calendarData[calendarHoverDay.dateStr].events.map((ev, i) => (
+              <div key={i} className="flex items-center gap-2 text-xs">
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{
+                  backgroundColor: ev.type === "medication" ? P.medication : ev.type === "examination" ? P.examination : ev.alarm ? ALARM_COLORS[ev.alarm] : P.alarmGray
+                }} />
+                <span style={{ color: P.textSecondary }}>{ev.label}</span>
+              </div>
             ))}
-            {nonEcgEvents.map((ev, i) => {
-              const x = xScale(new Date(ev.date));
-              const iconColor = ev.alarm ? ALARM_COLORS[ev.alarm] : P.alarmGray;
-              const yOff = (i % 3) * 14;
-              return (
-                <g key={`ev-${i}`}
-                  onClick={() => setSidePanel({ type: "event", date: ev.date, data: ev })}
-                  onMouseEnter={(e) => handleDataHover({ type: "event", ...ev }, e)}
-                  onMouseMove={handleMouseMove}
-                  onMouseLeave={handleDataLeave}
-                  className="cursor-pointer">
-                  {ev.type === "medication" && <SvgPillIcon x={x - 8} y={6 + yOff} color={P.medication} size={1.2} />}
-                  {ev.type === "call" && <SvgPhoneIcon x={x - 8} y={6 + yOff} color={P.call} size={1.3} />}
-                  {ev.type === "alert" && <SvgAlertIcon x={x - 8} y={4 + yOff} color={iconColor} size={1.2} />}
-                  {ev.type === "examination" && <SvgExamIcon x={x - 8} y={4 + yOff} color={P.examination} size={1.2} />}
-                  {ev.type === "atrialBurden" && <SvgAtrialIcon x={x - 8} y={4 + yOff} color={iconColor} size={1.2} />}
-                </g>
-              );
-            })}
-            {alarmEcgAsEvents.map((ecg, i) => {
-              const x = xScale(new Date(ecg.date));
-              return (
-                <g key={`ecg-ev-${i}`} onClick={() => setEcgDrawer(ecg)} className="cursor-pointer">
-                  <SvgEcgIcon x={x - 8} y={eventsInnerH - 8} color={ALARM_COLORS[ecg.alarm!]} size={1.2} />
-                </g>
-              );
-            })}
-          </g>
-        </svg>
+            {calendarData[calendarHoverDay.dateStr].ecgs.map((ecg, i) => (
+              <div key={`ecg-${i}`} className="text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: P.ecg }} />
+                  <span style={{ color: P.textSecondary }}>EKG {ecg.time} · {ecg.duration}s{ecg.atrialBurden ? ` · AB ${ecg.atrialBurden}%` : ""}</span>
+                </div>
+                {ecg.waveform && (
+                  <svg width={200} height={30} className="mt-1 ml-4">
+                    <path d={ecg.waveform.slice(0, 500).map((v, j) => `${j === 0 ? "M" : "L"}${j * 0.4},${15 - v * 10}`).join(" ")} fill="none" stroke={P.ecg} strokeWidth={1} />
+                  </svg>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Selected day detail panel (inline below calendar) */}
+      {calendarSelectedDay && calendarData[calendarSelectedDay] && (
+        <div className="px-5 pb-4 pt-2 border-t" style={{ borderTopColor: P.border }}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-sm font-semibold" style={{ color: P.text }}>
+              {new Date(calendarSelectedDay).toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+            </div>
+            <button onClick={() => setCalendarSelectedDay(null)} className="p-1 rounded-md transition-colors" style={{ color: P.textMuted }}>
+              <X size={14} />
+            </button>
+          </div>
+          <div className="space-y-2">
+            {calendarData[calendarSelectedDay].events.map((ev, i) => (
+              <div key={i}
+                className="flex items-start gap-3 p-2.5 rounded-md cursor-pointer transition-colors"
+                style={{ backgroundColor: P.bgInput }}
+                onClick={() => setSidePanel({ type: "event", date: ev.date, data: ev })}>
+                <span className="w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0" style={{
+                  backgroundColor: ev.type === "medication" ? P.medication : ev.type === "examination" ? P.examination : ev.alarm ? ALARM_COLORS[ev.alarm] : P.alarmGray
+                }} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium" style={{ color: P.text }}>{ev.label}</div>
+                  <div className="flex items-center gap-2 text-xs mt-0.5" style={{ color: P.textMuted }}>
+                    <span>{ev.type === "medication" ? "Medikation" : ev.type === "examination" ? "Untersuchung" : ev.type === "atrialBurden" ? "Atrial Burden" : ev.type}</span>
+                    {ev.alarm && <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold" style={{ backgroundColor: `${ALARM_COLORS[ev.alarm]}22`, color: ALARM_COLORS[ev.alarm] }}>{ALARM_LABELS[ev.alarm]}</span>}
+                    {ev.acknowledgedBy && <span>✓ {ev.acknowledgedBy}</span>}
+                  </div>
+                </div>
+              </div>
+            ))}
+            {calendarData[calendarSelectedDay].ecgs.map((ecg, i) => (
+              <div key={`ecg-${i}`}
+                className="p-2.5 rounded-md cursor-pointer transition-colors"
+                style={{ backgroundColor: P.bgInput }}
+                onClick={() => setEcgDrawer(ecg)}>
+                <div className="flex items-center gap-3">
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: ecg.alarm ? ALARM_COLORS[ecg.alarm] : P.ecg }} />
+                  <div className="flex-1">
+                    <div className="text-sm font-medium" style={{ color: P.text }}>EKG-Aufzeichnung · {ecg.time}</div>
+                    <div className="text-xs mt-0.5" style={{ color: P.textMuted }}>
+                      {ecg.duration}s{ecg.atrialBurden ? ` · Atrial Burden: ${ecg.atrialBurden}%` : ""}
+                      {ecg.alarm && <span className="ml-2 px-1.5 py-0.5 rounded-full text-[10px] font-semibold" style={{ backgroundColor: `${ALARM_COLORS[ecg.alarm]}22`, color: ALARM_COLORS[ecg.alarm] }}>{ALARM_LABELS[ecg.alarm]}</span>}
+                      {ecg.acknowledgedBy && <span className="ml-2">✓ {ecg.acknowledgedBy}</span>}
+                    </div>
+                  </div>
+                </div>
+                {ecg.waveform && (
+                  <svg width="100%" height={40} viewBox="0 0 280 40" preserveAspectRatio="xMidYMid meet" className="mt-2">
+                    <path d={ecg.waveform.slice(0, 700).map((v, j) => `${j === 0 ? "M" : "L"}${j * 0.4},${20 - v * 15}`).join(" ")} fill="none" stroke={P.ecg} strokeWidth={1.2} />
+                  </svg>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Legend */}
+      <div className="px-5 pb-3 flex items-center gap-4 flex-wrap text-xs" style={{ color: P.textMuted }}>
+        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.medication }} /> Medikation</span>
+        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.examination }} /> Untersuchung</span>
+        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.alert }} /> Alarm</span>
+        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.ecg }} /> EKG</span>
       </div>
     </div>
   );
@@ -2483,9 +2595,8 @@ export default function VitalDashboard() {
                   </button>
                 </div>
 
-                {/* ── Events + ECG Timeline (below devices) ── */}
-                  {eventsRow}
-                  {ecgTimeline}
+                {/* ── Calendar View (Events + ECG) ── */}
+                  {calendarView}
 
                   {/* ── Toggles + View mode ── */}
                   <div className="flex items-center gap-2 flex-wrap">
