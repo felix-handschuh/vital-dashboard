@@ -112,10 +112,11 @@ const darkPalette = {
   atrialHigh: "#EF4444", atrialMod: "#F59E0B", atrialLow: "#60A5FA",
   outlier: "#C084FC",
   shortcutBg: "rgba(24,24,27,0.95)", shortcutKey: "#3f3f46", shortcutKeyText: "#e4e4e7",
+  accent: "#ff5c00",
 };
 
 const lightPalette: typeof darkPalette = {
-  bg: "#fafafa", bgCard: "rgba(255,255,255,0.9)", bgCardHover: "rgba(244,244,245,0.8)",
+  bg: "#f5f5f5", bgCard: "rgba(255,255,255,0.9)", bgCardHover: "rgba(244,244,245,0.8)",
   bgPanel: "rgba(255,255,255,0.98)", bgInput: "rgba(244,244,245,0.8)",
   border: "rgba(228,228,231,0.8)", borderStrong: "rgba(212,212,216,0.6)",
   text: "#18181b", textSecondary: "#52525b", textMuted: "#71717a", textDim: "#a1a1aa",
@@ -130,6 +131,7 @@ const lightPalette: typeof darkPalette = {
   atrialHigh: "#DC2626", atrialMod: "#CA8A04", atrialLow: "#2563EB",
   outlier: "#9333EA",
   shortcutBg: "rgba(255,255,255,0.95)", shortcutKey: "#e4e4e7", shortcutKeyText: "#27272a",
+  accent: "#ff5c00",
 };
 
 const ALARM_LABELS: Record<string, string> = {
@@ -653,7 +655,7 @@ export default function VitalDashboard() {
     const clipId = `clip-${type}`;
 
     return (
-      <div key={type} className="rounded-xl overflow-hidden shadow-sm transition-all" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
+      <div key={type} className="rounded-md overflow-hidden shadow-sm transition-all" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
         <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: `1px solid ${P.border}` }}>
           <div className="flex items-center gap-3">
             {icon}
@@ -955,7 +957,7 @@ export default function VitalDashboard() {
   /* ─── ECG Timeline ─── */
   const ecgTimelineH = 52;
   const ecgTimeline = (
-    <div className="rounded-xl overflow-visible relative shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
+    <div className="rounded-md overflow-visible relative shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
       <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: `1px solid ${P.border}` }}>
         <div className="flex items-center gap-3">
           <FileHeart size={18} color={P.ecg} />
@@ -992,7 +994,7 @@ export default function VitalDashboard() {
         </svg>
       </div>
       {ecgHover && ecgHover.ecg.waveform && (
-        <div className="fixed z-[200] rounded-xl p-4 shadow-2xl pointer-events-none"
+        <div className="fixed z-[200] rounded-md p-4 shadow-2xl pointer-events-none"
           style={{ left: ecgHover.cx + 16, top: ecgHover.cy - 80, backgroundColor: P.bgPanel, border: `1px solid ${P.borderStrong}`, backdropFilter: "blur(8px)" }}>
           <div className="text-sm mb-1 font-medium" style={{ color: P.textSecondary }}>{ecgHover.ecg.date} {ecgHover.ecg.time} · {ecgHover.ecg.duration}s</div>
           {ecgHover.ecg.atrialBurden !== undefined && ecgHover.ecg.atrialBurden > 0 && (
@@ -1015,7 +1017,7 @@ export default function VitalDashboard() {
   const alarmEcgAsEvents = filteredData.ecgs.filter(e => e.alarm);
 
   const eventsRow = (
-    <div className="rounded-xl overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
+    <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
       <div className="flex items-center gap-3 px-5 py-3" style={{ borderBottom: `1px solid ${P.border}` }}>
         <ShieldAlert size={18} color={P.alert} />
         <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>Ereignisse</span>
@@ -1066,7 +1068,7 @@ export default function VitalDashboard() {
 
   /* ─── Tooltip ─── */
   const tooltip = hoverInfo && (
-    <div ref={tooltipRef} className="fixed z-[100] pointer-events-none rounded-xl px-5 py-3 shadow-2xl"
+    <div ref={tooltipRef} className="fixed z-[100] pointer-events-none rounded-lg px-5 py-3 shadow-2xl"
       style={{
         left: mousePosRef.current ? mousePosRef.current.cx + 16 : -9999,
         top: mousePosRef.current ? mousePosRef.current.cy - 16 : -9999,
@@ -1436,7 +1438,7 @@ export default function VitalDashboard() {
 
   /* ─── Table View ─── */
   const tableView = (
-    <div className="rounded-xl overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
+    <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
       <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${P.border}` }}>
         <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>Tabellenansicht</span>
         <div className="flex gap-2">
@@ -1685,7 +1687,7 @@ export default function VitalDashboard() {
       </div>
 
       {/* Template selector + actions */}
-      <div className="rounded-xl overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
+      <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
         <div className="px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-wrap">
             <span className="text-sm font-semibold uppercase tracking-wider" style={{ color: P.textMuted }}>Template:</span>
@@ -1739,7 +1741,7 @@ export default function VitalDashboard() {
       {/* Save dialog */}
       {showSaveDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-          <div className="rounded-xl p-6 shadow-2xl w-full max-w-md space-y-4" style={{ backgroundColor: P.bgPanel, border: `1px solid ${P.border}` }}>
+          <div className="rounded-md p-6 shadow-2xl w-full max-w-md space-y-4" style={{ backgroundColor: P.bgPanel, border: `1px solid ${P.border}` }}>
             <h3 className="text-lg font-semibold" style={{ color: P.text }}>Neues Template speichern</h3>
             <input
               type="text" placeholder="Name des Templates..."
@@ -1781,7 +1783,7 @@ export default function VitalDashboard() {
       </div>
 
       {/* Threshold table */}
-      <div className="rounded-xl overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
+      <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
         {/* Table header */}
         <div className="grid grid-cols-[240px_1fr_1fr] text-sm font-semibold" style={{ borderBottom: `2px solid ${P.border}` }}>
           <div className="px-5 py-3" style={{ color: P.textMuted }}>Parameter</div>
@@ -1911,7 +1913,7 @@ export default function VitalDashboard() {
       </div>
 
       {/* Info hint */}
-      <div className="flex items-start gap-3 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: P.bgInput, color: P.textSecondary }}>
+      <div className="flex items-start gap-3 px-4 py-3 rounded-md text-sm" style={{ backgroundColor: P.bgInput, color: P.textSecondary }}>
         <Info size={16} className="mt-0.5 shrink-0" />
         <div>
           <strong style={{ color: P.text }}>Hinweis:</strong> Gelbe Alarme (1. Schwellwert) zeigen Warnungen an. Rote Alarme (2. Schwellwert) kennzeichnen kritische Überschreitungen.
@@ -1976,9 +1978,9 @@ export default function VitalDashboard() {
         </div>
 
         {/* ── Page Tabs ── */}
-        <div className="flex items-center gap-1 p-1 rounded-xl" style={{ backgroundColor: P.bgInput }}>
+        <div className="flex items-center gap-1 p-1 rounded-md" style={{ backgroundColor: P.bgInput }}>
           <button onClick={() => setPage("dashboard")}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm text-sm font-medium transition-all"
             style={{
               backgroundColor: page === "dashboard" ? P.bgCard : "transparent",
               color: page === "dashboard" ? P.text : P.textMuted,
@@ -1987,7 +1989,7 @@ export default function VitalDashboard() {
             <Activity size={16} /> Dashboard
           </button>
           <button onClick={() => setPage("thresholds")}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm text-sm font-medium transition-all"
             style={{
               backgroundColor: page === "thresholds" ? P.bgCard : "transparent",
               color: page === "thresholds" ? P.text : P.textMuted,
@@ -2003,7 +2005,7 @@ export default function VitalDashboard() {
 
         {page === "dashboard" && <>
         {/* ── Patient Info Bar ── */}
-        <div className="rounded-xl overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
+        <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
           <div className="px-5 py-3 flex items-center gap-3" style={{ borderBottom: `1px solid ${P.border}` }}>
             <Info size={16} style={{ color: P.textMuted }} />
             <span className="text-sm font-semibold uppercase tracking-wider" style={{ color: P.textMuted }}>Patientendaten</span>
