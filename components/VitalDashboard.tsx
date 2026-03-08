@@ -620,12 +620,25 @@ export default function VitalDashboard() {
     return [start, end] as [Date, Date];
   }, [range]);
 
-  /* Chart dimensions — wider for horizontal scrolling */
+  /* Chart dimensions — adaptive to range: more detail for shorter ranges */
   const chartW = range <= 14 ? 1200 : range <= 30 ? 1600 : range <= 60 ? 2400 : 3200;
-  const chartH = (type: string) => (expanded === type ? 260 : 160);
+  const chartH = (type: string) => expanded === type ? 300 : range <= 14 ? 200 : range <= 30 ? 180 : 160;
   const margin = { top: 28, right: 24, bottom: 28, left: 64 };
   const innerW = chartW - margin.left - margin.right;
   const innerH = (type: string) => chartH(type) - margin.top - margin.bottom;
+
+  /* Adaptive detail levels based on range */
+  const detail = useMemo(() => ({
+    lineWidth: range <= 14 ? 2.5 : range <= 30 ? 2 : 1.5,
+    dotRadius: range <= 14 ? 5 : range <= 30 ? 4 : 3,
+    hitRadius: range <= 14 ? 12 : range <= 30 ? 10 : 8,
+    showDots: range <= 30,
+    showValues: range <= 14,
+    xTickCount: range <= 14 ? 14 : range <= 30 ? 15 : range <= 60 ? 20 : 30,
+    xTickFormat: range <= 14 ? d3.timeFormat("%-d.%-m. %H:%M") : d3.timeFormat("%-d.%-m."),
+    medianWidth: range <= 14 ? 1.5 : 1,
+    gridOpacity: range <= 30 ? 1 : 0.7,
+  }), [range]);
 
   const xScale = useMemo(() => d3.scaleTime().domain(xDomain).range([0, innerW]), [xDomain, innerW]);
 
@@ -685,9 +698,9 @@ export default function VitalDashboard() {
                 </g>
               ))}
               {/* X ticks */}
-              {xScale.ticks(range <= 14 ? 14 : range <= 30 ? 30 : range <= 60 ? 30 : 45).map(t => (
-                <text key={t.getTime()} x={xScale(t)} y={iH + 20} textAnchor="middle" fill={P.gridLabel} fontSize={12} fontFamily="IBM Plex Sans">
-                  {d3.timeFormat("%-d.%-m.")(t)}
+              {xScale.ticks(detail.xTickCount).map(t => (
+                <text key={t.getTime()} x={xScale(t)} y={iH + 20} textAnchor="middle" fill={P.gridLabel} fontSize={range <= 14 ? 11 : 12} fontFamily="IBM Plex Sans">
+                  {detail.xTickFormat(t)}
                 </text>
               ))}
               {/* Thresholds — clickable to go to settings */}
@@ -789,9 +802,9 @@ export default function VitalDashboard() {
 
       return (
         <g>
-          <path d={sysLine(filteredData.bp) || ""} fill="none" stroke={P.bpSystolic} strokeWidth={2} />
-          <path d={diaLine(filteredData.bp) || ""} fill="none" stroke={P.bpDiastolic} strokeWidth={2} />
-          <path d={medLine(medVals) || ""} fill="none" stroke={P.median} strokeWidth={1} strokeDasharray="4,4" opacity={0.5} />
+          <path d={sysLine(filteredData.bp) || ""} fill="none" stroke={P.bpSystolic} strokeWidth={detail.lineWidth} />
+          <path d={diaLine(filteredData.bp) || ""} fill="none" stroke={P.bpDiastolic} strokeWidth={detail.lineWidth} />
+          <path d={medLine(medVals) || ""} fill="none" stroke={P.median} strokeWidth={detail.medianWidth} strokeDasharray="4,4" opacity={0.5} />
           {/* Median hover points */}
           {medVals.map((mv, i) => {
             const x = xS(new Date(mv.date));
@@ -809,6 +822,7 @@ export default function VitalDashboard() {
             const x = xS(new Date(p.date));
             const ySys = yS(p.systolic);
             const yDia = yS(p.diastolic);
+            const s = detail.dotRadius;
             return (
               <g key={i}
                 onMouseEnter={(e) => handleDataHover({ type: "bp", ...p }, e)}
@@ -816,13 +830,19 @@ export default function VitalDashboard() {
                 onMouseLeave={handleDataLeave}
                 onClick={() => setSidePanel({ type: "bp", date: p.date, data: p })}
                 className="cursor-pointer">
-                <rect x={x - 10} y={Math.min(ySys, yDia) - 10} width={20} height={Math.abs(yDia - ySys) + 20} fill="transparent" />
-                <polygon points={`${x},${ySys - 6} ${x - 5},${ySys + 4} ${x + 5},${ySys + 4}`} fill={P.bpSystolic} />
-                <polygon points={`${x},${yDia + 6} ${x - 5},${yDia - 4} ${x + 5},${yDia - 4}`} fill={P.bpDiastolic} />
-                <line x1={x} y1={ySys + 4} x2={x} y2={yDia - 4} stroke={P.bpSystolic} strokeWidth={1} opacity={0.3} />
-                {p.alarm && <AlarmDot x={x} y={ySys - 6} alarm={p.alarm} />}
+                <rect x={x - detail.hitRadius} y={Math.min(ySys, yDia) - detail.hitRadius} width={detail.hitRadius * 2} height={Math.abs(yDia - ySys) + detail.hitRadius * 2} fill="transparent" />
+                <polygon points={`${x},${ySys - s - 1} ${x - s},${ySys + s - 1} ${x + s},${ySys + s - 1}`} fill={P.bpSystolic} />
+                <polygon points={`${x},${yDia + s + 1} ${x - s},${yDia - s + 1} ${x + s},${yDia - s + 1}`} fill={P.bpDiastolic} />
+                <line x1={x} y1={ySys + s - 1} x2={x} y2={yDia - s + 1} stroke={P.bpSystolic} strokeWidth={1} opacity={0.3} />
+                {detail.showValues && (
+                  <>
+                    <text x={x + s + 4} y={ySys} dy="0.35em" fontSize={10} fill={P.bpSystolic} fontFamily="IBM Plex Sans">{p.systolic}</text>
+                    <text x={x + s + 4} y={yDia} dy="0.35em" fontSize={10} fill={P.bpDiastolic} fontFamily="IBM Plex Sans">{p.diastolic}</text>
+                  </>
+                )}
+                {p.alarm && <AlarmDot x={x} y={ySys - s - 1} alarm={p.alarm} />}
                 {p.outlier && <OutlierRing x={x} y={ySys} validated={p.outlierValidated} />}
-                <CountBadge x={x} y={ySys - 6} count={p.readings.length} />
+                <CountBadge x={x} y={ySys - s - 1} count={p.readings.length} />
               </g>
             );
           })}
@@ -851,8 +871,8 @@ export default function VitalDashboard() {
 
       return (
         <g>
-          <path d={line(filteredData.hr) || ""} fill="none" stroke={P.heartRate} strokeWidth={2} />
-          <path d={medLine(medVals) || ""} fill="none" stroke={P.median} strokeWidth={1} strokeDasharray="4,4" opacity={0.5} />
+          <path d={line(filteredData.hr) || ""} fill="none" stroke={P.heartRate} strokeWidth={detail.lineWidth} />
+          <path d={medLine(medVals) || ""} fill="none" stroke={P.median} strokeWidth={detail.medianWidth} strokeDasharray="4,4" opacity={0.5} />
           {/* Median hover points */}
           {medVals.map((mv, i) => {
             const x = xS(new Date(mv.date));
@@ -862,13 +882,14 @@ export default function VitalDashboard() {
                 onMouseEnter={(e) => handleDataHover({ type: "median", date: mv.date, label: "Median Herzfrequenz", value: mv.v, unit: "bpm" }, e)}
                 onMouseMove={handleMouseMove}
                 onMouseLeave={handleDataLeave}>
-                <circle cx={x} cy={y} r={8} fill="transparent" className="cursor-crosshair" />
+                <circle cx={x} cy={y} r={detail.hitRadius} fill="transparent" className="cursor-crosshair" />
               </g>
             );
           })}
           {filteredData.hr.map((p, i) => {
             const x = xS(new Date(p.date));
             const y = yS(p.value);
+            const s = detail.dotRadius;
             return (
               <g key={i}
                 onMouseEnter={(e) => handleDataHover({ type: "hr", ...p }, e)}
@@ -876,9 +897,10 @@ export default function VitalDashboard() {
                 onMouseLeave={handleDataLeave}
                 onClick={() => setSidePanel({ type: "hr", date: p.date, data: p })}
                 className="cursor-pointer">
-                <circle cx={x} cy={y} r={10} fill="transparent" />
-                <polygon points={`${x - 5},${y} ${x},${y - 5} ${x + 5},${y} ${x},${y + 5}`} fill={P.heartRate} />
-                {p.alarm && <AlarmDot x={x} y={y - 5} alarm={p.alarm} />}
+                <circle cx={x} cy={y} r={detail.hitRadius} fill="transparent" />
+                <polygon points={`${x - s},${y} ${x},${y - s} ${x + s},${y} ${x},${y + s}`} fill={P.heartRate} />
+                {detail.showValues && <text x={x + s + 4} y={y} dy="0.35em" fontSize={10} fill={P.heartRate} fontFamily="IBM Plex Sans">{p.value}</text>}
+                {p.alarm && <AlarmDot x={x} y={y - s} alarm={p.alarm} />}
                 {p.outlier && <OutlierRing x={x} y={y} validated={p.outlierValidated} />}
                 <CountBadge x={x} y={y - 5} count={p.readings.length} />
               </g>
@@ -907,7 +929,7 @@ export default function VitalDashboard() {
 
       return (
         <g>
-          <path d={line(filteredData.weight) || ""} fill="none" stroke={P.weight} strokeWidth={2} />
+          <path d={line(filteredData.weight) || ""} fill="none" stroke={P.weight} strokeWidth={detail.lineWidth} />
           {filteredData.weight.map((p, i) => {
             const x = xS(new Date(p.date));
             const y = yS(p.value);
@@ -918,8 +940,9 @@ export default function VitalDashboard() {
                 onMouseLeave={handleDataLeave}
                 onClick={() => setSidePanel({ type: "weight", date: p.date, data: p })}
                 className="cursor-pointer">
-                <circle cx={x} cy={y} r={10} fill="transparent" />
-                <circle cx={x} cy={y} r={4} fill={P.weight} />
+                <circle cx={x} cy={y} r={detail.hitRadius} fill="transparent" />
+                <circle cx={x} cy={y} r={detail.dotRadius} fill={P.weight} />
+                {detail.showValues && <text x={x + detail.dotRadius + 4} y={y} dy="0.35em" fontSize={10} fill={P.weight} fontFamily="IBM Plex Sans">{p.value.toFixed(1)}</text>}
                 {p.alarm && <AlarmDot x={x} y={y} alarm={p.alarm} />}
                 {p.outlier && <OutlierRing x={x} y={y} validated={p.outlierValidated} />}
                 <CountBadge x={x} y={y} count={p.readings.length} />
@@ -1551,6 +1574,7 @@ export default function VitalDashboard() {
      ═══════════════════════════════════════════════════════════════════════════════ */
   const patient = {
     name: "Max Mustermann",
+    dob: "12.05.1967",
     age: 58,
     gender: "Männlich",
     nyha: "II",
@@ -2194,45 +2218,9 @@ export default function VitalDashboard() {
 
           {patientTab === "dashboard" && (
             <div className="space-y-5">
-              {/* Toolbar: Time range selector + Settings button */}
+              {/* Settings button row - only on dashboard */}
               {page === "dashboard" && (
-                <div className="flex items-center gap-2">
-                  {RANGES.map((r) => (
-                    <button
-                      key={r}
-                      onClick={() => setRange(r)}
-                      className="px-3 py-1.5 rounded text-sm font-semibold transition-all"
-                      style={{
-                        backgroundColor:
-                          range === r
-                            ? theme === "dark"
-                              ? "rgba(63,63,70,0.8)"
-                              : "rgba(228,228,231,0.8)"
-                            : "transparent",
-                        color: range === r ? P.text : P.textMuted,
-                      }}
-                    >
-                      {r}T
-                    </button>
-                  ))}
-                  <button
-                    className="p-1.5 rounded transition-colors"
-                    style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
-                  >
-                    <Calendar size={16} />
-                  </button>
-                  <div className="w-px h-6" style={{ backgroundColor: P.border }} />
-                  <button
-                    onClick={() => setViewMode(viewMode === "chart" ? "table" : "chart")}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded text-sm transition-colors"
-                    style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
-                  >
-                    {viewMode === "chart" ? <Table2 size={14} /> : <LineChart size={14} />}
-                  </button>
-
-                  <div className="flex-1" />
-
-                  {/* Settings / Grenzwerte button */}
+                <div className="flex items-center gap-2 justify-end">
                   <button
                     onClick={() => setPage("thresholds")}
                     className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors"
@@ -2284,6 +2272,9 @@ export default function VitalDashboard() {
                     <div className="p-4">
                       {/* Clinical info pills */}
                       <div className="flex flex-wrap gap-2 mb-4">
+                        <InfoPill label="Geburtsdatum" value={patient.dob} />
+                        <InfoPill label="Alter" value={`${patient.age} Jahre`} />
+                        <InfoPill label="Geschlecht" value={patient.gender} />
                         <InfoPill label="NYHA" value={`Klasse ${patient.nyha}`} />
                         <InfoPill
                           label="LVEF"
@@ -2301,7 +2292,6 @@ export default function VitalDashboard() {
                           value={patient.anticoag ? "Ja" : "Nein"}
                           color={patient.anticoag ? P.good : P.textMuted}
                         />
-                        <InfoPill label="Geschlecht" value={patient.gender} />
                       </div>
 
                       {/* ICD-10 Codes */}
@@ -2448,6 +2438,43 @@ export default function VitalDashboard() {
                       ))}
                     </div>
                   </div>
+                </div>
+
+                {/* ── Time range selector + view toggle ── */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {RANGES.map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setRange(r)}
+                      className="px-3 py-1.5 rounded text-sm font-semibold transition-all"
+                      style={{
+                        backgroundColor:
+                          range === r
+                            ? theme === "dark"
+                              ? "rgba(63,63,70,0.8)"
+                              : "rgba(228,228,231,0.8)"
+                            : "transparent",
+                        color: range === r ? P.text : P.textMuted,
+                      }}
+                    >
+                      {r}T
+                    </button>
+                  ))}
+                  <button
+                    className="p-1.5 rounded transition-colors"
+                    style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
+                  >
+                    <Calendar size={16} />
+                  </button>
+                  <div className="w-px h-6" style={{ backgroundColor: P.border }} />
+                  <button
+                    onClick={() => setViewMode(viewMode === "chart" ? "table" : "chart")}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded text-sm transition-colors"
+                    style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
+                  >
+                    {viewMode === "chart" ? <Table2 size={14} /> : <LineChart size={14} />}
+                    {viewMode === "chart" ? "Tabelle" : "Graphen"}
+                  </button>
                 </div>
 
                 {/* ── Events + ECG Timeline (below devices) ── */}
