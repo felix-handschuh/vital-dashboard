@@ -554,6 +554,7 @@ export default function VitalDashboard() {
   const [calendarSelectedDay, setCalendarSelectedDay] = useState<string | null>(null);
   const [calendarHoverDay, setCalendarHoverDay] = useState<{ dateStr: string; cx: number; cy: number } | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [devicesOpen, setDevicesOpen] = useState(false);
 
   /* ── Threshold settings state ── */
   const [templates, setTemplates] = useState<ThresholdTemplate[]>(() => [createDefaultTemplate()]);
@@ -2484,8 +2485,31 @@ export default function VitalDashboard() {
                       </div>
                     </div>
 
-                      {/* Devices row */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {/* Devices — collapsible */}
+                      <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
+                        <button
+                          className="w-full flex items-center gap-3 px-5 py-3 text-left transition-colors"
+                          style={{ borderBottom: devicesOpen ? `1px solid ${P.border}` : "none" }}
+                          onClick={() => setDevicesOpen(!devicesOpen)}
+                        >
+                          <span className="transition-transform" style={{ transform: devicesOpen ? "rotate(90deg)" : "rotate(0deg)", color: P.textMuted }}>
+                            <ChevronRight size={16} />
+                          </span>
+                          <Cpu size={18} color={P.textMuted} />
+                          <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>Geräte</span>
+                          <div className="flex items-center gap-2 ml-2">
+                            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${P.heartRate}22`, color: P.heartRate }}>
+                              {patient.implant.type.split(" ")[0]}
+                            </span>
+                            {patient.externalDevices.map((dev, i) => (
+                              <span key={i} className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${dev.type === "Waage" ? P.weight : P.bpSystolic}22`, color: dev.type === "Waage" ? P.weight : P.bpSystolic }}>
+                                {dev.type}
+                              </span>
+                            ))}
+                          </div>
+                        </button>
+                      {devicesOpen && (
+                      <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                       {/* Implant */}
                       <div
                         className="rounded-lg p-4"
@@ -2602,6 +2626,8 @@ export default function VitalDashboard() {
                         </div>
                       ))}
                     </div>
+                    )}
+                  </div>
                   </div>
                 </div>
 
