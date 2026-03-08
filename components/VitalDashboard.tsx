@@ -16,7 +16,9 @@ import {
   Link01Icon, CheckmarkCircle01Icon, CancelCircleIcon, RotateLeft01Icon,
   ToggleOnIcon, ToggleOffIcon, Notification01Icon, NotificationOff01Icon,
   Sun01Icon, Moon01Icon, Stethoscope02Icon, KeyboardIcon,
-  UserIcon, CpuIcon, Radio01Icon, BluetoothIcon, BatteryFullIcon, Wifi01Icon
+  UserIcon, CpuIcon, Radio01Icon, BluetoothIcon, BatteryFullIcon, Wifi01Icon,
+  Settings02Icon, FloppyDiskIcon, Copy01Icon, Mail01Icon, Edit02Icon,
+  Add01Icon, Delete01Icon, CheckListIcon, ArrowTurnBackwardIcon
 } from "@hugeicons/core-free-icons";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -79,6 +81,15 @@ const Bluetooth = hi(BluetoothIcon);
 const Battery = hi(BatteryFullIcon);
 const Link2 = hi(Link01Icon);
 const Wifi = hi(Wifi01Icon);
+const Settings = hi(Settings02Icon);
+const Save = hi(FloppyDiskIcon);
+const Copy = hi(Copy01Icon);
+const Mail = hi(Mail01Icon);
+const Edit = hi(Edit02Icon);
+const Plus = hi(Add01Icon);
+const Trash = hi(Delete01Icon);
+const Checklist = hi(CheckListIcon);
+const ArrowBack = hi(ArrowTurnBackwardIcon);
 
 /* ═══════════════════════════════════════════════════════════════════════════════
    THEME SYSTEM — dark / light mode
@@ -124,6 +135,128 @@ const lightPalette: typeof darkPalette = {
 const ALARM_LABELS: Record<string, string> = {
   critical: "Kritisch", warning: "Warnung", change: "Änderung", info: "Information",
 };
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   THRESHOLD / ALARM CONFIGURATION TYPES
+   ═══════════════════════════════════════════════════════════════════════════════ */
+interface AlarmLevel {
+  enabled: boolean;
+  emailNotify: boolean;
+}
+
+interface ThresholdParam {
+  id: string;
+  label: string;
+  unit: string;
+  yellow: AlarmLevel & { rules: ThresholdRule[] };
+  red: AlarmLevel & { rules: ThresholdRule[] };
+}
+
+interface ThresholdRule {
+  id: string;
+  label: string;
+  operator: "<" | ">" | "≤" | "≥";
+  value: number;
+  suffix?: string;
+  secondValue?: number;
+  secondSuffix?: string;
+}
+
+interface ThresholdTemplate {
+  id: string;
+  name: string;
+  isDefault: boolean;
+  params: ThresholdParam[];
+}
+
+const createDefaultParams = (): ThresholdParam[] => [
+  {
+    id: "pulse", label: "Puls aus RR-Messung", unit: "bpm",
+    yellow: { enabled: true, emailNotify: false, rules: [
+      { id: "pulse-y1", label: "Unterer Schwellwert", operator: "<", value: 50, suffix: "bpm" },
+      { id: "pulse-y2", label: "Oberer Schwellwert", operator: ">", value: 100, suffix: "bpm" },
+    ]},
+    red: { enabled: true, emailNotify: true, rules: [
+      { id: "pulse-r1", label: "Unterer Schwellwert", operator: "<", value: 40, suffix: "bpm" },
+      { id: "pulse-r2", label: "Oberer Schwellwert", operator: ">", value: 120, suffix: "bpm" },
+    ]},
+  },
+  {
+    id: "bp", label: "Blutdruck", unit: "mmHg",
+    yellow: { enabled: true, emailNotify: false, rules: [
+      { id: "bp-y1", label: "Systolisch unter", operator: "<", value: 90, suffix: "mmHg" },
+      { id: "bp-y2", label: "Systolisch über", operator: ">", value: 140, suffix: "mmHg" },
+      { id: "bp-y3", label: "Diastolisch unter", operator: "<", value: 40, suffix: "mmHg" },
+      { id: "bp-y4", label: "Diastolisch über", operator: ">", value: 90, suffix: "mmHg" },
+    ]},
+    red: { enabled: true, emailNotify: true, rules: [
+      { id: "bp-r1", label: "Systolisch unter", operator: "<", value: 80, suffix: "mmHg" },
+      { id: "bp-r2", label: "Systolisch über", operator: ">", value: 160, suffix: "mmHg" },
+      { id: "bp-r3", label: "Diastolisch unter", operator: "<", value: 30, suffix: "mmHg" },
+      { id: "bp-r4", label: "Diastolisch über", operator: ">", value: 100, suffix: "mmHg" },
+    ]},
+  },
+  {
+    id: "weight", label: "Gewicht", unit: "kg",
+    yellow: { enabled: true, emailNotify: false, rules: [
+      { id: "wt-y1", label: "Zunahme in 1 Tag", operator: ">", value: 1, suffix: "kg in 1 Tag" },
+      { id: "wt-y2", label: "Zunahme in 3 Tagen", operator: ">", value: 2, suffix: "kg in", secondValue: 3, secondSuffix: "Tagen" },
+      { id: "wt-y3", label: "Zunahme in 8 Tagen", operator: ">", value: 2.5, suffix: "kg in", secondValue: 8, secondSuffix: "Tagen" },
+    ]},
+    red: { enabled: true, emailNotify: true, rules: [
+      { id: "wt-r1", label: "Zunahme in 1 Tag", operator: ">", value: 1.5, suffix: "kg in 1 Tag" },
+      { id: "wt-r2", label: "Zunahme in 3 Tagen", operator: ">", value: 3, suffix: "kg in", secondValue: 3, secondSuffix: "Tagen" },
+      { id: "wt-r3", label: "Zunahme in 8 Tagen", operator: ">", value: 4, suffix: "kg in", secondValue: 8, secondSuffix: "Tagen" },
+    ]},
+  },
+  {
+    id: "spo2", label: "Sauerstoffsättigung", unit: "%",
+    yellow: { enabled: false, emailNotify: false, rules: [
+      { id: "spo2-y1", label: "Unter", operator: "<", value: 94, suffix: "%" },
+    ]},
+    red: { enabled: false, emailNotify: false, rules: [
+      { id: "spo2-r1", label: "Unter", operator: "<", value: 89, suffix: "%" },
+    ]},
+  },
+  {
+    id: "mood", label: "Befinden", unit: "",
+    yellow: { enabled: true, emailNotify: false, rules: [
+      { id: "mood-y1", label: "Eher schlechter an X Tagen in Folge", operator: "≤", value: 2, suffix: "an", secondValue: 3, secondSuffix: "Tagen in Folge" },
+    ]},
+    red: { enabled: true, emailNotify: false, rules: [
+      { id: "mood-r1", label: "Schlechter an X Tagen in Folge", operator: "≤", value: 1, suffix: "an", secondValue: 3, secondSuffix: "Tagen in Folge" },
+    ]},
+  },
+  {
+    id: "nodata", label: "Keine eingegangene Messung", unit: "",
+    yellow: { enabled: true, emailNotify: false, rules: [
+      { id: "nodata-y1", label: "Nach X Tagen", operator: ">", value: 3, suffix: "Tagen" },
+    ]},
+    red: { enabled: false, emailNotify: false, rules: [] },
+  },
+  {
+    id: "ecg_received", label: "EKG eingegangen", unit: "",
+    yellow: { enabled: true, emailNotify: false, rules: [] },
+    red: { enabled: false, emailNotify: false, rules: [] },
+  },
+  {
+    id: "ecg_findings", label: "EKG Befunde", unit: "",
+    yellow: { enabled: false, emailNotify: false, rules: [] },
+    red: { enabled: false, emailNotify: false, rules: [] },
+  },
+  {
+    id: "implant_template", label: "Template für Implantate", unit: "",
+    yellow: { enabled: false, emailNotify: false, rules: [] },
+    red: { enabled: false, emailNotify: false, rules: [] },
+  },
+];
+
+const createDefaultTemplate = (): ThresholdTemplate => ({
+  id: "standard",
+  name: "Standard-Template",
+  isDefault: true,
+  params: createDefaultParams(),
+});
 
 /* ═══════════════════════════════════════════════════════════════════════════════
    DATA TYPES — measurements support multiple per day
@@ -413,6 +546,20 @@ export default function VitalDashboard() {
   const [ecgZoom, setEcgZoom] = useState(1);
   const [ecgHover, setEcgHover] = useState<{ ecg: EcgEvent; cx: number; cy: number } | null>(null);
   const [theme, setTheme] = useState<Theme>("dark");
+  const [page, setPage] = useState<"dashboard" | "thresholds">("dashboard");
+
+  /* ── Threshold settings state ── */
+  const [templates, setTemplates] = useState<ThresholdTemplate[]>(() => [createDefaultTemplate()]);
+  const [activeTemplateId, setActiveTemplateId] = useState("standard");
+  const [thresholdParams, setThresholdParams] = useState<ThresholdParam[]>(() => createDefaultParams());
+  const [thresholdModified, setThresholdModified] = useState(false);
+  const [saveTemplateName, setSaveTemplateName] = useState("");
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+
+  const activeTemplate = templates.find(t => t.id === activeTemplateId);
+  const displayTemplateName = activeTemplate
+    ? (thresholdModified ? `${activeTemplate.name}+` : activeTemplate.name)
+    : "Benutzerdefiniert";
 
   const P = theme === "dark" ? darkPalette : lightPalette;
   const ALARM_COLORS: Record<string, string> = { critical: P.alarmRed, warning: P.alarmYellow, change: P.alarmBlue, info: P.alarmGray };
@@ -539,12 +686,20 @@ export default function VitalDashboard() {
                   {d3.timeFormat("%-d.%-m.")(t)}
                 </text>
               ))}
-              {/* Thresholds */}
+              {/* Thresholds — clickable to go to settings */}
               {vis.thresholds && thresholds?.upper && yDomain[1] >= thresholds.upper && (
-                <line x1={0} x2={innerW} y1={yS(thresholds.upper)} y2={yS(thresholds.upper)} stroke={P.threshUpper} strokeWidth={1.2} strokeDasharray="6,4" opacity={0.6} />
+                <g onClick={() => setPage("thresholds")} className="cursor-pointer">
+                  <line x1={0} x2={innerW} y1={yS(thresholds.upper)} y2={yS(thresholds.upper)} stroke={P.threshUpper} strokeWidth={1.2} strokeDasharray="6,4" opacity={0.6} />
+                  <rect x={0} y={yS(thresholds.upper) - 6} width={innerW} height={12} fill="transparent" />
+                  <title>Grenzwert-Einstellungen öffnen</title>
+                </g>
               )}
               {vis.thresholds && thresholds?.lower && yDomain[0] <= thresholds.lower && (
-                <line x1={0} x2={innerW} y1={yS(thresholds.lower)} y2={yS(thresholds.lower)} stroke={P.threshLower} strokeWidth={1.2} strokeDasharray="6,4" opacity={0.6} />
+                <g onClick={() => setPage("thresholds")} className="cursor-pointer">
+                  <line x1={0} x2={innerW} y1={yS(thresholds.lower)} y2={yS(thresholds.lower)} stroke={P.threshLower} strokeWidth={1.2} strokeDasharray="6,4" opacity={0.6} />
+                  <rect x={0} y={yS(thresholds.lower) - 6} width={innerW} height={12} fill="transparent" />
+                  <title>Grenzwert-Einstellungen öffnen</title>
+                </g>
               )}
               {/* Missed */}
               {vis.missed && filteredData.missed.map(d => {
@@ -1453,6 +1608,321 @@ export default function VitalDashboard() {
   );
 
   /* ═══════════════════════════════════════════════════════════════════════════════
+     THRESHOLD SETTINGS HELPERS
+     ═══════════════════════════════════════════════════════════════════════════════ */
+  const handleTemplateChange = (templateId: string) => {
+    const tmpl = templates.find(t => t.id === templateId);
+    if (tmpl) {
+      setActiveTemplateId(templateId);
+      setThresholdParams(JSON.parse(JSON.stringify(tmpl.params)));
+      setThresholdModified(false);
+    }
+  };
+
+  const handleParamChange = (paramId: string, level: "yellow" | "red", field: string, value: any) => {
+    setThresholdParams(prev => prev.map(p => {
+      if (p.id !== paramId) return p;
+      const lvl = { ...p[level] };
+      if (field === "enabled") lvl.enabled = value;
+      else if (field === "emailNotify") lvl.emailNotify = value;
+      return { ...p, [level]: lvl };
+    }));
+    setThresholdModified(true);
+  };
+
+  const handleRuleValueChange = (paramId: string, level: "yellow" | "red", ruleId: string, field: "value" | "secondValue", newVal: number) => {
+    setThresholdParams(prev => prev.map(p => {
+      if (p.id !== paramId) return p;
+      const lvl = { ...p[level], rules: p[level].rules.map(r => r.id === ruleId ? { ...r, [field]: newVal } : r) };
+      return { ...p, [level]: lvl };
+    }));
+    setThresholdModified(true);
+  };
+
+  const handleSaveAsTemplate = () => {
+    if (!saveTemplateName.trim()) return;
+    const newId = `custom-${Date.now()}`;
+    const newTemplate: ThresholdTemplate = {
+      id: newId,
+      name: saveTemplateName.trim(),
+      isDefault: false,
+      params: JSON.parse(JSON.stringify(thresholdParams)),
+    };
+    setTemplates(prev => [...prev, newTemplate]);
+    setActiveTemplateId(newId);
+    setThresholdModified(false);
+    setShowSaveDialog(false);
+    setSaveTemplateName("");
+  };
+
+  const handleOverwriteTemplate = () => {
+    if (!activeTemplate || activeTemplate.isDefault) return;
+    setTemplates(prev => prev.map(t => t.id === activeTemplateId ? { ...t, params: JSON.parse(JSON.stringify(thresholdParams)) } : t));
+    setThresholdModified(false);
+  };
+
+  const handleDeleteTemplate = (templateId: string) => {
+    const tmpl = templates.find(t => t.id === templateId);
+    if (!tmpl || tmpl.isDefault) return;
+    setTemplates(prev => prev.filter(t => t.id !== templateId));
+    if (activeTemplateId === templateId) {
+      handleTemplateChange("standard");
+    }
+  };
+
+  /* ── Threshold Settings Page ── */
+  const thresholdSettingsPage = (
+    <div className="space-y-5">
+      {/* Back + Title */}
+      <div className="flex items-center gap-4">
+        <button onClick={() => setPage("dashboard")} className="p-2 rounded-lg transition-colors" style={{ backgroundColor: P.bgInput, color: P.textSecondary }}>
+          <ArrowBack size={18} />
+        </button>
+        <div>
+          <h2 className="text-xl font-bold tracking-tight" style={{ color: P.text }}>Grenzwert-Einstellungen</h2>
+          <p className="text-sm" style={{ color: P.textMuted }}>Alarm-Schwellwerte und Benachrichtigungen konfigurieren</p>
+        </div>
+      </div>
+
+      {/* Template selector + actions */}
+      <div className="rounded-xl overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
+        <div className="px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-semibold uppercase tracking-wider" style={{ color: P.textMuted }}>Template:</span>
+            <select
+              value={activeTemplateId}
+              onChange={(e) => handleTemplateChange(e.target.value)}
+              className="px-3 py-2 rounded-lg text-sm font-medium border-0 outline-none cursor-pointer"
+              style={{ backgroundColor: P.bgInput, color: P.text }}>
+              {templates.map(t => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+            {thresholdModified && (
+              <span className="text-sm px-2.5 py-1 rounded-full font-medium"
+                style={{ backgroundColor: "rgba(234,179,8,0.15)", color: P.warning }}>
+                Geändert
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {thresholdModified && activeTemplate && !activeTemplate.isDefault && (
+              <button onClick={handleOverwriteTemplate}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{ backgroundColor: P.bgInput, color: P.text }}>
+                <Save size={15} /> Speichern
+              </button>
+            )}
+            <button onClick={() => { setSaveTemplateName(""); setShowSaveDialog(true); }}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors"
+              style={{ backgroundColor: P.bgInput, color: P.text }}>
+              <Copy size={15} /> Als neues Template speichern
+            </button>
+            {activeTemplate && !activeTemplate.isDefault && (
+              <button onClick={() => handleDeleteTemplate(activeTemplateId)}
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{ backgroundColor: "rgba(239,68,68,0.1)", color: P.danger }}>
+                <Trash size={15} /> Löschen
+              </button>
+            )}
+            {thresholdModified && (
+              <button onClick={() => { if (activeTemplate) handleTemplateChange(activeTemplateId); }}
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{ backgroundColor: P.bgInput, color: P.textMuted }}>
+                <RotateCcw size={15} /> Zurücksetzen
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Save dialog */}
+      {showSaveDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="rounded-xl p-6 shadow-2xl w-full max-w-md space-y-4" style={{ backgroundColor: P.bgPanel, border: `1px solid ${P.border}` }}>
+            <h3 className="text-lg font-semibold" style={{ color: P.text }}>Neues Template speichern</h3>
+            <input
+              type="text" placeholder="Name des Templates..."
+              value={saveTemplateName} onChange={(e) => setSaveTemplateName(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-lg text-sm outline-none border-0"
+              style={{ backgroundColor: P.bgInput, color: P.text }}
+              autoFocus
+              onKeyDown={(e) => e.key === "Enter" && handleSaveAsTemplate()}
+            />
+            <div className="flex items-center gap-2 justify-end">
+              <button onClick={() => setShowSaveDialog(false)}
+                className="px-4 py-2 rounded-lg text-sm font-medium" style={{ color: P.textMuted }}>
+                Abbrechen
+              </button>
+              <button onClick={handleSaveAsTemplate}
+                className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                style={{ backgroundColor: P.bpSystolic, color: "white" }}>
+                Speichern
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Alarm legend */}
+      <div className="flex items-center gap-4 text-sm" style={{ color: P.textSecondary }}>
+        <span className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded" style={{ backgroundColor: P.alarmYellow }} />
+          <span>1. Schwellwert (Warnung)</span>
+        </span>
+        <span className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded" style={{ backgroundColor: P.alarmRed }} />
+          <span>2. Schwellwert (Kritisch)</span>
+        </span>
+        <span className="flex items-center gap-2">
+          <Mail size={14} />
+          <span>E-Mail-Benachrichtigung</span>
+        </span>
+      </div>
+
+      {/* Threshold table */}
+      <div className="rounded-xl overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
+        {/* Table header */}
+        <div className="grid grid-cols-[240px_1fr_1fr] text-sm font-semibold" style={{ borderBottom: `2px solid ${P.border}` }}>
+          <div className="px-5 py-3" style={{ color: P.textMuted }}>Parameter</div>
+          <div className="px-5 py-3 text-center" style={{ backgroundColor: "rgba(234,179,8,0.08)", color: P.alarmYellow }}>
+            1. Schwellwert (Warnung)
+          </div>
+          <div className="px-5 py-3 text-center" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: P.alarmRed }}>
+            2. Schwellwert (Kritisch)
+          </div>
+        </div>
+
+        {/* Table rows */}
+        {thresholdParams.map((param, idx) => {
+          const isLast = idx === thresholdParams.length - 1;
+          return (
+            <div key={param.id} className="grid grid-cols-[240px_1fr_1fr]"
+              style={{ borderBottom: isLast ? "none" : `1px solid ${P.border}` }}>
+              {/* Parameter label */}
+              <div className="px-5 py-4 flex items-start">
+                <span className="text-sm font-medium" style={{ color: P.text }}>{param.label}</span>
+              </div>
+
+              {/* Yellow alarm column */}
+              <div className="px-4 py-3 space-y-2" style={{ backgroundColor: "rgba(234,179,8,0.04)", borderLeft: `1px solid ${P.border}` }}>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => handleParamChange(param.id, "yellow", "enabled", !param.yellow.enabled)}
+                    className="transition-colors" style={{ color: param.yellow.enabled ? P.alarmYellow : P.textDim }}>
+                    {param.yellow.enabled ? <ToggleRight size={22} /> : <ToggleLeft size={22} />}
+                  </button>
+                  <button onClick={() => handleParamChange(param.id, "yellow", "emailNotify", !param.yellow.emailNotify)}
+                    className="p-1 rounded transition-colors"
+                    style={{ color: param.yellow.emailNotify ? P.bpSystolic : P.textDim }}
+                    title={param.yellow.emailNotify ? "E-Mail aktiv" : "E-Mail deaktiviert"}>
+                    <Mail size={16} />
+                  </button>
+                </div>
+                {param.yellow.enabled && param.yellow.rules.length > 0 && (
+                  <div className="space-y-1.5 pl-1">
+                    {param.yellow.rules.map(rule => (
+                      <div key={rule.id} className="flex items-center gap-1.5 text-sm flex-wrap">
+                        <span style={{ color: P.textMuted }}>{rule.operator}</span>
+                        <input
+                          type="number"
+                          value={rule.value}
+                          onChange={(e) => handleRuleValueChange(param.id, "yellow", rule.id, "value", parseFloat(e.target.value) || 0)}
+                          className="w-14 px-2 py-1 rounded text-sm text-center font-mono font-semibold outline-none border-0"
+                          style={{ backgroundColor: P.bgInput, color: P.text }}
+                          step={rule.suffix?.includes("kg") ? 0.5 : 1}
+                        />
+                        {rule.suffix && <span className="text-xs" style={{ color: P.textMuted }}>{rule.suffix}</span>}
+                        {rule.secondValue !== undefined && (
+                          <>
+                            <input
+                              type="number"
+                              value={rule.secondValue}
+                              onChange={(e) => handleRuleValueChange(param.id, "yellow", rule.id, "secondValue", parseInt(e.target.value) || 0)}
+                              className="w-12 px-2 py-1 rounded text-sm text-center font-mono font-semibold outline-none border-0"
+                              style={{ backgroundColor: P.bgInput, color: P.text }}
+                            />
+                            {rule.secondSuffix && <span className="text-xs" style={{ color: P.textMuted }}>{rule.secondSuffix}</span>}
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {param.yellow.enabled && param.yellow.rules.length === 0 && param.id !== "nodata" && (
+                  <div className="pl-1 py-1">
+                    <span className="text-xs" style={{ color: P.textMuted }}>Aktiv (keine Parameter)</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Red alarm column */}
+              <div className="px-4 py-3 space-y-2" style={{ backgroundColor: "rgba(239,68,68,0.04)", borderLeft: `1px solid ${P.border}` }}>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => handleParamChange(param.id, "red", "enabled", !param.red.enabled)}
+                    className="transition-colors" style={{ color: param.red.enabled ? P.alarmRed : P.textDim }}>
+                    {param.red.enabled ? <ToggleRight size={22} /> : <ToggleLeft size={22} />}
+                  </button>
+                  <button onClick={() => handleParamChange(param.id, "red", "emailNotify", !param.red.emailNotify)}
+                    className="p-1 rounded transition-colors"
+                    style={{ color: param.red.emailNotify ? P.bpSystolic : P.textDim }}
+                    title={param.red.emailNotify ? "E-Mail aktiv" : "E-Mail deaktiviert"}>
+                    <Mail size={16} />
+                  </button>
+                </div>
+                {param.red.enabled && param.red.rules.length > 0 && (
+                  <div className="space-y-1.5 pl-1">
+                    {param.red.rules.map(rule => (
+                      <div key={rule.id} className="flex items-center gap-1.5 text-sm flex-wrap">
+                        <span style={{ color: P.textMuted }}>{rule.operator}</span>
+                        <input
+                          type="number"
+                          value={rule.value}
+                          onChange={(e) => handleRuleValueChange(param.id, "red", rule.id, "value", parseFloat(e.target.value) || 0)}
+                          className="w-14 px-2 py-1 rounded text-sm text-center font-mono font-semibold outline-none border-0"
+                          style={{ backgroundColor: P.bgInput, color: P.text }}
+                          step={rule.suffix?.includes("kg") ? 0.5 : 1}
+                        />
+                        {rule.suffix && <span className="text-xs" style={{ color: P.textMuted }}>{rule.suffix}</span>}
+                        {rule.secondValue !== undefined && (
+                          <>
+                            <input
+                              type="number"
+                              value={rule.secondValue}
+                              onChange={(e) => handleRuleValueChange(param.id, "red", rule.id, "secondValue", parseInt(e.target.value) || 0)}
+                              className="w-12 px-2 py-1 rounded text-sm text-center font-mono font-semibold outline-none border-0"
+                              style={{ backgroundColor: P.bgInput, color: P.text }}
+                            />
+                            {rule.secondSuffix && <span className="text-xs" style={{ color: P.textMuted }}>{rule.secondSuffix}</span>}
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {param.red.enabled && param.red.rules.length === 0 && (
+                  <div className="pl-1 py-1">
+                    <span className="text-xs" style={{ color: P.textMuted }}>Aktiv (keine Parameter)</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Info hint */}
+      <div className="flex items-start gap-3 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: P.bgInput, color: P.textSecondary }}>
+        <Info size={16} className="mt-0.5 shrink-0" />
+        <div>
+          <strong style={{ color: P.text }}>Hinweis:</strong> Gelbe Alarme (1. Schwellwert) zeigen Warnungen an. Rote Alarme (2. Schwellwert) kennzeichnen kritische Überschreitungen.
+          Bei aktivierter E-Mail-Benachrichtigung wird der zuständige Arzt per Mail informiert.
+          Geänderte Templates werden mit einem <strong style={{ color: P.warning }}>+</strong> gekennzeichnet.
+        </div>
+      </div>
+    </div>
+  );
+
+  /* ═══════════════════════════════════════════════════════════════════════════════
      RENDER
      ═══════════════════════════════════════════════════════════════════════════════ */
   return (
@@ -1505,6 +1975,33 @@ export default function VitalDashboard() {
           </div>
         </div>
 
+        {/* ── Page Tabs ── */}
+        <div className="flex items-center gap-1 p-1 rounded-xl" style={{ backgroundColor: P.bgInput }}>
+          <button onClick={() => setPage("dashboard")}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all"
+            style={{
+              backgroundColor: page === "dashboard" ? P.bgCard : "transparent",
+              color: page === "dashboard" ? P.text : P.textMuted,
+              boxShadow: page === "dashboard" ? "0 1px 3px rgba(0,0,0,0.15)" : "none",
+            }}>
+            <Activity size={16} /> Dashboard
+          </button>
+          <button onClick={() => setPage("thresholds")}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all"
+            style={{
+              backgroundColor: page === "thresholds" ? P.bgCard : "transparent",
+              color: page === "thresholds" ? P.text : P.textMuted,
+              boxShadow: page === "thresholds" ? "0 1px 3px rgba(0,0,0,0.15)" : "none",
+            }}>
+            <Settings size={16} /> Grenzwerte
+            {thresholdModified && <span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.warning }} />}
+          </button>
+        </div>
+
+        {/* ═══ CONDITIONAL PAGE CONTENT ═══ */}
+        {page === "thresholds" && thresholdSettingsPage}
+
+        {page === "dashboard" && <>
         {/* ── Patient Info Bar ── */}
         <div className="rounded-xl overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
           <div className="px-5 py-3 flex items-center gap-3" style={{ borderBottom: `1px solid ${P.border}` }}>
@@ -1634,6 +2131,7 @@ export default function VitalDashboard() {
         ) : (
           tableView
         )}
+        </>}
       </div>
     </div>
   );
