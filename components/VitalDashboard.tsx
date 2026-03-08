@@ -549,6 +549,7 @@ export default function VitalDashboard() {
   const [ecgHover, setEcgHover] = useState<{ ecg: EcgEvent; cx: number; cy: number } | null>(null);
   const [theme, setTheme] = useState<Theme>("dark");
   const [page, setPage] = useState<"dashboard" | "thresholds">("dashboard");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   /* ── Threshold settings state ── */
   const [templates, setTemplates] = useState<ThresholdTemplate[]>(() => [createDefaultTemplate()]);
@@ -1928,213 +1929,549 @@ export default function VitalDashboard() {
      RENDER
      ═══════════════════════════════════════════════════════════════════════════════ */
   return (
-    <div className="min-h-screen transition-colors pb-14" style={{ backgroundColor: P.bg }}>
-      <div className="max-w-[1500px] mx-auto px-3 py-4 sm:px-6 sm:py-6 lg:px-8 space-y-5" style={{ color: P.text }}>
-        {tooltip}
-        {sidePanelEl}
-        {ecgDrawerEl}
-        {shortcutBar}
-
-        {/* ── Header Row ── */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: P.text }}>Vitalparameter</h1>
-            <div className="flex items-center gap-2">
-              <User size={16} style={{ color: P.textMuted }} />
-              <span className="text-base font-medium" style={{ color: P.textSecondary }}>{patient.name}, {patient.age} J., {patient.gender}</span>
+    <div className="flex min-h-screen" style={{ backgroundColor: P.bg, color: P.text }}>
+      {/* ═══════════════════════════════════════════════════════════════════════════════
+          SIDEBAR
+          ═══════════════════════════════════════════════════════════════════════════════ */}
+      <aside
+        className="hidden md:flex flex-col transition-all duration-300 border-r overflow-hidden"
+        style={{
+          width: sidebarCollapsed ? 48 : 256,
+          backgroundColor: P.bgCard,
+          borderRightColor: P.border,
+        }}
+      >
+        {/* ── SidebarHeader ── */}
+        <div className="p-2 flex flex-col gap-2 border-b" style={{ borderBottomColor: P.border }}>
+          {/* Logo area */}
+          <div className="flex items-center justify-between gap-2">
+            <div
+              className="flex items-center justify-center rounded-lg flex-shrink-0"
+              style={{
+                width: 32,
+                height: 32,
+                backgroundColor: P.text,
+              }}
+            >
+              <Heart size={18} style={{ color: P.bgCard }} />
             </div>
-            <span className="text-sm px-3 py-1 rounded-full font-semibold"
-              style={{ backgroundColor: score >= 80 ? "rgba(34,197,94,0.15)" : score >= 50 ? "rgba(234,179,8,0.15)" : "rgba(239,68,68,0.15)", color: score >= 80 ? P.good : score >= 50 ? P.warning : P.danger }}>
-              {score}% Compliance
-            </span>
+            {!sidebarCollapsed && (
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold" style={{ color: P.text }}>MoRe Care</div>
+                <div className="text-xs" style={{ color: P.textMuted }}>Heart Failure</div>
+              </div>
+            )}
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <button onClick={() => setTheme(t => t === "dark" ? "light" : "dark")}
-              className="p-2 rounded-lg transition-colors"
-              style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
-              title="Dark/Light Mode (D)">
-              {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-            <div className="w-px h-7 mx-1" style={{ backgroundColor: P.borderStrong }} />
-            {RANGES.map(r => (
-              <button key={r} onClick={() => setRange(r)}
-                className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+          {/* Collapse button */}
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="p-1.5 rounded-md transition-colors flex items-center justify-center"
+            style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
+            title={sidebarCollapsed ? "Expand" : "Collapse"}
+          >
+            {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          </button>
+        </div>
+
+        {/* ── SidebarContent ── */}
+        <div className="flex-1 overflow-y-auto px-2 py-4">
+          {/* Navigation Group */}
+          <div className="mb-6">
+            {!sidebarCollapsed && (
+              <div className="text-xs uppercase tracking-wider font-semibold px-2 py-1 mb-2" style={{ color: P.textMuted }}>
+                Navigation
+              </div>
+            )}
+            <div className="space-y-1">
+              {/* Dashboard */}
+              <button
+                onClick={() => setPage("dashboard")}
+                className="w-full rounded-md transition-colors flex items-center gap-3 px-2 py-2 text-sm font-medium"
                 style={{
-                  backgroundColor: range === r ? (theme === "dark" ? "rgba(63,63,70,0.8)" : "rgba(228,228,231,0.8)") : "transparent",
-                  color: range === r ? P.text : P.textMuted,
-                }}>
-                {r}T
+                  backgroundColor: page === "dashboard" ? P.bgInput : "transparent",
+                  color: page === "dashboard" ? P.text : P.textSecondary,
+                }}
+              >
+                <Activity size={18} />
+                {!sidebarCollapsed && "Dashboard"}
               </button>
-            ))}
-            <button className="p-2 rounded-lg transition-colors" style={{ color: P.textMuted }}><Calendar size={18} /></button>
-            <div className="w-px h-7 mx-1" style={{ backgroundColor: P.borderStrong }} />
-            <button onClick={() => setViewMode(viewMode === "chart" ? "table" : "chart")}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-              style={{ backgroundColor: P.bgInput, color: P.textSecondary }}>
-              {viewMode === "chart" ? <Table2 size={16} /> : <LineChart size={16} />}
-              {viewMode === "chart" ? "Tabelle" : "Graphen"}
-            </button>
-          </div>
-        </div>
-
-        {/* ── Page Tabs ── */}
-        <div className="flex items-center gap-1 p-1 rounded-md" style={{ backgroundColor: P.bgInput }}>
-          <button onClick={() => setPage("dashboard")}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm text-sm font-medium transition-all"
-            style={{
-              backgroundColor: page === "dashboard" ? P.bgCard : "transparent",
-              color: page === "dashboard" ? P.text : P.textMuted,
-              boxShadow: page === "dashboard" ? "0 1px 3px rgba(0,0,0,0.15)" : "none",
-            }}>
-            <Activity size={16} /> Dashboard
-          </button>
-          <button onClick={() => setPage("thresholds")}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-sm text-sm font-medium transition-all"
-            style={{
-              backgroundColor: page === "thresholds" ? P.bgCard : "transparent",
-              color: page === "thresholds" ? P.text : P.textMuted,
-              boxShadow: page === "thresholds" ? "0 1px 3px rgba(0,0,0,0.15)" : "none",
-            }}>
-            <Settings size={16} /> Grenzwerte
-            {thresholdModified && <span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.warning }} />}
-          </button>
-        </div>
-
-        {/* ═══ CONDITIONAL PAGE CONTENT ═══ */}
-        {page === "thresholds" && thresholdSettingsPage}
-
-        {page === "dashboard" && <>
-        {/* ── Patient Info Bar ── */}
-        <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
-          <div className="px-5 py-3 flex items-center gap-3" style={{ borderBottom: `1px solid ${P.border}` }}>
-            <Info size={16} style={{ color: P.textMuted }} />
-            <span className="text-sm font-semibold uppercase tracking-wider" style={{ color: P.textMuted }}>Patientendaten</span>
-          </div>
-          <div className="p-4">
-            {/* Clinical info pills */}
-            <div className="flex flex-wrap gap-2 mb-4">
-              <InfoPill label="NYHA" value={`Klasse ${patient.nyha}`} />
-              <InfoPill label="LVEF" value={`${patient.lvef}%`} color={patient.lvef < 40 ? P.danger : patient.lvef < 50 ? P.warning : P.good} />
-              <InfoPill label="Antikoagulation" value={patient.anticoag ? "Ja" : "Nein"} color={patient.anticoag ? P.good : P.textMuted} />
-              <InfoPill label="Geschlecht" value={patient.gender} />
+              {/* Grenzwerte */}
+              <button
+                onClick={() => setPage("thresholds")}
+                className="w-full rounded-md transition-colors flex items-center gap-3 px-2 py-2 text-sm font-medium relative"
+                style={{
+                  backgroundColor: page === "thresholds" ? P.bgInput : "transparent",
+                  color: page === "thresholds" ? P.text : P.textSecondary,
+                }}
+              >
+                <Settings size={18} />
+                {!sidebarCollapsed && "Grenzwerte"}
+                {thresholdModified && (
+                  <span
+                    className="w-2 h-2 rounded-full ml-auto"
+                    style={{ backgroundColor: P.warning }}
+                  />
+                )}
+              </button>
             </div>
+          </div>
 
-            {/* ICD-10 Codes */}
-            <div className="mb-4">
-              <span className="text-[11px] uppercase tracking-wider font-semibold block mb-2" style={{ color: P.textMuted }}>ICD-10 Diagnosen</span>
-              <div className="flex flex-wrap gap-2">
-                {patient.icd10.map((d, i) => (
-                  <span key={i} className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg" style={{ backgroundColor: P.bgInput, color: P.textSecondary }}>
-                    <span className="font-mono font-semibold" style={{ color: P.text }}>{d.code}</span>
-                    <span style={{ color: P.textMuted }}>—</span>
-                    <span>{d.text}</span>
-                  </span>
-                ))}
+          {/* Patient Group */}
+          {!sidebarCollapsed && (
+            <div>
+              <div className="text-xs uppercase tracking-wider font-semibold px-2 py-1 mb-2" style={{ color: P.textMuted }}>
+                Patient
+              </div>
+              <div className="px-2 py-2 rounded-md" style={{ backgroundColor: P.bgInput }}>
+                <div className="text-sm font-semibold mb-2" style={{ color: P.text }}>
+                  {patient.name}
+                </div>
+                <div className="space-y-1 text-xs" style={{ color: P.textSecondary }}>
+                  <div>
+                    <span style={{ color: P.textMuted }}>Alter:</span> {patient.age} J.
+                  </div>
+                  <div>
+                    <span style={{ color: P.textMuted }}>NYHA:</span> Klasse {patient.nyha}
+                  </div>
+                  <div>
+                    <span style={{ color: P.textMuted }}>LVEF:</span>{" "}
+                    <span
+                      style={{
+                        color:
+                          patient.lvef < 40
+                            ? P.danger
+                            : patient.lvef < 50
+                              ? P.warning
+                              : P.good,
+                      }}
+                    >
+                      {patient.lvef}%
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: P.textMuted }}>Compliance:</span>{" "}
+                    <span
+                      style={{
+                        color:
+                          score >= 80
+                            ? P.good
+                            : score >= 50
+                              ? P.warning
+                              : P.danger,
+                      }}
+                    >
+                      {score}%
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
+          )}
+        </div>
 
-            {/* Devices row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {/* Implant */}
-              <div className="rounded-lg p-4" style={{ backgroundColor: P.bgInput, border: `1px solid ${P.border}` }}>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Cpu size={16} style={{ color: P.heartRate }} />
-                    <span className="text-sm font-semibold" style={{ color: P.text }}>Implantat</span>
-                  </div>
-                  <a href={patient.implant.detailLink} className="inline-flex items-center gap-1 text-xs font-medium rounded-md px-2 py-1 transition-colors"
-                    style={{ color: P.bpSystolic, backgroundColor: theme === "dark" ? "rgba(74,158,222,0.1)" : "rgba(37,99,235,0.1)" }}>
-                    Details <ExternalLink size={11} />
-                  </a>
-                </div>
-                <div className="space-y-1">
-                  <div className="text-sm font-semibold" style={{ color: P.text }}>{patient.implant.manufacturer} {patient.implant.model}</div>
-                  <div className="text-xs" style={{ color: P.textMuted }}>{patient.implant.type}</div>
-                  <div className="flex items-center gap-3 mt-2">
-                    <div className="flex items-center gap-1.5 text-xs" style={{ color: P.textSecondary }}>
-                      <Battery size={13} />
-                      <span className="font-mono font-semibold" style={{ color: patient.implant.batteryVoltage > 2.8 ? P.good : P.warning }}>{patient.implant.batteryVoltage} V</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs" style={{ color: P.textSecondary }}>
-                      <Radio size={13} />
-                      <span>{timeSince(patient.implant.lastTransmission)}</span>
-                    </div>
-                  </div>
-                  <a href={patient.implant.transmissionListLink} className="inline-flex items-center gap-1 text-xs mt-1 transition-colors"
-                    style={{ color: P.bpSystolic }}>
-                    Transmissions-Verlauf <Link2 size={11} />
-                  </a>
-                </div>
+        {/* ── SidebarFooter ── */}
+        {!sidebarCollapsed && (
+          <div
+            className="p-2 border-t flex items-center gap-2"
+            style={{ borderTopColor: P.border }}
+          >
+            <div
+              className="flex items-center justify-center rounded-full flex-shrink-0"
+              style={{
+                width: 32,
+                height: 32,
+                backgroundColor: P.bgInput,
+              }}
+            >
+              <User size={16} style={{ color: P.textSecondary }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium" style={{ color: P.text }}>
+                Dr. Meier
               </div>
-
-              {/* External devices */}
-              {patient.externalDevices.map((dev, i) => (
-                <div key={i} className="rounded-lg p-4" style={{ backgroundColor: P.bgInput, border: `1px solid ${P.border}` }}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      {dev.type === "Waage" ? <Weight size={16} style={{ color: P.weight }} /> : <Activity size={16} style={{ color: P.bpSystolic }} />}
-                      <span className="text-sm font-semibold" style={{ color: P.text }}>{dev.type}</span>
-                    </div>
-                    <Bluetooth size={14} style={{ color: P.bpSystolic }} />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-sm font-semibold" style={{ color: P.text }}>{dev.manufacturer} {dev.model}</div>
-                    <div className="flex items-center gap-1.5 text-xs mt-2" style={{ color: P.textSecondary }}>
-                      <Wifi size={13} />
-                      <span>Letzte Übertragung: <span className="font-medium" style={{ color: P.text }}>{timeSince(dev.lastTransmission)}</span></span>
-                    </div>
-                    <a href={dev.transmissionListLink} className="inline-flex items-center gap-1 text-xs mt-1 transition-colors"
-                      style={{ color: P.bpSystolic }}>
-                      Transmissions-Verlauf <Link2 size={11} />
-                    </a>
-                  </div>
-                </div>
-              ))}
+              <div className="text-xs" style={{ color: P.textMuted }}>
+                Kardiologie
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* ── Events + ECG Timeline (below devices) ── */}
-        {eventsRow}
-        {ecgTimeline}
-
-        {/* ── Toggles ── */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm uppercase tracking-wider font-semibold mr-1" style={{ color: P.textMuted }}>Anzeige:</span>
-          <ToggleBtn label="Grenzwerte" active={vis.thresholds} onToggle={() => setVis(v => ({ ...v, thresholds: !v.thresholds }))} shortcut="G" />
-          <ToggleBtn label="Fehlende Werte" active={vis.missed} onToggle={() => setVis(v => ({ ...v, missed: !v.missed }))} shortcut="M" />
-        </div>
-
-        {/* ── Legend ── */}
-        <div className="flex items-center gap-5 text-sm flex-wrap" style={{ color: P.textSecondary }}>
-          <span className="flex items-center gap-1.5"><span className="inline-block w-0 h-0 border-l-[5px] border-r-[5px] border-b-[8px] border-transparent" style={{ borderBottomColor: P.bpSystolic }} />Sys</span>
-          <span className="flex items-center gap-1.5"><span className="inline-block w-0 h-0 border-l-[5px] border-r-[5px] border-t-[8px] border-transparent" style={{ borderTopColor: P.bpDiastolic }} />Dia</span>
-          <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rotate-45" style={{ backgroundColor: P.heartRate }} />HR</span>
-          <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: P.weight }} />Gewicht</span>
-          <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: P.mood }} />Stimmung</span>
-          <span style={{ color: P.textDim }}>|</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: P.alarmRed }} />Kritisch</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: P.alarmYellow }} />Warnung</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: P.alarmBlue }} />Änderung</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: P.alarmGray }} />Info</span>
-          <span style={{ color: P.textDim }}>|</span>
-          <span className="flex items-center gap-1.5"><span className="w-4 h-4 rounded-full border-2 border-dashed" style={{ borderColor: P.outlier }} />Ausreißer</span>
-          <span className="flex items-center gap-1.5"><Stethoscope size={14} style={{ color: P.examination }} />Untersuchung</span>
-        </div>
-
-        {/* ── Charts / Table ── */}
-        {viewMode === "chart" ? (
-          <div className="flex flex-col gap-3">
-            {bpChart}
-            {hrChart}
-            {weightChart}
-            {moodChart}
-          </div>
-        ) : (
-          tableView
         )}
-        </>}
-      </div>
+      </aside>
+
+      {/* ═══════════════════════════════════════════════════════════════════════════════
+          MAIN CONTENT
+          ═══════════════════════════════════════════════════════════════════════════════ */}
+      <main className="flex-1 min-h-screen overflow-x-hidden" style={{ backgroundColor: P.bg }}>
+        <div
+          className="max-w-[1400px] mx-auto px-4 py-5 sm:px-6 space-y-5"
+          style={{ color: P.text }}
+        >
+          {tooltip}
+          {sidePanelEl}
+          {ecgDrawerEl}
+          {shortcutBar}
+
+          {/* ── Header Row ── */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-4">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: P.text }}>
+                Vitalparameter
+              </h1>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => setTheme(t => (t === "dark" ? "light" : "dark"))}
+                className="p-2 rounded-lg transition-colors"
+                style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
+                title="Dark/Light Mode (D)"
+              >
+                {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
+              <div className="w-px h-7 mx-1" style={{ backgroundColor: P.borderStrong }} />
+              {RANGES.map(r => (
+                <button
+                  key={r}
+                  onClick={() => setRange(r)}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+                  style={{
+                    backgroundColor:
+                      range === r
+                        ? theme === "dark"
+                          ? "rgba(63,63,70,0.8)"
+                          : "rgba(228,228,231,0.8)"
+                        : "transparent",
+                    color: range === r ? P.text : P.textMuted,
+                  }}
+                >
+                  {r}T
+                </button>
+              ))}
+              <button className="p-2 rounded-lg transition-colors" style={{ color: P.textMuted }}>
+                <Calendar size={18} />
+              </button>
+              <div className="w-px h-7 mx-1" style={{ backgroundColor: P.borderStrong }} />
+              <button
+                onClick={() => setViewMode(viewMode === "chart" ? "table" : "chart")}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
+              >
+                {viewMode === "chart" ? <Table2 size={16} /> : <LineChart size={16} />}
+                {viewMode === "chart" ? "Tabelle" : "Graphen"}
+              </button>
+            </div>
+          </div>
+
+          {/* ═══ CONDITIONAL PAGE CONTENT ═══ */}
+          {page === "thresholds" && thresholdSettingsPage}
+
+          {page === "dashboard" && (
+            <>
+              {/* ── Patient Info Bar ── */}
+              <div
+                className="rounded-md overflow-hidden shadow-sm"
+                style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}
+              >
+                <div
+                  className="px-5 py-3 flex items-center gap-3"
+                  style={{ borderBottom: `1px solid ${P.border}` }}
+                >
+                  <Info size={16} style={{ color: P.textMuted }} />
+                  <span
+                    className="text-sm font-semibold uppercase tracking-wider"
+                    style={{ color: P.textMuted }}
+                  >
+                    Patientendaten
+                  </span>
+                </div>
+                <div className="p-4">
+                  {/* Clinical info pills */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <InfoPill label="NYHA" value={`Klasse ${patient.nyha}`} />
+                    <InfoPill
+                      label="LVEF"
+                      value={`${patient.lvef}%`}
+                      color={
+                        patient.lvef < 40
+                          ? P.danger
+                          : patient.lvef < 50
+                            ? P.warning
+                            : P.good
+                      }
+                    />
+                    <InfoPill
+                      label="Antikoagulation"
+                      value={patient.anticoag ? "Ja" : "Nein"}
+                      color={patient.anticoag ? P.good : P.textMuted}
+                    />
+                    <InfoPill label="Geschlecht" value={patient.gender} />
+                  </div>
+
+                  {/* ICD-10 Codes */}
+                  <div className="mb-4">
+                    <span
+                      className="text-[11px] uppercase tracking-wider font-semibold block mb-2"
+                      style={{ color: P.textMuted }}
+                    >
+                      ICD-10 Diagnosen
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {patient.icd10.map((d, i) => (
+                        <span
+                          key={i}
+                          className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg"
+                          style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
+                        >
+                          <span className="font-mono font-semibold" style={{ color: P.text }}>
+                            {d.code}
+                          </span>
+                          <span style={{ color: P.textMuted }}>—</span>
+                          <span>{d.text}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Devices row */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {/* Implant */}
+                    <div
+                      className="rounded-lg p-4"
+                      style={{ backgroundColor: P.bgInput, border: `1px solid ${P.border}` }}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Cpu size={16} style={{ color: P.heartRate }} />
+                          <span className="text-sm font-semibold" style={{ color: P.text }}>
+                            Implantat
+                          </span>
+                        </div>
+                        <a
+                          href={patient.implant.detailLink}
+                          className="inline-flex items-center gap-1 text-xs font-medium rounded-md px-2 py-1 transition-colors"
+                          style={{
+                            color: P.bpSystolic,
+                            backgroundColor:
+                              theme === "dark"
+                                ? "rgba(74,158,222,0.1)"
+                                : "rgba(37,99,235,0.1)",
+                          }}
+                        >
+                          Details <ExternalLink size={11} />
+                        </a>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-sm font-semibold" style={{ color: P.text }}>
+                          {patient.implant.manufacturer} {patient.implant.model}
+                        </div>
+                        <div className="text-xs" style={{ color: P.textMuted }}>
+                          {patient.implant.type}
+                        </div>
+                        <div className="flex items-center gap-3 mt-2">
+                          <div
+                            className="flex items-center gap-1.5 text-xs"
+                            style={{ color: P.textSecondary }}
+                          >
+                            <Battery size={13} />
+                            <span
+                              className="font-mono font-semibold"
+                              style={{
+                                color:
+                                  patient.implant.batteryVoltage > 2.8
+                                    ? P.good
+                                    : P.warning,
+                              }}
+                            >
+                              {patient.implant.batteryVoltage} V
+                            </span>
+                          </div>
+                          <div
+                            className="flex items-center gap-1.5 text-xs"
+                            style={{ color: P.textSecondary }}
+                          >
+                            <Radio size={13} />
+                            <span>{timeSince(patient.implant.lastTransmission)}</span>
+                          </div>
+                        </div>
+                        <a
+                          href={patient.implant.transmissionListLink}
+                          className="inline-flex items-center gap-1 text-xs mt-1 transition-colors"
+                          style={{ color: P.bpSystolic }}
+                        >
+                          Transmissions-Verlauf <Link2 size={11} />
+                        </a>
+                      </div>
+                    </div>
+
+                    {/* External devices */}
+                    {patient.externalDevices.map((dev, i) => (
+                      <div
+                        key={i}
+                        className="rounded-lg p-4"
+                        style={{ backgroundColor: P.bgInput, border: `1px solid ${P.border}` }}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            {dev.type === "Waage" ? (
+                              <Weight size={16} style={{ color: P.weight }} />
+                            ) : (
+                              <Activity size={16} style={{ color: P.bpSystolic }} />
+                            )}
+                            <span className="text-sm font-semibold" style={{ color: P.text }}>
+                              {dev.type}
+                            </span>
+                          </div>
+                          <Bluetooth size={14} style={{ color: P.bpSystolic }} />
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-sm font-semibold" style={{ color: P.text }}>
+                            {dev.manufacturer} {dev.model}
+                          </div>
+                          <div
+                            className="flex items-center gap-1.5 text-xs mt-2"
+                            style={{ color: P.textSecondary }}
+                          >
+                            <Wifi size={13} />
+                            <span>
+                              Letzte Übertragung:{" "}
+                              <span className="font-medium" style={{ color: P.text }}>
+                                {timeSince(dev.lastTransmission)}
+                              </span>
+                            </span>
+                          </div>
+                          <a
+                            href={dev.transmissionListLink}
+                            className="inline-flex items-center gap-1 text-xs mt-1 transition-colors"
+                            style={{ color: P.bpSystolic }}
+                          >
+                            Transmissions-Verlauf <Link2 size={11} />
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Events + ECG Timeline (below devices) ── */}
+              {eventsRow}
+              {ecgTimeline}
+
+              {/* ── Toggles ── */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span
+                  className="text-sm uppercase tracking-wider font-semibold mr-1"
+                  style={{ color: P.textMuted }}
+                >
+                  Anzeige:
+                </span>
+                <ToggleBtn
+                  label="Grenzwerte"
+                  active={vis.thresholds}
+                  onToggle={() => setVis(v => ({ ...v, thresholds: !v.thresholds }))}
+                  shortcut="G"
+                />
+                <ToggleBtn
+                  label="Fehlende Werte"
+                  active={vis.missed}
+                  onToggle={() => setVis(v => ({ ...v, missed: !v.missed }))}
+                  shortcut="M"
+                />
+              </div>
+
+              {/* ── Legend ── */}
+              <div className="flex items-center gap-5 text-sm flex-wrap" style={{ color: P.textSecondary }}>
+                <span className="flex items-center gap-1.5">
+                  <span
+                    className="inline-block w-0 h-0 border-l-[5px] border-r-[5px] border-b-[8px] border-transparent"
+                    style={{ borderBottomColor: P.bpSystolic }}
+                  />
+                  Sys
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span
+                    className="inline-block w-0 h-0 border-l-[5px] border-r-[5px] border-t-[8px] border-transparent"
+                    style={{ borderTopColor: P.bpDiastolic }}
+                  />
+                  Dia
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span
+                    className="inline-block w-3 h-3 rotate-45"
+                    style={{ backgroundColor: P.heartRate }}
+                  />
+                  HR
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span
+                    className="inline-block w-3 h-3 rounded-full"
+                    style={{ backgroundColor: P.weight }}
+                  />
+                  Gewicht
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span
+                    className="inline-block w-3 h-3 rounded-sm"
+                    style={{ backgroundColor: P.mood }}
+                  />
+                  Stimmung
+                </span>
+                <span style={{ color: P.textDim }}>|</span>
+                <span className="flex items-center gap-1.5">
+                  <span
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: P.alarmRed }}
+                  />
+                  Kritisch
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: P.alarmYellow }}
+                  />
+                  Warnung
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: P.alarmBlue }}
+                  />
+                  Änderung
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: P.alarmGray }}
+                  />
+                  Info
+                </span>
+                <span style={{ color: P.textDim }}>|</span>
+                <span className="flex items-center gap-1.5">
+                  <span
+                    className="w-4 h-4 rounded-full border-2 border-dashed"
+                    style={{ borderColor: P.outlier }}
+                  />
+                  Ausreißer
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Stethoscope size={14} style={{ color: P.examination }} />
+                  Untersuchung
+                </span>
+              </div>
+
+              {/* ── Charts / Table ── */}
+              {viewMode === "chart" ? (
+                <div className="flex flex-col gap-3">
+                  {bpChart}
+                  {hrChart}
+                  {weightChart}
+                  {moodChart}
+                </div>
+              ) : (
+                tableView
+              )}
+            </>
+          )}
+        </div>
+      </main>
     </div>
   );
 }
