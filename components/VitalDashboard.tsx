@@ -550,7 +550,7 @@ export default function VitalDashboard() {
   const [theme, setTheme] = useState<Theme>("dark");
   const [page, setPage] = useState<"dashboard" | "thresholds">("dashboard");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [patientTab, setPatientTab] = useState<string>("telemonitoring");
+  const [patientTab, setPatientTab] = useState<string>("dashboard");
 
   /* ── Threshold settings state ── */
   const [templates, setTemplates] = useState<ThresholdTemplate[]>(() => [createDefaultTemplate()]);
@@ -1974,13 +1974,13 @@ export default function VitalDashboard() {
         <nav className="flex-1 flex flex-col items-center gap-1 py-4">
           {/* Patients - active */}
           <button
-            onClick={() => setPatientTab("telemonitoring")}
+            onClick={() => setPatientTab("dashboard")}
             className="p-2 rounded-lg transition-colors flex items-center justify-center"
             style={{
               width: 36,
               height: 36,
-              backgroundColor: patientTab === "telemonitoring" ? P.accent : "transparent",
-              color: patientTab === "telemonitoring" ? "#ffffff" : P.textMuted,
+              backgroundColor: P.accent,
+              color: "#ffffff",
             }}
             title="Patienten"
           >
@@ -2164,7 +2164,7 @@ export default function VitalDashboard() {
         {/* Tab bar */}
         <div className="px-6 border-b" style={{ borderBottomColor: P.border }}>
           <div className="flex gap-0">
-            {["Patient Info", "Telemonitoring", "Insurance", "Documents", "App", "Contact Persons"].map((tab) => (
+            {["Dashboard", "Patient Info", "Telemonitoring", "Insurance", "Documents", "App", "Contact Persons"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setPatientTab(tab.toLowerCase().replace(" ", "-"))}
@@ -2192,71 +2192,72 @@ export default function VitalDashboard() {
           {ecgDrawerEl}
           {shortcutBar}
 
-          {patientTab === "telemonitoring" && (
+          {patientTab === "dashboard" && (
             <div className="space-y-5">
-              {/* Sub-tabs: Dashboard | Grenzwerte */}
-              <div className="flex items-center gap-4 pb-4">
-                <button
-                  onClick={() => setPage("dashboard")}
-                  className="px-4 py-2 rounded-full text-sm transition-colors"
-                  style={{
-                    backgroundColor: page === "dashboard" ? P.bgInput : "transparent",
-                    color: page === "dashboard" ? P.text : P.textSecondary,
-                  }}
-                >
-                  Dashboard
-                </button>
-                <button
-                  onClick={() => setPage("thresholds")}
-                  className="px-4 py-2 rounded-full text-sm transition-colors"
-                  style={{
-                    backgroundColor: page === "thresholds" ? P.bgInput : "transparent",
-                    color: page === "thresholds" ? P.text : P.textSecondary,
-                  }}
-                >
-                  Grenzwerte
-                </button>
-
-                <div className="flex-1" />
-
-                {/* Time range selector - only on dashboard */}
-                {page === "dashboard" && (
-                  <div className="flex items-center gap-2">
-                    {RANGES.map((r) => (
-                      <button
-                        key={r}
-                        onClick={() => setRange(r)}
-                        className="px-3 py-1.5 rounded text-sm font-semibold transition-all"
-                        style={{
-                          backgroundColor:
-                            range === r
-                              ? theme === "dark"
-                                ? "rgba(63,63,70,0.8)"
-                                : "rgba(228,228,231,0.8)"
-                              : "transparent",
-                          color: range === r ? P.text : P.textMuted,
-                        }}
-                      >
-                        {r}T
-                      </button>
-                    ))}
+              {/* Toolbar: Time range selector + Settings button */}
+              {page === "dashboard" && (
+                <div className="flex items-center gap-2">
+                  {RANGES.map((r) => (
                     <button
-                      className="p-1.5 rounded transition-colors"
-                      style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
+                      key={r}
+                      onClick={() => setRange(r)}
+                      className="px-3 py-1.5 rounded text-sm font-semibold transition-all"
+                      style={{
+                        backgroundColor:
+                          range === r
+                            ? theme === "dark"
+                              ? "rgba(63,63,70,0.8)"
+                              : "rgba(228,228,231,0.8)"
+                            : "transparent",
+                        color: range === r ? P.text : P.textMuted,
+                      }}
                     >
-                      <Calendar size={16} />
+                      {r}T
                     </button>
-                    <div className="w-px h-6" style={{ backgroundColor: P.border }} />
-                    <button
-                      onClick={() => setViewMode(viewMode === "chart" ? "table" : "chart")}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded text-sm transition-colors"
-                      style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
-                    >
-                      {viewMode === "chart" ? <Table2 size={14} /> : <LineChart size={14} />}
-                    </button>
-                  </div>
-                )}
-              </div>
+                  ))}
+                  <button
+                    className="p-1.5 rounded transition-colors"
+                    style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
+                  >
+                    <Calendar size={16} />
+                  </button>
+                  <div className="w-px h-6" style={{ backgroundColor: P.border }} />
+                  <button
+                    onClick={() => setViewMode(viewMode === "chart" ? "table" : "chart")}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded text-sm transition-colors"
+                    style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
+                  >
+                    {viewMode === "chart" ? <Table2 size={14} /> : <LineChart size={14} />}
+                  </button>
+
+                  <div className="flex-1" />
+
+                  {/* Settings / Grenzwerte button */}
+                  <button
+                    onClick={() => setPage("thresholds")}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors"
+                    style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
+                    title="Grenzwerte & Alarme"
+                  >
+                    <Settings size={14} />
+                    Grenzwerte
+                  </button>
+                </div>
+              )}
+
+              {/* Back button when on thresholds page */}
+              {page === "thresholds" && (
+                <div className="flex items-center gap-2 pb-2">
+                  <button
+                    onClick={() => setPage("dashboard")}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors"
+                    style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
+                  >
+                    <ChevronLeft size={14} />
+                    Zurück zum Dashboard
+                  </button>
+                </div>
+              )}
 
               {/* Page content */}
               {page === "thresholds" && thresholdSettingsPage}
@@ -2571,9 +2572,9 @@ export default function VitalDashboard() {
             </div>
           )}
 
-          {patientTab !== "telemonitoring" && (
+          {patientTab !== "dashboard" && (
             <div className="text-center py-12" style={{ color: P.textMuted }}>
-              <span>{patientTab} — Inhalt folgt</span>
+              <span className="capitalize">{patientTab.replace("-", " ")} — Inhalt folgt</span>
             </div>
           )}
         </div>
