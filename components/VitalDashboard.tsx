@@ -654,7 +654,7 @@ export default function VitalDashboard() {
     showDots: range <= 30,
     showValues: range <= 14,
     xTickCount: range <= 14 ? 14 : range <= 30 ? 15 : range <= 60 ? 20 : 30,
-    xTickFormat: range <= 14 ? d3.timeFormat("%-d.%-m. %H:%M") : d3.timeFormat("%-d.%-m."),
+    xTickFormat: d3.timeFormat("%d.%m."),
     medianWidth: range <= 14 ? 1.5 : 1,
     gridOpacity: range <= 30 ? 1 : 0.7,
   }), [range]);
