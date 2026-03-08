@@ -2466,22 +2466,13 @@ export default function VitalDashboard() {
                   >
                     <Calendar size={16} />
                   </button>
-                  <div className="w-px h-6" style={{ backgroundColor: P.border }} />
-                  <button
-                    onClick={() => setViewMode(viewMode === "chart" ? "table" : "chart")}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded text-sm transition-colors"
-                    style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
-                  >
-                    {viewMode === "chart" ? <Table2 size={14} /> : <LineChart size={14} />}
-                    {viewMode === "chart" ? "Tabelle" : "Graphen"}
-                  </button>
                 </div>
 
                 {/* ── Events + ECG Timeline (below devices) ── */}
                   {eventsRow}
                   {ecgTimeline}
 
-                  {/* ── Toggles ── */}
+                  {/* ── Toggles + View mode ── */}
                   <div className="flex items-center gap-2 flex-wrap">
                     <span
                       className="text-sm uppercase tracking-wider font-semibold mr-1"
@@ -2501,6 +2492,15 @@ export default function VitalDashboard() {
                       onToggle={() => setVis(v => ({ ...v, missed: !v.missed }))}
                       shortcut="M"
                     />
+                    <div className="w-px h-6 mx-1" style={{ backgroundColor: P.borderStrong }} />
+                    <button
+                      onClick={() => setViewMode(viewMode === "chart" ? "table" : "chart")}
+                      className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all"
+                      style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
+                    >
+                      {viewMode === "chart" ? <Table2 size={14} /> : <LineChart size={14} />}
+                      {viewMode === "chart" ? "Tabelle" : "Graphen"}
+                    </button>
                   </div>
 
                   {/* ── Legend ── */}
