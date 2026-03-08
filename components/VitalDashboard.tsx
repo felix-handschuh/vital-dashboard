@@ -620,8 +620,23 @@ export default function VitalDashboard() {
     return [start, end] as [Date, Date];
   }, [range]);
 
-  /* Chart dimensions — adaptive to range: more detail for shorter ranges */
-  const chartW = range <= 14 ? 1200 : range <= 30 ? 1600 : range <= 60 ? 2400 : 3200;
+  /* Chart dimensions — responsive: fill container width */
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+  const [chartContainerW, setChartContainerW] = useState(900);
+  useEffect(() => {
+    const el = chartContainerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = Math.floor(entry.contentRect.width);
+        if (w > 0) setChartContainerW(w);
+      }
+    });
+    ro.observe(el);
+    setChartContainerW(el.clientWidth || 900);
+    return () => ro.disconnect();
+  }, []);
+  const chartW = chartContainerW;
   const chartH = (type: string) => expanded === type ? 300 : range <= 14 ? 200 : range <= 30 ? 180 : 160;
   const margin = { top: 28, right: 24, bottom: 28, left: 64 };
   const innerW = chartW - margin.left - margin.right;
@@ -681,9 +696,9 @@ export default function VitalDashboard() {
             {isExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
           </button>
         </div>
-        {/* Horizontal scroll wrapper */}
-        <div className="overflow-x-auto">
-          <svg width={chartW} height={h} viewBox={`0 0 ${chartW} ${h}`} style={{ minWidth: chartW }}>
+        {/* Chart area — responsive width */}
+        <div>
+          <svg width="100%" height={h} viewBox={`0 0 ${chartW} ${h}`} preserveAspectRatio="xMidYMid meet">
             <defs>
               <clipPath id={clipId}>
                 <rect x={0} y={0} width={innerW} height={iH} />
@@ -990,8 +1005,8 @@ export default function VitalDashboard() {
           <span className="text-sm" style={{ color: P.textMuted }}>Hover = Vorschau · Klick = Detail</span>
         </div>
       </div>
-      <div className="overflow-x-auto">
-        <svg width={chartW} height={ecgTimelineH} viewBox={`0 0 ${chartW} ${ecgTimelineH}`} style={{ minWidth: chartW }}>
+      <div>
+        <svg width="100%" height={ecgTimelineH} viewBox={`0 0 ${chartW} ${ecgTimelineH}`} preserveAspectRatio="xMidYMid meet">
           <g transform={`translate(${margin.left},8)`}>
             <line x1={0} x2={innerW} y1={18} y2={18} stroke={P.grid} strokeWidth={1} />
             {filteredData.ecgs.map((ecg, i) => {
@@ -1048,8 +1063,8 @@ export default function VitalDashboard() {
         <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>Ereignisse</span>
         <span className="text-sm" style={{ color: P.textMuted }}>{nonEcgEvents.length + alarmEcgAsEvents.length} Einträge</span>
       </div>
-      <div className="overflow-x-auto">
-        <svg width={chartW} height={eventsH} viewBox={`0 0 ${chartW} ${eventsH}`} style={{ minWidth: chartW }}>
+      <div>
+        <svg width="100%" height={eventsH} viewBox={`0 0 ${chartW} ${eventsH}`} preserveAspectRatio="xMidYMid meet">
           <g transform={`translate(${margin.left},12)`}>
             <line x1={0} x2={innerW} y1={eventsInnerH / 2} y2={eventsInnerH / 2} stroke={P.grid} strokeWidth={1} />
             {/* X-axis date labels */}
@@ -2585,7 +2600,7 @@ export default function VitalDashboard() {
 
                   {/* ── Charts / Table ── */}
                   {viewMode === "chart" ? (
-                    <div className="flex flex-col gap-3">
+                    <div ref={chartContainerRef} className="flex flex-col gap-3">
                       {bpChart}
                       {hrChart}
                       {weightChart}
