@@ -1589,7 +1589,7 @@ export default function VitalDashboard() {
             </div>
           </div>
         </div>
-        <div>
+        <div style={{ position: "relative" }}>
           <svg width="100%" height={h} viewBox={`0 0 ${chartW} ${h}`} preserveAspectRatio="xMidYMid meet"
             onMouseMove={handleOverviewHover}
             onMouseLeave={handleOverviewLeave}
