@@ -366,6 +366,144 @@ const translations = {
       "E11.9": "2-es típusú diabetes mellitus, szövődmények nélkül",
     },
   },
+  mk: {
+    // Tabs
+    dashboard: "Контролна панела",
+    patientInfo: "Информации за пациент",
+    telemonitoring: "Теледистанцијско надзирање",
+    insurance: "Осигурување",
+    documents: "Документи",
+    app: "Апликација",
+    contactPersons: "Контактни лица",
+    // Patient data labels
+    patientData: "Податоци за пациент",
+    age: "Возраст",
+    gender: "Пол",
+    nyha: "NYHA",
+    lvef: "LVEF",
+    anticoagulation: "Антикоагулација",
+    birthDate: "Датум на раѓање",
+    icd10Diagnoses: "ICD-10 дијагнози",
+    devices: "Уреди",
+    implant: "Имплант",
+    externalDevices: "Надворешни уреди",
+    // Section headers
+    events: "События и EКГ",
+    overview: "Преглед",
+    display: "Приказ",
+    thresholds: "Граници на вредност",
+    missingValues: "Недостасувачки вредности",
+    // Chart titles and units
+    bloodPressure: "Крвен притисок",
+    heartRate: "Пулс",
+    weight: "Тежина",
+    mood: "Расположение",
+    // Legend items
+    sys: "Сис",
+    dia: "Дија",
+    hr: "ЧСС",
+    outlier: "Отстапување",
+    examination: "Преглед",
+    // Time ranges
+    timeRanges: { 14: "14Д", 30: "30Д", 60: "60Д", 90: "90Д" },
+    // Buttons
+    table: "Табела",
+    charts: "Графикони",
+    backToDashboard: "Назад на контролна панела",
+    // Calendar
+    monthNames: ["Јануари", "Февруари", "Март", "Април", "Мај", "Јуни", "Јули", "Август", "Септември", "Октомври", "Ноември", "Декември"],
+    dayAbbrev: ["Пон", "Втр", "Сря", "Чет", "Пет", "Саб", "Нед"],
+    patients: "Пациенти",
+    searchPlaceholder: "Пребарај пациент",
+    from: "Од",
+    to: "До",
+    custom: "Прилагодено",
+    save: "Зачувај",
+    cancel: "Откажи",
+    monitoring: "Надзирање",
+    years: "години",
+    class: "Класа",
+    details: "Детали",
+    male: "Мажи",
+    female: "Жени",
+    yes: "Да",
+    no: "Не",
+    icd10Texts: {
+      "I50.0": "Конгестивна срцева недостаточност",
+      "I48.0": "Пароксизмална атријална фибрилација",
+      "I25.1": "Атеросклеротична болест на срцето",
+      "E11.9": "Дијабетес мелитус тип 2, без компликации",
+    },
+  },
+  uk: {
+    // Tabs
+    dashboard: "Панель приладуння",
+    patientInfo: "Інформація про пацієнта",
+    telemonitoring: "Телемоніторинг",
+    insurance: "Страхування",
+    documents: "Документи",
+    app: "Додаток",
+    contactPersons: "Контактні особи",
+    // Patient data labels
+    patientData: "Дані пацієнта",
+    age: "Вік",
+    gender: "Стать",
+    nyha: "NYHA",
+    lvef: "LVEF",
+    anticoagulation: "Антикоагуляція",
+    birthDate: "Дата народження",
+    icd10Diagnoses: "Діагнози МКХ-10",
+    devices: "Пристрої",
+    implant: "Імплантат",
+    externalDevices: "Зовнішні пристрої",
+    // Section headers
+    events: "Події та ЕКГ",
+    overview: "Огляд",
+    display: "Дисплей",
+    thresholds: "Пороги",
+    missingValues: "Відсутні значення",
+    // Chart titles and units
+    bloodPressure: "Артеріальний тиск",
+    heartRate: "Частота серцевих скорочень",
+    weight: "Вага",
+    mood: "Настрій",
+    // Legend items
+    sys: "САТ",
+    dia: "ДАТ",
+    hr: "ЧСС",
+    outlier: "Викид",
+    examination: "Обстеження",
+    // Time ranges
+    timeRanges: { 14: "14Д", 30: "30Д", 60: "60Д", 90: "90Д" },
+    // Buttons
+    table: "Таблиця",
+    charts: "Графіки",
+    backToDashboard: "Повернутися на панель приладуння",
+    // Calendar
+    monthNames: ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"],
+    dayAbbrev: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"],
+    patients: "Пацієнти",
+    searchPlaceholder: "Пошук пацієнта",
+    from: "Від",
+    to: "До",
+    custom: "Користувацький",
+    save: "Зберегти",
+    cancel: "Скасувати",
+    monitoring: "Моніторинг",
+    years: "років",
+    class: "Клас",
+    details: "Подробиці",
+    male: "Чоловік",
+    female: "Жінка",
+    yes: "Так",
+    no: "Ні",
+    icd10Texts: {
+      "I50.0": "Застійна серцева недостатність",
+      "I48.0": "Пароксизмальна фібриляція передсердь",
+      "I25.1": "Атеросклеротична хвороба серця",
+      "E11.9": "Цукровий діабет 2 типу без ускладнень",
+    },
+  },
 };
 
 const ALARM_LABELS: Record<string, string> = {
@@ -789,7 +927,7 @@ export default function VitalDashboard() {
   const [calendarHoverDay, setCalendarHoverDay] = useState<{ dateStr: string; cx: number; cy: number } | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [devicesOpen, setDevicesOpen] = useState(false);
-  const [lang, setLang] = useState<"de" | "en" | "hu">("de");
+  const [lang, setLang] = useState<"de" | "en" | "hu" | "mk" | "uk">("de");
   const [langOpen, setLangOpen] = useState(false);
   const [customDateRange, setCustomDateRange] = useState<[string, string] | null>(null);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
@@ -854,16 +992,17 @@ export default function VitalDashboard() {
     const startDate = new Date(endDate);
     startDate.setDate(startDate.getDate() - range);
     const cs = startDate.toISOString().split("T")[0];
+    const ce = endDate.toISOString().split("T")[0];
     return {
-      bp: allData.bp.filter(p => p.date >= cs),
-      hr: allData.hr.filter(p => p.date >= cs),
-      weight: allData.weight.filter(p => p.date >= cs),
-      mood: allData.mood.filter(p => p.date >= cs),
-      events: allData.events.filter(p => p.date >= cs),
-      ecgs: allData.ecgs.filter(p => p.date >= cs),
-      missed: allData.missed.filter(d => d >= cs),
+      bp: allData.bp.filter(p => p.date >= cs && p.date <= ce),
+      hr: allData.hr.filter(p => p.date >= cs && p.date <= ce),
+      weight: allData.weight.filter(p => p.date >= cs && p.date <= ce),
+      mood: allData.mood.filter(p => p.date >= cs && p.date <= ce),
+      events: allData.events.filter(p => p.date >= cs && p.date <= ce),
+      ecgs: allData.ecgs.filter(p => p.date >= cs && p.date <= ce),
+      missed: allData.missed.filter(d => d >= cs && d <= ce),
     };
-  }, [allData, range]);
+  }, [allData, range, chartOffset]);
 
   /* Keyboard shortcuts */
   useEffect(() => {
@@ -2671,7 +2810,7 @@ export default function VitalDashboard() {
                                 value={rule.value}
                                 onChange={(e) => handleRuleValueChange(param.id, "yellow", rule.id, "value", parseFloat(e.target.value) || 0)}
                                 style={{
-                                  width: "28px",
+                                  width: "44px",
                                   padding: "1px 3px",
                                   borderRadius: "2px",
                                   fontSize: "10px",
@@ -2693,7 +2832,7 @@ export default function VitalDashboard() {
                                     value={rule.secondValue}
                                     onChange={(e) => handleRuleValueChange(param.id, "yellow", rule.id, "secondValue", parseInt(e.target.value) || 0)}
                                     style={{
-                                      width: "24px",
+                                      width: "36px",
                                       padding: "1px 3px",
                                       borderRadius: "2px",
                                       fontSize: "10px",
@@ -2785,7 +2924,7 @@ export default function VitalDashboard() {
                                 value={rule.value}
                                 onChange={(e) => handleRuleValueChange(param.id, "red", rule.id, "value", parseFloat(e.target.value) || 0)}
                                 style={{
-                                  width: "28px",
+                                  width: "44px",
                                   padding: "1px 3px",
                                   borderRadius: "2px",
                                   fontSize: "10px",
@@ -2807,7 +2946,7 @@ export default function VitalDashboard() {
                                     value={rule.secondValue}
                                     onChange={(e) => handleRuleValueChange(param.id, "red", rule.id, "secondValue", parseInt(e.target.value) || 0)}
                                     style={{
-                                      width: "24px",
+                                      width: "36px",
                                       padding: "1px 3px",
                                       borderRadius: "2px",
                                       fontSize: "10px",
@@ -3102,11 +3241,11 @@ export default function VitalDashboard() {
               </button>
               {langOpen && (
                 <div className="absolute right-0 mt-2 rounded-md shadow-lg p-2 z-50" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}`, minWidth: "140px" }}>
-                  {["de", "en", "hu"].map((langCode) => (
+                  {["de", "en", "hu", "mk", "uk"].map((langCode) => (
                     <button
                       key={langCode}
                       onClick={() => {
-                        setLang(langCode as "de" | "en" | "hu");
+                        setLang(langCode as "de" | "en" | "hu" | "mk" | "uk");
                         setLangOpen(false);
                       }}
                       className="w-full text-left px-3 py-2 rounded text-sm transition-colors flex items-center gap-2"
@@ -3118,6 +3257,8 @@ export default function VitalDashboard() {
                       {langCode === "de" && "Deutsch"}
                       {langCode === "en" && "English"}
                       {langCode === "hu" && "Magyar"}
+                      {langCode === "mk" && "Македонски"}
+                      {langCode === "uk" && "Українська"}
                       {lang === langCode && <span style={{ color: P.bpSystolic }}>✓</span>}
                     </button>
                   ))}
