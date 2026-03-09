@@ -952,11 +952,9 @@ export default function VitalDashboard() {
   }>>([]);
   const toastIdRef = useRef(0);
   const [chartOffset, setChartOffset] = useState(0);
-  const [timelineZoom, setTimelineZoom] = useState(1); // 1 = full range visible
-  const [timelinePan, setTimelinePan] = useState(1); // 0..1 position, 1 = rightmost (current)
   const timelineRef = useRef<HTMLDivElement>(null);
-  const [isDraggingTimeline, setIsDraggingTimeline] = useState(false);
-  const [isResizingTimeline, setIsResizingTimeline] = useState<"left" | "right" | null>(null);
+  const [isDraggingTimeline, setIsDraggingTimeline] = useState<"pan" | "left" | "right" | null>(null);
+  const dragStartRef = useRef<{ x: number; offset: number; range: number }>({ x: 0, offset: 0, range: 90 });
 
   const activeTemplate = templates.find(t => t.id === activeTemplateId);
   const displayTemplateName = activeTemplate
@@ -2385,77 +2383,46 @@ export default function VitalDashboard() {
     { key: "Esc", label: "Schließen" },
   ];
 
-  /* ── Timeline slider state → override chartOffset + range ── */
-  const timelineData = useMemo(() => {
-    // The full data spans ~365 days. We compute a window from timeline controls.
-    const maxDays = 365;
-    const windowDays = Math.max(7, Math.round(maxDays / Math.max(1, timelineZoom * 4)));
-    const maxOffset = Math.max(0, maxDays - windowDays);
-    const offset = Math.round((1 - timelinePan) * maxOffset);
-    return { windowDays, offset, maxDays };
-  }, [timelineZoom, timelinePan]);
-
-  // Sync timeline to chartOffset and range when user interacts with timeline
-  const applyTimeline = useCallback((pan: number, zoom: number) => {
-    const maxDays = 365;
-    const windowDays = Math.max(7, Math.round(maxDays / Math.max(1, zoom * 4)));
-    const maxOffset = Math.max(0, maxDays - windowDays);
-    const offset = Math.round((1 - pan) * maxOffset);
-    setChartOffset(offset);
-    // Find closest standard range
-    if (windowDays <= 14) setRange(14);
-    else if (windowDays <= 30) setRange(30);
-    else if (windowDays <= 60) setRange(60);
-    else setRange(90);
-  }, []);
-
-  const handleTimelineMouseDown = useCallback((e: React.MouseEvent, action: "pan" | "resize-left" | "resize-right") => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (action === "pan") setIsDraggingTimeline(true);
-    else setIsResizingTimeline(action === "resize-left" ? "left" : "right");
-  }, []);
+  /* ── Timeline slider — derives position from chartOffset + range ── */
+  const TIMELINE_DAYS = 365;
 
   useEffect(() => {
-    if (!isDraggingTimeline && !isResizingTimeline) return;
+    if (!isDraggingTimeline) return;
     const bar = timelineRef.current;
     if (!bar) return;
 
     const handleMove = (e: MouseEvent) => {
       const rect = bar.getBoundingClientRect();
       const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      const startRef = dragStartRef.current;
 
-      if (isDraggingTimeline) {
-        setTimelinePan(x);
-        applyTimeline(x, timelineZoom);
-      } else if (isResizingTimeline) {
-        // Resize changes zoom level
-        const currentWidth = 1 / Math.max(1, timelineZoom * 4);
-        const currentLeft = (1 - timelinePan) - currentWidth / 2;
-        if (isResizingTimeline === "left") {
-          const newLeft = Math.max(0, Math.min(x, currentLeft + currentWidth - 0.02));
-          const newWidth = (currentLeft + currentWidth) - newLeft;
-          const newZoom = Math.max(0.25, Math.min(10, (1 / newWidth) / 4));
-          const newPan = 1 - (newLeft + newWidth / 2);
-          setTimelineZoom(newZoom);
-          setTimelinePan(Math.max(0, Math.min(1, newPan)));
-          applyTimeline(Math.max(0, Math.min(1, newPan)), newZoom);
-        } else {
-          const newRight = Math.max(currentLeft + 0.02, Math.min(1, x));
-          const newWidth = newRight - currentLeft;
-          const newZoom = Math.max(0.25, Math.min(10, (1 / newWidth) / 4));
-          const newPan = 1 - (currentLeft + newWidth / 2);
-          setTimelineZoom(newZoom);
-          setTimelinePan(Math.max(0, Math.min(1, newPan)));
-          applyTimeline(Math.max(0, Math.min(1, newPan)), newZoom);
-        }
+      if (isDraggingTimeline === "pan") {
+        // Pan: move the window, keep width same
+        const thumbW = startRef.range / TIMELINE_DAYS;
+        // Right edge of thumb = x position mapped to day offset
+        const rightEdge = Math.min(1, Math.max(thumbW, x + thumbW / 2));
+        const newOffset = Math.max(0, Math.round((1 - rightEdge) * TIMELINE_DAYS));
+        setChartOffset(newOffset);
+      } else if (isDraggingTimeline === "left") {
+        // Resize left edge: changes range (zoom)
+        const rightEdge = 1 - startRef.offset / TIMELINE_DAYS;
+        const leftEdge = Math.max(0, Math.min(rightEdge - 7 / TIMELINE_DAYS, x));
+        const newRange = Math.round((rightEdge - leftEdge) * TIMELINE_DAYS);
+        const clamped = newRange <= 14 ? 14 : newRange <= 30 ? 30 : newRange <= 60 ? 60 : 90;
+        setRange(clamped);
+      } else if (isDraggingTimeline === "right") {
+        // Resize right edge: changes range + offset
+        const leftEdge = 1 - (startRef.offset + startRef.range) / TIMELINE_DAYS;
+        const rightEdge = Math.max(leftEdge + 7 / TIMELINE_DAYS, Math.min(1, x));
+        const newRange = Math.round((rightEdge - leftEdge) * TIMELINE_DAYS);
+        const clamped = newRange <= 14 ? 14 : newRange <= 30 ? 30 : newRange <= 60 ? 60 : 90;
+        const newOffset = Math.max(0, Math.round((1 - rightEdge) * TIMELINE_DAYS));
+        setRange(clamped);
+        setChartOffset(newOffset);
       }
     };
 
-    const handleUp = () => {
-      setIsDraggingTimeline(false);
-      setIsResizingTimeline(null);
-    };
+    const handleUp = () => setIsDraggingTimeline(null);
 
     window.addEventListener("mousemove", handleMove);
     window.addEventListener("mouseup", handleUp);
@@ -2463,80 +2430,86 @@ export default function VitalDashboard() {
       window.removeEventListener("mousemove", handleMove);
       window.removeEventListener("mouseup", handleUp);
     };
-  }, [isDraggingTimeline, isResizingTimeline, timelineZoom, timelinePan, applyTimeline]);
+  }, [isDraggingTimeline]);
 
   const shortcutBar = (() => {
-    // Timeline thumb position and width
-    const thumbWidth = Math.max(0.05, 1 / Math.max(1, timelineZoom * 4));
-    const thumbLeft = Math.max(0, Math.min(1 - thumbWidth, (1 - timelinePan) - thumbWidth / 2));
+    // Thumb derived from chartOffset + range
+    const thumbWidth = Math.max(0.04, range / TIMELINE_DAYS);
+    const thumbRight = 1 - chartOffset / TIMELINE_DAYS;
+    const thumbLeft = Math.max(0, thumbRight - thumbWidth);
 
-    // Generate month labels for the timeline
+    // Month labels
     const today = new Date();
     const yearAgo = new Date(today);
     yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+    const totalMs = today.getTime() - yearAgo.getTime();
     const months: { label: string; pos: number }[] = [];
-    const cur = new Date(yearAgo);
-    cur.setDate(1);
-    cur.setMonth(cur.getMonth() + 1);
-    while (cur <= today) {
-      const totalDays = (today.getTime() - yearAgo.getTime()) / (1000 * 60 * 60 * 24);
-      const dayOffset = (cur.getTime() - yearAgo.getTime()) / (1000 * 60 * 60 * 24);
-      months.push({ label: cur.toLocaleDateString("de-DE", { month: "short" }), pos: dayOffset / totalDays });
-      cur.setMonth(cur.getMonth() + 1);
+    const mc = new Date(yearAgo);
+    mc.setDate(1);
+    mc.setMonth(mc.getMonth() + 1);
+    while (mc <= today) {
+      months.push({ label: mc.toLocaleDateString("de-DE", { month: "short" }), pos: (mc.getTime() - yearAgo.getTime()) / totalMs });
+      mc.setMonth(mc.getMonth() + 1);
     }
+
+    const startDrag = (e: React.MouseEvent, mode: "pan" | "left" | "right") => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragStartRef.current = { x: e.clientX, offset: chartOffset, range };
+      setIsDraggingTimeline(mode);
+    };
+
+    const handleTrackClick = (e: React.MouseEvent) => {
+      if (isDraggingTimeline) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width;
+      // Move thumb center to click position
+      const newRight = Math.min(1, Math.max(thumbWidth, x + thumbWidth / 2));
+      setChartOffset(Math.max(0, Math.round((1 - newRight) * TIMELINE_DAYS)));
+    };
 
     return (
       <div className="fixed bottom-0 left-0 right-0 z-40 px-6 pb-2 pt-1"
         style={{ backgroundColor: P.shortcutBg, borderTop: `1px solid ${P.border}`, backdropFilter: "blur(8px)" }}>
         {/* Timeline slider */}
         <div className="mb-1.5">
-          {/* Month labels */}
-          <div className="relative h-3 mx-1" style={{ marginLeft: 240 }}>
+          <div className="relative h-3" style={{ marginLeft: 240, marginRight: 8 }}>
             {months.map((m, i) => (
               <span key={i} className="absolute text-[9px] font-mono" style={{ left: `${m.pos * 100}%`, color: P.textMuted, transform: "translateX(-50%)" }}>{m.label}</span>
             ))}
           </div>
-          {/* Slider track */}
-          <div ref={timelineRef} className="relative h-6 rounded-md cursor-pointer mx-1"
-            style={{ backgroundColor: theme === "dark" ? "rgba(63,63,70,0.3)" : "rgba(228,228,231,0.5)", marginLeft: 240 }}
-            onClick={(e) => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              const x = (e.clientX - rect.left) / rect.width;
-              setTimelinePan(Math.max(0, Math.min(1, x)));
-              applyTimeline(Math.max(0, Math.min(1, x)), timelineZoom);
-            }}
+          <div ref={timelineRef} className="relative h-6 rounded-md cursor-pointer"
+            style={{ backgroundColor: theme === "dark" ? "rgba(63,63,70,0.3)" : "rgba(228,228,231,0.5)", marginLeft: 240, marginRight: 8 }}
+            onClick={handleTrackClick}
           >
-            {/* Month tick marks */}
             {months.map((m, i) => (
-              <div key={i} className="absolute top-0 bottom-0 w-px" style={{ left: `${m.pos * 100}%`, backgroundColor: P.border, opacity: 0.4 }} />
+              <div key={i} className="absolute top-0 bottom-0 w-px" style={{ left: `${m.pos * 100}%`, backgroundColor: P.border, opacity: 0.3 }} />
             ))}
-            {/* Thumb (draggable window) */}
+            {/* Thumb */}
             <div
-              className="absolute top-0 bottom-0 rounded-md transition-none"
+              className="absolute top-0 bottom-0 rounded-md"
               style={{
                 left: `${thumbLeft * 100}%`,
-                width: `${thumbWidth * 100}%`,
-                backgroundColor: theme === "dark" ? "rgba(99,102,241,0.35)" : "rgba(99,102,241,0.25)",
-                border: `1.5px solid ${theme === "dark" ? "rgba(99,102,241,0.7)" : "rgba(99,102,241,0.5)"}`,
-                cursor: isDraggingTimeline ? "grabbing" : "grab",
-                minWidth: 20,
+                width: `${Math.max(0.04, thumbWidth) * 100}%`,
+                backgroundColor: theme === "dark" ? "rgba(99,102,241,0.3)" : "rgba(99,102,241,0.2)",
+                border: `1.5px solid ${theme === "dark" ? "rgba(129,140,248,0.6)" : "rgba(99,102,241,0.5)"}`,
+                cursor: isDraggingTimeline === "pan" ? "grabbing" : "grab",
+                minWidth: 24,
               }}
-              onMouseDown={(e) => handleTimelineMouseDown(e, "pan")}
+              onMouseDown={(e) => startDrag(e, "pan")}
             >
-              {/* Left resize handle */}
-              <div className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize"
-                onMouseDown={(e) => handleTimelineMouseDown(e, "resize-left")} />
-              {/* Right resize handle */}
-              <div className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize"
-                onMouseDown={(e) => handleTimelineMouseDown(e, "resize-right")} />
-              {/* Center label */}
-              <div className="flex items-center justify-center h-full text-[10px] font-mono select-none" style={{ color: theme === "dark" ? "rgba(165,180,252,0.9)" : "rgba(79,70,229,0.8)" }}>
+              <div className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-indigo-400/20 rounded-l-md"
+                onMouseDown={(e) => startDrag(e, "left")} />
+              <div className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-indigo-400/20 rounded-r-md"
+                onMouseDown={(e) => startDrag(e, "right")} />
+              <div className="flex items-center justify-center h-full text-[10px] font-mono select-none pointer-events-none"
+                style={{ color: theme === "dark" ? "rgba(165,180,252,0.9)" : "rgba(79,70,229,0.8)" }}>
                 {range}T
               </div>
             </div>
           </div>
         </div>
-        {/* Keyboard shortcuts row */}
+        {/* Shortcuts row */}
         <div className="flex items-center justify-center gap-4">
           <Keyboard size={16} style={{ color: P.textMuted }} />
           {shortcuts.map(s => (
@@ -2548,9 +2521,7 @@ export default function VitalDashboard() {
               <span className="text-xs" style={{ color: P.textMuted }}>{s.label}</span>
             </div>
           ))}
-          {/* Divider */}
           <div style={{ width: 1, height: 20, backgroundColor: P.border }} />
-          {/* Time navigation */}
           <div className="flex items-center gap-1.5">
             <button onClick={() => handleChartNav("left")} className="p-1 rounded transition-colors" style={{ backgroundColor: P.bgInput, color: P.textSecondary }}>
               <ChevronLeft size={14} />
