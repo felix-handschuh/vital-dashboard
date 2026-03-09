@@ -18,7 +18,8 @@ import {
   Sun01Icon, Moon01Icon, Stethoscope02Icon, KeyboardIcon,
   UserIcon, CpuIcon, Radio01Icon, BluetoothIcon, BatteryFullIcon, Wifi01Icon,
   Settings02Icon, FloppyDiskIcon, Copy01Icon, Mail01Icon, Edit02Icon,
-  Add01Icon, Delete01Icon, CheckListIcon, ArrowTurnBackwardIcon
+  Add01Icon, Delete01Icon, CheckListIcon, ArrowTurnBackwardIcon,
+  SadDizzyIcon, Sad01Icon, NeutralIcon, HappyIcon
 } from "@hugeicons/core-free-icons";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -34,6 +35,12 @@ const Activity = hi(Activity01Icon);
 const Heart = hi(HeartCheckIcon);
 const Weight = hi(WeightScaleIcon);
 const Smile = hi(SmileIcon);
+const MoodFace1 = hi(SadDizzyIcon);
+const MoodFace2 = hi(Sad01Icon);
+const MoodFace3 = hi(NeutralIcon);
+const MoodFace4 = hi(HappyIcon);
+const MoodFace5 = hi(SmileIcon);
+const moodFaces = [null, MoodFace1, MoodFace2, MoodFace3, MoodFace4, MoodFace5];
 const Calendar = hi(Calendar01Icon);
 const Maximize2 = hi(Maximize01Icon);
 const Minimize2 = hi(Minimize01Icon);
@@ -233,6 +240,7 @@ const translations = {
       "I25.1": "Atherosklerotische Herzkrankheit",
       "E11.9": "Diabetes mellitus, Typ 2, ohne Komplikationen",
     },
+    beeToast: "Du kleines Fleißbienchen! Deine Patienten haben es gut!",
   },
   en: {
     dashboard: "Dashboard",
@@ -294,6 +302,7 @@ const translations = {
       "I25.1": "Atherosclerotic heart disease",
       "E11.9": "Type 2 diabetes mellitus, without complications",
     },
+    beeToast: "You busy little bee! Your patients are in good hands!",
     male: "Männlich",
     female: "Weiblich",
     yes: "Ja",
@@ -365,6 +374,7 @@ const translations = {
       "I25.1": "Atherosclerotikus szívbetegség",
       "E11.9": "2-es típusú diabetes mellitus, szövődmények nélkül",
     },
+    beeToast: "Te kis szorgalmas méhecske! A pácienseidnek jó dolguk van!",
   },
   mk: {
     // Tabs
@@ -434,6 +444,7 @@ const translations = {
       "I25.1": "Атеросклеротична болест на срцето",
       "E11.9": "Дијабетес мелитус тип 2, без компликации",
     },
+    beeToast: "Ти мало вредно пчеличка! Твоите пациенти ја имаат добро!",
   },
   uk: {
     // Tabs
@@ -503,6 +514,7 @@ const translations = {
       "I25.1": "Атеросклеротична хвороба серця",
       "E11.9": "Цукровий діабет 2 типу без ускладнень",
     },
+    beeToast: "Ти маленька працьовита бджілка! Твоїм пацієнтам пощастило!",
   },
 };
 
@@ -942,8 +954,11 @@ export default function VitalDashboard() {
   const [thresholdModified, setThresholdModified] = useState(false);
   const [saveTemplateName, setSaveTemplateName] = useState("");
   const [showSaveDialog, setShowSaveDialog] = useState(false);
-  const [openThresholdParam, setOpenThresholdParam] = useState<string | null>(null);
+  const [openThresholdParams, setOpenThresholdParams] = useState<Set<string>>(new Set());
   const [autoCorrectFlash, setAutoCorrectFlash] = useState<string | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showBeeToast, setShowBeeToast] = useState(false);
+  const hasShownConfettiRef = useRef(false);
 
   const [toasts, setToasts] = useState<Array<{
     id: number;
@@ -1253,7 +1268,7 @@ export default function VitalDashboard() {
   };
 
   /* ─── BP Chart ─── */
-  const bpAllVals = useMemo(() => [...chartData.bp.map(p => p.systolic), ...chartData.bp.map(p => p.diastolic)], [chartData.bp]);
+  const bpAllVals = useMemo(() => [...allData.bp.map(p => p.systolic), ...allData.bp.map(p => p.diastolic)], [allData.bp]);
   const bpYDomain = useMemo(() => niceYDomain(bpAllVals, 0.08), [bpAllVals]);
   const bpChart = renderChart("bp", tr.bloodPressure, <Activity size={18} color={P.bpSystolic} />, P.bpSystolic,
     (xS, yS, iH) => {
@@ -1327,7 +1342,7 @@ export default function VitalDashboard() {
   );
 
   /* ─── HR Chart ─── */
-  const hrYDomain = useMemo(() => niceYDomain(chartData.hr.map(p => p.value), 0.1), [chartData.hr]);
+  const hrYDomain = useMemo(() => niceYDomain(allData.hr.map(p => p.value), 0.1), [allData.hr]);
   const hrChart = renderChart("hr", tr.heartRate, <Heart size={18} color={P.heartRate} />, P.heartRate,
     (xS, yS, iH) => {
       const line = d3.line<HrPoint>().x(d => xS(new Date(d.date))).y(d => yS(d.value)).defined((d, i, arr) => {
@@ -1387,7 +1402,7 @@ export default function VitalDashboard() {
   );
 
   /* ─── Weight Chart ─── */
-  const wYDomain = useMemo(() => niceYDomain(chartData.weight.map(p => p.value), 0.12), [chartData.weight]);
+  const wYDomain = useMemo(() => niceYDomain(allData.weight.map(p => p.value), 0.12), [allData.weight]);
   const weightChart = renderChart("weight", tr.weight, <Weight size={18} color={P.weight} />, P.weight,
     (xS, yS, iH) => {
       const line = d3.line<WeightPoint>().x(d => xS(new Date(d.date))).y(d => yS(d.value)).defined((d, i, arr) => {
@@ -1437,8 +1452,15 @@ export default function VitalDashboard() {
               onMouseLeave={handleDataLeave}
               onClick={() => setSidePanel({ type: "mood", date: p.date, data: p })}
               className="cursor-pointer">
-              <circle cx={x} cy={y} r={10} fill="transparent" />
-              <rect x={x - 4} y={y - 4} width={8} height={8} fill={P.mood} rx={1.5} />
+              <circle cx={x} cy={y} r={12} fill="transparent" />
+              <foreignObject x={x - 8} y={y - 8} width={16} height={16}>
+                <div style={{ width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {(() => {
+                    const MoodIcon = moodFaces[Math.round(p.value)] || MoodFace3;
+                    return <MoodIcon size={16} color={P.mood} />;
+                  })()}
+                </div>
+              </foreignObject>
             </g>
           );
         })}
@@ -1457,8 +1479,8 @@ export default function VitalDashboard() {
     const yScaleLeft = d3.scaleLinear().domain([leftMin, leftMax]).range([iH, 0]);
 
     // Right scale: Weight (actual min/max from data)
-    const weightMin = filteredData.weight.length > 0 ? Math.min(...filteredData.weight.map(p => p.value)) : 70;
-    const weightMax = filteredData.weight.length > 0 ? Math.max(...filteredData.weight.map(p => p.value)) : 100;
+    const weightMin = allData.weight.length > 0 ? Math.min(...allData.weight.map(p => p.value)) : 70;
+    const weightMax = allData.weight.length > 0 ? Math.max(...allData.weight.map(p => p.value)) : 100;
     const yScaleRight = d3.scaleLinear().domain([weightMin, weightMax]).range([iH, 0]);
 
     // Map mood (1-5) to left scale (normalized to 60-160 range)
@@ -2433,6 +2455,17 @@ export default function VitalDashboard() {
     };
   }, [isDraggingTimeline]);
 
+  useEffect(() => {
+    const maxOffset = TIMELINE_DAYS - range;
+    if (chartOffset >= maxOffset && !hasShownConfettiRef.current) {
+      hasShownConfettiRef.current = true;
+      setShowConfetti(true);
+      setShowBeeToast(true);
+      setTimeout(() => setShowConfetti(false), 5000);
+      setTimeout(() => setShowBeeToast(false), 6000);
+    }
+  }, [chartOffset, range, TIMELINE_DAYS]);
+
   const shortcutBar = (() => {
     // Thumb derived from chartOffset + range
     const thumbWidth = Math.max(0.04, range / TIMELINE_DAYS);
@@ -2869,7 +2902,7 @@ export default function VitalDashboard() {
       {/* Accordion parameter cards */}
       <div className="space-y-3">
         {thresholdParams.map((param) => {
-          const isOpen = openThresholdParam === param.id;
+          const isOpen = openThresholdParams.has(param.id);
           const hasYellowAlarm = param.yellow.enabled;
           const hasRedAlarm = param.red.enabled;
           const icon = paramIconMap[param.id] || <Activity size={18} />;
@@ -2882,7 +2915,7 @@ export default function VitalDashboard() {
               }}>
               {/* Accordion Header */}
               <button
-                onClick={() => setOpenThresholdParam(isOpen ? null : param.id)}
+                onClick={() => setOpenThresholdParams(prev => { const next = new Set(prev); if (next.has(param.id)) next.delete(param.id); else next.add(param.id); return next; })}
                 className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:opacity-75"
                 style={{ backgroundColor: isOpen ? P.bgInput : "transparent" }}>
                 <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -3525,7 +3558,6 @@ export default function VitalDashboard() {
           {tooltip}
           {sidePanelEl}
           {ecgDrawerEl}
-          {shortcutBar}
 
           {patientTab === "dashboard" && (
             <div className="space-y-5">
@@ -3941,6 +3973,9 @@ export default function VitalDashboard() {
           )}
         </div>
 
+        {/* Shortcut Bar - always visible */}
+        {shortcutBar}
+
         {/* Bottom status bar */}
         <div
           className="flex items-center justify-center gap-6 px-6 py-2 border-t"
@@ -3964,6 +3999,54 @@ export default function VitalDashboard() {
           </button>
         </div>
       </main>
+
+      {/* Confetti animation */}
+      {showConfetti && (
+        <div className="fixed inset-0 pointer-events-none z-[100]">
+          {Array.from({ length: 80 }).map((_, i) => (
+            <div key={i} className="absolute" style={{
+              left: `${Math.random() * 100}%`,
+              top: -20,
+              width: `${6 + Math.random() * 8}px`,
+              height: `${6 + Math.random() * 8}px`,
+              backgroundColor: ['#f59e0b', '#ef4444', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#f97316'][i % 7],
+              borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+              animation: `confetti-fall ${2 + Math.random() * 3}s ease-in ${Math.random() * 1}s forwards`,
+              transform: `rotate(${Math.random() * 360}deg)`,
+            }} />
+          ))}
+          <style>{`
+            @keyframes confetti-fall {
+              0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+              100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+            }
+          `}</style>
+        </div>
+      )}
+
+      {/* Bee toast */}
+      {showBeeToast && (
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[110] animate-bounce">
+          <div className="relative px-8 py-6 rounded-2xl shadow-2xl text-center max-w-sm"
+            style={{ backgroundColor: theme === "dark" ? "rgba(30,30,30,0.95)" : "rgba(255,255,255,0.97)", border: `2px solid #f59e0b` }}>
+            <div className="text-4xl mb-3">🐝</div>
+            <p className="text-base font-bold mb-1" style={{ color: P.text }}>{tr.beeToast}</p>
+            {/* Flying bees */}
+            {Array.from({ length: 6 }).map((_, i) => (
+              <span key={i} className="absolute text-2xl" style={{
+                animation: `bee-fly-${i % 3} ${2 + Math.random()}s ease-in-out infinite`,
+                top: `${20 + Math.random() * 60}%`,
+                left: `${10 + Math.random() * 80}%`,
+              }}>🐝</span>
+            ))}
+            <style>{`
+              @keyframes bee-fly-0 { 0%,100% { transform: translate(0,0) rotate(0deg); } 25% { transform: translate(30px,-20px) rotate(10deg); } 50% { transform: translate(-20px,-40px) rotate(-5deg); } 75% { transform: translate(40px,-10px) rotate(8deg); } }
+              @keyframes bee-fly-1 { 0%,100% { transform: translate(0,0) rotate(0deg); } 25% { transform: translate(-40px,-15px) rotate(-8deg); } 50% { transform: translate(25px,-35px) rotate(12deg); } 75% { transform: translate(-15px,-45px) rotate(-3deg); } }
+              @keyframes bee-fly-2 { 0%,100% { transform: translate(0,0) rotate(0deg); } 25% { transform: translate(20px,10px) rotate(5deg); } 50% { transform: translate(-30px,-25px) rotate(-10deg); } 75% { transform: translate(35px,-30px) rotate(7deg); } }
+            `}</style>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
