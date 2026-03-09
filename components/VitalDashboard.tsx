@@ -213,6 +213,26 @@ const translations = {
     years: "Jahre",
     class: "Klasse",
     details: "Details",
+    male: "Männlich",
+    female: "Weiblich",
+    yes: "Ja",
+    no: "Nein",
+    icd10Texts: {
+      "I50.0": "Herzinsuffizienz, kongestiv",
+      "I48.0": "Vorhofflimmern, paroxysmal",
+      "I25.1": "Atherosklerotische Herzkrankheit",
+      "E11.9": "Diabetes mellitus, Typ 2, ohne Komplikationen",
+    },
+    male: "Männlich",
+    female: "Weiblich",
+    yes: "Ja",
+    no: "Nein",
+    icd10Texts: {
+      "I50.0": "Herzinsuffizienz, kongestiv",
+      "I48.0": "Vorhofflimmern, paroxysmal",
+      "I25.1": "Atherosklerotische Herzkrankheit",
+      "E11.9": "Diabetes mellitus, Typ 2, ohne Komplikationen",
+    },
   },
   en: {
     dashboard: "Dashboard",
@@ -264,6 +284,26 @@ const translations = {
     years: "years",
     class: "Class",
     details: "Details",
+    male: "Male",
+    female: "Female",
+    yes: "Yes",
+    no: "No",
+    icd10Texts: {
+      "I50.0": "Congestive heart failure",
+      "I48.0": "Paroxysmal atrial fibrillation",
+      "I25.1": "Atherosclerotic heart disease",
+      "E11.9": "Type 2 diabetes mellitus, without complications",
+    },
+    male: "Männlich",
+    female: "Weiblich",
+    yes: "Ja",
+    no: "Nein",
+    icd10Texts: {
+      "I50.0": "Herzinsuffizienz, kongestiv",
+      "I48.0": "Vorhofflimmern, paroxysmal",
+      "I25.1": "Atherosklerotische Herzkrankheit",
+      "E11.9": "Diabetes mellitus, Typ 2, ohne Komplikationen",
+    },
   },
   hu: {
     dashboard: "Irányítópult",
@@ -315,6 +355,16 @@ const translations = {
     years: "év",
     class: "Osztály",
     details: "Részletek",
+    male: "Férfi",
+    female: "Nő",
+    yes: "Igen",
+    no: "Nem",
+    icd10Texts: {
+      "I50.0": "Pangásos szívelégtelenség",
+      "I48.0": "Paroxizmális pitvarfibrilláció",
+      "I25.1": "Atherosclerotikus szívbetegség",
+      "E11.9": "2-es típusú diabetes mellitus, szövődmények nélkül",
+    },
   },
 };
 
@@ -744,7 +794,7 @@ export default function VitalDashboard() {
   const [customDateRange, setCustomDateRange] = useState<[string, string] | null>(null);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [overviewVisible, setOverviewVisible] = useState({ sys: true, hr: true, weight: true, mood: true });
-  const [overviewHover, setOverviewHover] = useState<{ xPos: number; data: Record<string, any> } | null>(null);
+  const [overviewHover, setOverviewHover] = useState<{ xPos: number; yPos: number; data: Record<string, any> } | null>(null);
 
   /* ── Threshold settings state ── */
   const [templates, setTemplates] = useState<ThresholdTemplate[]>(() => [createDefaultTemplate()]);
@@ -1254,6 +1304,7 @@ export default function VitalDashboard() {
       }
       const xValue = xScale.invert(x);
       const data: Record<string, any> = {};
+      let yPos = 0;
 
       if (overviewVisible.sys && filteredData.bp.length > 0) {
         const nearest = filteredData.bp.reduce((prev, curr) =>
@@ -1261,6 +1312,7 @@ export default function VitalDashboard() {
           Math.abs(new Date(prev.date).getTime() - xValue.getTime()) ? curr : prev
         );
         data.sys = { value: nearest.systolic, date: nearest.date };
+        yPos = yScaleLeft(nearest.systolic);
       }
       if (overviewVisible.hr && filteredData.hr.length > 0) {
         const nearest = filteredData.hr.reduce((prev, curr) =>
@@ -1268,6 +1320,7 @@ export default function VitalDashboard() {
           Math.abs(new Date(prev.date).getTime() - xValue.getTime()) ? curr : prev
         );
         data.hr = { value: nearest.value, date: nearest.date };
+        if (yPos === 0) yPos = yScaleLeft(nearest.value);
       }
       if (overviewVisible.weight && filteredData.weight.length > 0) {
         const nearest = filteredData.weight.reduce((prev, curr) =>
@@ -1284,7 +1337,7 @@ export default function VitalDashboard() {
         data.mood = { value: nearest.value, date: nearest.date };
       }
 
-      setOverviewHover({ xPos: x, data });
+      setOverviewHover({ xPos: x, yPos, data });
     };
 
     const handleOverviewLeave = () => {
@@ -1382,7 +1435,7 @@ export default function VitalDashboard() {
               style={{
                 position: "absolute",
                 left: `calc(${(margin.left + overviewHover.xPos) / chartW * 100}% - 50px)`,
-                top: "0",
+                top: `${Math.max(0, margin.top + overviewHover.yPos - 60)}px`,
                 backgroundColor: P.bgPanel,
                 border: `1px solid ${P.border}`,
                 borderRadius: "6px",
@@ -1394,8 +1447,8 @@ export default function VitalDashboard() {
             >
               {overviewHover.data.sys && <div style={{ color: P.bpSystolic }}>Sys: {overviewHover.data.sys.value} mmHg</div>}
               {overviewHover.data.hr && <div style={{ color: P.heartRate }}>HR: {overviewHover.data.hr.value} bpm</div>}
-              {overviewHover.data.weight && <div style={{ color: P.weight }}>Gewicht: {overviewHover.data.weight.value.toFixed(1)} kg</div>}
-              {overviewHover.data.mood && <div style={{ color: P.mood }}>Stimmung: {overviewHover.data.mood.value}/5</div>}
+              {overviewHover.data.weight && <div style={{ color: P.weight }}>{tr.weight}: {overviewHover.data.weight.value.toFixed(1)} kg</div>}
+              {overviewHover.data.mood && <div style={{ color: P.mood }}>{tr.mood}: {overviewHover.data.mood.value}/5</div>}
             </div>
           )}
         </div>
@@ -2501,22 +2554,23 @@ export default function VitalDashboard() {
 
               {isOpen && (
                 <div className="px-5 py-4" style={{ borderTop: `1px solid ${P.border}`, backgroundColor: P.bgInput }}>
-                  {/* Two-column layout */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }}>
-                    {/* Yellow alarm column */}
-                    <div className="space-y-3" style={{ padding: "0 16px 0 0", borderRight: `1px solid ${P.border}` }}>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: P.alarmYellow }} />
-                          <span className="text-sm font-semibold" style={{ color: P.alarmYellow }}>Warnung</span>
+                  {/* Bento grid layout: [Yellow Rules | Yellow Toggle] | [Red Rules | Red Toggle] */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                    {/* Yellow section */}
+                    <div style={{ padding: "12px 16px", borderRadius: "6px", backgroundColor: P.bgCard, border: `1px solid ${P.border}`, display: "flex", flexDirection: "column" }}>
+                      {/* Header with label and controls on far right */}
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: P.alarmYellow, flexShrink: 0 }} />
+                          <span style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: P.alarmYellow }}>Warnung</span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
                           {/* iOS Toggle for yellow */}
                           <div onClick={() => handleParamChange(param.id, "yellow", "enabled", !param.yellow.enabled)}
                             style={{
-                              width: 36,
-                              height: 20,
-                              borderRadius: 10,
+                              width: 32,
+                              height: 18,
+                              borderRadius: 9,
                               position: "relative",
                               cursor: "pointer",
                               backgroundColor: param.yellow.enabled ? "#2CC990" : "#3f3f46",
@@ -2524,75 +2578,113 @@ export default function VitalDashboard() {
                             }}>
                             <div style={{
                               position: "absolute",
-                              top: 2,
-                              width: 16,
-                              height: 16,
+                              top: 1.5,
+                              width: 14,
+                              height: 14,
                               borderRadius: "50%",
                               backgroundColor: "white",
                               transition: "left 0.2s",
-                              left: param.yellow.enabled ? 18 : 2,
+                              left: param.yellow.enabled ? 16 : 2,
                             }} />
                           </div>
                           {/* Email toggle for yellow */}
                           <button onClick={() => handleParamChange(param.id, "yellow", "emailNotify", !param.yellow.emailNotify)}
-                            className="p-1.5 rounded transition-colors"
-                            style={{ backgroundColor: param.yellow.emailNotify ? `${P.alarmYellow}22` : "transparent", color: param.yellow.emailNotify ? P.alarmYellow : P.textMuted }}>
-                            <Mail size={16} />
+                            style={{
+                              padding: "4px",
+                              borderRadius: "4px",
+                              border: "none",
+                              backgroundColor: param.yellow.emailNotify ? `${P.alarmYellow}22` : "transparent",
+                              color: param.yellow.emailNotify ? P.alarmYellow : P.textMuted,
+                              cursor: "pointer",
+                              transition: "all 0.2s"
+                            }}>
+                            <Mail size={14} />
                           </button>
                         </div>
                       </div>
                       
-                      {/* Rules - horizontal layout */}
-                      {param.yellow.enabled && param.yellow.rules.length > 0 && (
-                        <div className="flex flex-wrap gap-3">
-                          {param.yellow.rules.map((rule, ruleIdx) => (
-                            <div key={rule.id} className="flex items-center gap-1.5 text-sm p-2 rounded-lg"
-                              style={{ backgroundColor: autoCorrectFlash === `${param.id}-yellow` && ruleIdx === 0 ? `${P.alarmYellow}33` : P.bgCard, transition: "background-color 0.3s" }}>
-                              <span style={{ color: P.textMuted, fontWeight: 600 }}>{rule.operator}</span>
+                      {/* Rules - compact inline display */}
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", opacity: param.yellow.enabled ? 1 : 0.5, transition: "opacity 0.2s" }}>
+                        {param.yellow.rules.length > 0 ? (
+                          param.yellow.rules.map((rule, ruleIdx) => (
+                            <div key={rule.id} style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "2px",
+                              fontSize: "11px",
+                              padding: "2px 6px",
+                              borderRadius: "3px",
+                              backgroundColor: autoCorrectFlash === `${param.id}-yellow` && ruleIdx === 0 ? `${P.alarmYellow}33` : P.bgInput,
+                              transition: "background-color 0.3s",
+                              border: `0.5px solid ${P.border}`
+                            }}>
+                              <span style={{ color: P.textMuted, fontWeight: 700, fontSize: "10px" }}>{rule.operator}</span>
                               <input
                                 type="number"
                                 value={rule.value}
                                 onChange={(e) => handleRuleValueChange(param.id, "yellow", rule.id, "value", parseFloat(e.target.value) || 0)}
-                                className="w-16 px-2 py-1 rounded text-sm text-center font-mono font-semibold outline-none border-0"
-                                style={{ backgroundColor: P.bgPanel, color: P.text }}
+                                style={{
+                                  width: "28px",
+                                  padding: "1px 3px",
+                                  borderRadius: "2px",
+                                  fontSize: "10px",
+                                  textAlign: "center",
+                                  fontFamily: "monospace",
+                                  fontWeight: 600,
+                                  outline: "none",
+                                  border: "none",
+                                  backgroundColor: P.bgPanel,
+                                  color: P.text
+                                }}
                                 step={rule.suffix?.includes("kg") ? 0.5 : 1}
                               />
-                              {rule.suffix && <span className="text-xs" style={{ color: P.textMuted }}>{rule.suffix}</span>}
+                              {rule.suffix && <span style={{ fontSize: "9px", color: P.textMuted }}>{rule.suffix}</span>}
                               {rule.secondValue !== undefined && (
                                 <>
                                   <input
                                     type="number"
                                     value={rule.secondValue}
                                     onChange={(e) => handleRuleValueChange(param.id, "yellow", rule.id, "secondValue", parseInt(e.target.value) || 0)}
-                                    className="w-14 px-2 py-1 rounded text-sm text-center font-mono font-semibold outline-none border-0"
-                                    style={{ backgroundColor: P.bgPanel, color: P.text }}
+                                    style={{
+                                      width: "24px",
+                                      padding: "1px 3px",
+                                      borderRadius: "2px",
+                                      fontSize: "10px",
+                                      textAlign: "center",
+                                      fontFamily: "monospace",
+                                      fontWeight: 600,
+                                      outline: "none",
+                                      border: "none",
+                                      backgroundColor: P.bgPanel,
+                                      color: P.text
+                                    }}
                                   />
-                                  {rule.secondSuffix && <span className="text-xs" style={{ color: P.textMuted }}>{rule.secondSuffix}</span>}
+                                  {rule.secondSuffix && <span style={{ fontSize: "9px", color: P.textMuted }}>{rule.secondSuffix}</span>}
                                 </>
                               )}
                             </div>
-                          ))}
-                        </div>
-                      )}
-                      {param.yellow.enabled && param.yellow.rules.length === 0 && param.id !== "nodata" && (
-                        <div className="p-2 text-xs" style={{ color: P.textMuted }}>Aktiv (keine Parameter)</div>
-                      )}
+                          ))
+                        ) : (
+                          <span style={{ fontSize: "11px", color: P.textMuted }}>—</span>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Red alarm column */}
-                    <div className="space-y-3" style={{ padding: "0 0 0 16px" }}>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: P.alarmRed }} />
-                          <span className="text-sm font-semibold" style={{ color: P.alarmRed }}>Kritisch</span>
+                    {/* Red section */}
+                    <div style={{ padding: "12px 16px", borderRadius: "6px", backgroundColor: P.bgCard, border: `1px solid ${P.border}`, display: "flex", flexDirection: "column" }}>
+                      {/* Header with label and controls on far right */}
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: P.alarmRed, flexShrink: 0 }} />
+                          <span style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: P.alarmRed }}>Kritisch</span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
                           {/* iOS Toggle for red */}
                           <div onClick={() => handleParamChange(param.id, "red", "enabled", !param.red.enabled)}
                             style={{
-                              width: 36,
-                              height: 20,
-                              borderRadius: 10,
+                              width: 32,
+                              height: 18,
+                              borderRadius: 9,
                               position: "relative",
                               cursor: "pointer",
                               backgroundColor: param.red.enabled ? "#2CC990" : "#3f3f46",
@@ -2600,59 +2692,96 @@ export default function VitalDashboard() {
                             }}>
                             <div style={{
                               position: "absolute",
-                              top: 2,
-                              width: 16,
-                              height: 16,
+                              top: 1.5,
+                              width: 14,
+                              height: 14,
                               borderRadius: "50%",
                               backgroundColor: "white",
                               transition: "left 0.2s",
-                              left: param.red.enabled ? 18 : 2,
+                              left: param.red.enabled ? 16 : 2,
                             }} />
                           </div>
                           {/* Email toggle for red */}
                           <button onClick={() => handleParamChange(param.id, "red", "emailNotify", !param.red.emailNotify)}
-                            className="p-1.5 rounded transition-colors"
-                            style={{ backgroundColor: param.red.emailNotify ? `${P.alarmRed}22` : "transparent", color: param.red.emailNotify ? P.alarmRed : P.textMuted }}>
-                            <Mail size={16} />
+                            style={{
+                              padding: "4px",
+                              borderRadius: "4px",
+                              border: "none",
+                              backgroundColor: param.red.emailNotify ? `${P.alarmRed}22` : "transparent",
+                              color: param.red.emailNotify ? P.alarmRed : P.textMuted,
+                              cursor: "pointer",
+                              transition: "all 0.2s"
+                            }}>
+                            <Mail size={14} />
                           </button>
                         </div>
                       </div>
                       
-                      {/* Rules - horizontal layout */}
-                      {param.red.enabled && param.red.rules.length > 0 && (
-                        <div className="flex flex-wrap gap-3">
-                          {param.red.rules.map((rule, ruleIdx) => (
-                            <div key={rule.id} className="flex items-center gap-1.5 text-sm p-2 rounded-lg"
-                              style={{ backgroundColor: autoCorrectFlash === `${param.id}-red` && ruleIdx === 0 ? `${P.alarmRed}33` : P.bgCard, transition: "background-color 0.3s" }}>
-                              <span style={{ color: P.textMuted, fontWeight: 600 }}>{rule.operator}</span>
+                      {/* Rules - compact inline display */}
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", opacity: param.red.enabled ? 1 : 0.5, transition: "opacity 0.2s" }}>
+                        {param.red.rules.length > 0 ? (
+                          param.red.rules.map((rule, ruleIdx) => (
+                            <div key={rule.id} style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "2px",
+                              fontSize: "11px",
+                              padding: "2px 6px",
+                              borderRadius: "3px",
+                              backgroundColor: autoCorrectFlash === `${param.id}-red` && ruleIdx === 0 ? `${P.alarmRed}33` : P.bgInput,
+                              transition: "background-color 0.3s",
+                              border: `0.5px solid ${P.border}`
+                            }}>
+                              <span style={{ color: P.textMuted, fontWeight: 700, fontSize: "10px" }}>{rule.operator}</span>
                               <input
                                 type="number"
                                 value={rule.value}
                                 onChange={(e) => handleRuleValueChange(param.id, "red", rule.id, "value", parseFloat(e.target.value) || 0)}
-                                className="w-16 px-2 py-1 rounded text-sm text-center font-mono font-semibold outline-none border-0"
-                                style={{ backgroundColor: P.bgPanel, color: P.text }}
+                                style={{
+                                  width: "28px",
+                                  padding: "1px 3px",
+                                  borderRadius: "2px",
+                                  fontSize: "10px",
+                                  textAlign: "center",
+                                  fontFamily: "monospace",
+                                  fontWeight: 600,
+                                  outline: "none",
+                                  border: "none",
+                                  backgroundColor: P.bgPanel,
+                                  color: P.text
+                                }}
                                 step={rule.suffix?.includes("kg") ? 0.5 : 1}
                               />
-                              {rule.suffix && <span className="text-xs" style={{ color: P.textMuted }}>{rule.suffix}</span>}
+                              {rule.suffix && <span style={{ fontSize: "9px", color: P.textMuted }}>{rule.suffix}</span>}
                               {rule.secondValue !== undefined && (
                                 <>
                                   <input
                                     type="number"
                                     value={rule.secondValue}
                                     onChange={(e) => handleRuleValueChange(param.id, "red", rule.id, "secondValue", parseInt(e.target.value) || 0)}
-                                    className="w-14 px-2 py-1 rounded text-sm text-center font-mono font-semibold outline-none border-0"
-                                    style={{ backgroundColor: P.bgPanel, color: P.text }}
+                                    style={{
+                                      width: "24px",
+                                      padding: "1px 3px",
+                                      borderRadius: "2px",
+                                      fontSize: "10px",
+                                      textAlign: "center",
+                                      fontFamily: "monospace",
+                                      fontWeight: 600,
+                                      outline: "none",
+                                      border: "none",
+                                      backgroundColor: P.bgPanel,
+                                      color: P.text
+                                    }}
                                   />
-                                  {rule.secondSuffix && <span className="text-xs" style={{ color: P.textMuted }}>{rule.secondSuffix}</span>}
+                                  {rule.secondSuffix && <span style={{ fontSize: "9px", color: P.textMuted }}>{rule.secondSuffix}</span>}
                                 </>
                               )}
                             </div>
-                          ))}
-                        </div>
-                      )}
-                      {param.red.enabled && param.red.rules.length === 0 && (
-                        <div className="p-2 text-xs" style={{ color: P.textMuted }}>Aktiv (keine Parameter)</div>
-                      )}
+                          ))
+                        ) : (
+                          <span style={{ fontSize: "11px", color: P.textMuted }}>—</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -3027,7 +3156,7 @@ export default function VitalDashboard() {
                       {/* Clinical info pills */}
                       <div className="flex flex-wrap gap-2 mb-4">
                         <InfoPill label={tr.age.toUpperCase()} value={`${patient.age} ${tr.years}`} />
-                        <InfoPill label={tr.gender.toUpperCase()} value={patient.gender} />
+                        <InfoPill label={tr.gender.toUpperCase()} value={patient.gender === "Männlich" ? tr.male : tr.female} />
                         <InfoPill label={tr.nyha} value={`${tr.class} ${patient.nyha}`} />
                         <InfoPill
                           label={tr.lvef}
@@ -3042,7 +3171,7 @@ export default function VitalDashboard() {
                         />
                         <InfoPill
                           label={tr.anticoagulation.toUpperCase()}
-                          value={patient.anticoag ? "Ja" : "Nein"}
+                          value={patient.anticoag ? tr.yes : tr.no}
                           color={patient.anticoag ? P.good : P.textMuted}
                         />
                       </div>
@@ -3056,7 +3185,9 @@ export default function VitalDashboard() {
                           {tr.icd10Diagnoses.toUpperCase()}
                         </span>
                         <div className="flex flex-wrap gap-2">
-                          {patient.icd10.map((d, i) => (
+                          {patient.icd10.map((d, i) => {
+                              const icdText = (tr as any).icd10Texts?.[d.code] || d.text;
+                              return (
                             <span
                               key={i}
                               className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg"
@@ -3066,9 +3197,10 @@ export default function VitalDashboard() {
                                 {d.code}
                               </span>
                               <span style={{ color: P.textMuted }}>—</span>
-                              <span>{d.text}</span>
+                              <span>{icdText}</span>
                             </span>
-                        ))}
+                              );
+                            })}
                       </div>
                     </div>
 
