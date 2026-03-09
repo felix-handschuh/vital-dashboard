@@ -6,7 +6,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Activity01Icon, HeartCheckIcon, WeightScaleIcon, SmileIcon, Calendar01Icon,
   Maximize01Icon, Minimize01Icon, ArrowLeft01Icon, ArrowRight01Icon,
-  Download01Icon, Table01Icon, ChartLineData01Icon,
+  Download01Icon, GridTableIcon, ChartLineData01Icon,
   PillIcon, CallIcon, Alert01Icon, PulseRectangle01Icon,
   ViewIcon, ViewOffIcon, InformationCircleIcon,
   ChartIncreaseIcon, ChartDecreaseIcon, MinusSignIcon,
@@ -41,13 +41,27 @@ const MoodFace3 = hi(NeutralIcon);
 const MoodFace4 = hi(HappyIcon);
 const MoodFace5 = hi(SmileIcon);
 const moodFaces = [null, MoodFace1, MoodFace2, MoodFace3, MoodFace4, MoodFace5];
+const moodColor = (v: number) => {
+  if (v <= 1) return "#ef4444"; // red
+  if (v <= 2) return "#f97316"; // orange
+  if (v <= 3) return "#eab308"; // yellow
+  if (v <= 4) return "#84cc16"; // lime
+  return "#22c55e"; // green
+};
+const moodLabels: Record<string, string[]> = {
+  de: ["", "Sehr schlecht", "Schlecht", "Okay", "Gut", "Sehr gut"],
+  en: ["", "Very bad", "Bad", "Okay", "Good", "Very good"],
+  hu: ["", "Nagyon rossz", "Rossz", "Rendben", "Jó", "Nagyon jó"],
+  mk: ["", "Многу лошо", "Лошо", "Добро", "Добро", "Многу добро"],
+  uk: ["", "Дуже погано", "Погано", "Нормально", "Добре", "Дуже добре"],
+};
 const Calendar = hi(Calendar01Icon);
 const Maximize2 = hi(Maximize01Icon);
 const Minimize2 = hi(Minimize01Icon);
 const ChevronLeft = hi(ArrowLeft01Icon);
 const ChevronRight = hi(ArrowRight01Icon);
 const Download = hi(Download01Icon);
-const Table2 = hi(Table01Icon);
+const Table2 = hi(GridTableIcon);
 const LineChart = hi(ChartLineData01Icon);
 const Pill = hi(PillIcon);
 const Phone = hi(CallIcon);
@@ -686,6 +700,9 @@ const generateData = (): AllData => {
   const data: AllData = { bp: [], hr: [], weight: [], mood: [], events: [], ecgs: [], missed: [] };
   let bW = 72.3, bS = 128, bD = 82, bHR = 72;
   const outlierDays = new Set([5, 12, 20, 35, 50, 65, 80]);
+  // Days with extreme spikes: sporadic systolic BP up to 180, HR near 200
+  const extremeBpDays = new Set([8, 22, 47, 73, 110, 145, 190, 230, 275, 310, 360, 400, 440]);
+  const extremeHrDays = new Set([15, 42, 88, 130, 175, 220, 260, 320, 380, 420, 470]);
 
   for (let i = days; i >= 0; i--) {
     const date = new Date(NOW); date.setDate(date.getDate() - i);
@@ -702,28 +719,32 @@ const generateData = (): AllData => {
       i % 2 === 0 ? Math.floor(Math.random() * 3) + 2 : // every other day: 2-4
       Math.random() < 0.6 ? Math.floor(Math.random() * 2) + 2 : 1; // rest: 60% get 2-3, 40% get 1
     const bpReadings: BpReading[] = [];
+    const isExtremeBp = extremeBpDays.has(i);
     for (let r = 0; r < bpCount; r++) {
-      const s = Math.round(bS + drift + (Math.random() - 0.5) * 12 + (isOutlierBp && r === 0 ? 35 : 0));
+      const extremeSpike = isExtremeBp && r === 0 ? 40 + Math.random() * 15 : 0; // systolic up to ~180
+      const s = Math.round(bS + drift + (Math.random() - 0.5) * 12 + (isOutlierBp && r === 0 ? 35 : 0) + extremeSpike);
       const d = Math.round(bD + drift * 0.6 + (Math.random() - 0.5) * 8 + (isOutlierBp && r === 0 ? -10 : 0));
       bpReadings.push({ time: randTime(6 + r * 2, 8 + r * 2), systolic: s, diastolic: d });
     }
     bpReadings.sort((a, b) => a.time.localeCompare(b.time));
     const avgSys = Math.round(bpReadings.reduce((s, r) => s + r.systolic, 0) / bpReadings.length);
     const avgDia = Math.round(bpReadings.reduce((s, r) => s + r.diastolic, 0) / bpReadings.length);
-    const bpAlarm = avgSys > 150 ? "critical" : avgSys > 140 ? "warning" : avgSys < 100 ? "change" : undefined;
-    data.bp.push({ date: ds, readings: bpReadings, systolic: avgSys, diastolic: avgDia, alarm: isOutlierBp ? "warning" : bpAlarm, outlier: isOutlierBp });
+    const bpAlarm = avgSys > 160 ? "critical" : avgSys > 140 ? "warning" : avgSys < 100 ? "change" : undefined;
+    data.bp.push({ date: ds, readings: bpReadings, systolic: avgSys, diastolic: avgDia, alarm: isOutlierBp ? "warning" : (isExtremeBp ? "critical" : bpAlarm), outlier: isOutlierBp || isExtremeBp });
 
     const hrCount = i % 5 === 0 ? Math.floor(Math.random() * 5) + 3 : i % 2 === 0 ? Math.floor(Math.random() * 2) + 2 : Math.random() < 0.5 ? 2 : 1;
     const hrReadings: HrReading[] = [];
     const isOutlierHr = i === 12 || i === 35;
+    const isExtremeHr = extremeHrDays.has(i);
     for (let r = 0; r < hrCount; r++) {
-      const hr = Math.round(bHR + Math.sin(i / 10) * 8 + (Math.random() - 0.5) * 10 + (isOutlierHr && r === 0 ? 40 : 0));
+      const extremeHrSpike = isExtremeHr && r === 0 ? 100 + Math.random() * 30 : 0; // HR near 190-200
+      const hr = Math.round(bHR + Math.sin(i / 10) * 8 + (Math.random() - 0.5) * 10 + (isOutlierHr && r === 0 ? 40 : 0) + extremeHrSpike);
       hrReadings.push({ time: randTime(6 + r, 8 + r * 2), value: hr });
     }
     hrReadings.sort((a, b) => a.time.localeCompare(b.time));
     const avgHr = Math.round(hrReadings.reduce((s, r) => s + r.value, 0) / hrReadings.length);
-    const hrAlarm = avgHr > 110 ? "critical" : avgHr > 100 ? "warning" : avgHr < 50 ? "warning" : undefined;
-    data.hr.push({ date: ds, readings: hrReadings, value: avgHr, alarm: isOutlierHr ? "critical" : hrAlarm, outlier: isOutlierHr });
+    const hrAlarm = avgHr > 150 ? "critical" : avgHr > 100 ? "warning" : avgHr < 50 ? "warning" : undefined;
+    data.hr.push({ date: ds, readings: hrReadings, value: avgHr, alarm: isOutlierHr ? "critical" : (isExtremeHr ? "critical" : hrAlarm), outlier: isOutlierHr || isExtremeHr });
 
     bW += (Math.random() - 0.52) * 0.15;
     const w = Math.round(bW * 10) / 10;
@@ -1456,11 +1477,17 @@ export default function VitalDashboard() {
               <foreignObject x={x - 8} y={y - 8} width={16} height={16}>
                 <div style={{ width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {(() => {
-                    const MoodIcon = moodFaces[Math.round(p.value)] || MoodFace3;
-                    return <MoodIcon size={16} color={P.mood} />;
+                    const mv = Math.round(p.value);
+                    const MoodIcon = moodFaces[mv] || MoodFace3;
+                    return <MoodIcon size={16} color={moodColor(mv)} />;
                   })()}
                 </div>
               </foreignObject>
+              {detail.showValues && (
+                <text x={x + 12} y={y} dy="0.35em" fontSize={9} fill={moodColor(Math.round(p.value))} fontFamily="IBM Plex Sans">
+                  {(moodLabels[lang] || moodLabels.de)[Math.round(p.value)]}
+                </text>
+              )}
             </g>
           );
         })}
