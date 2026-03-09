@@ -952,6 +952,11 @@ export default function VitalDashboard() {
   }>>([]);
   const toastIdRef = useRef(0);
   const [chartOffset, setChartOffset] = useState(0);
+  const [timelineZoom, setTimelineZoom] = useState(1); // 1 = full range visible
+  const [timelinePan, setTimelinePan] = useState(1); // 0..1 position, 1 = rightmost (current)
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const [isDraggingTimeline, setIsDraggingTimeline] = useState(false);
+  const [isResizingTimeline, setIsResizingTimeline] = useState<"left" | "right" | null>(null);
 
   const activeTemplate = templates.find(t => t.id === activeTemplateId);
   const displayTemplateName = activeTemplate
@@ -1087,7 +1092,7 @@ export default function VitalDashboard() {
   }, []);
   const chartW = chartContainerW;
   const chartH = (type: string) => expanded === type ? 300 : range <= 14 ? 200 : range <= 30 ? 180 : 160;
-  const margin = { top: 28, right: 24, bottom: 28, left: 64 };
+  const margin = { top: 28, right: 48, bottom: 28, left: 64 };
   const innerW = chartW - margin.left - margin.right;
   const innerH = (type: string) => chartH(type) - margin.top - margin.bottom;
 
@@ -1098,7 +1103,7 @@ export default function VitalDashboard() {
     hitRadius: range <= 14 ? 12 : range <= 30 ? 10 : 8,
     showDots: range <= 30,
     showValues: range <= 14,
-    xTickCount: range <= 14 ? 14 : range <= 30 ? 15 : range <= 60 ? 20 : 30,
+    xTickCount: range <= 14 ? 14 : range <= 30 ? 15 : range <= 60 ? 10 : 13,
     xTickFormat: d3.timeFormat("%d.%m."),
     medianWidth: range <= 14 ? 1.5 : 1,
     gridOpacity: range <= 30 ? 1 : 0.7,
@@ -2380,37 +2385,189 @@ export default function VitalDashboard() {
     { key: "Esc", label: "Schließen" },
   ];
 
-  const shortcutBar = (
-    <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-center gap-4 px-6 py-2.5"
-      style={{ backgroundColor: P.shortcutBg, borderTop: `1px solid ${P.border}`, backdropFilter: "blur(8px)" }}>
-      <Keyboard size={16} style={{ color: P.textMuted }} />
-      {shortcuts.map(s => (
-        <div key={s.key} className="flex items-center gap-1.5">
-          <kbd className="text-xs px-2 py-1 rounded font-mono font-semibold min-w-[28px] text-center"
-            style={{ backgroundColor: P.shortcutKey, color: P.shortcutKeyText, boxShadow: theme === "dark" ? "0 1px 2px rgba(0,0,0,0.4)" : "0 1px 2px rgba(0,0,0,0.1)" }}>
-            {s.key}
-          </kbd>
-          <span className="text-xs" style={{ color: P.textMuted }}>{s.label}</span>
+  /* ── Timeline slider state → override chartOffset + range ── */
+  const timelineData = useMemo(() => {
+    // The full data spans ~365 days. We compute a window from timeline controls.
+    const maxDays = 365;
+    const windowDays = Math.max(7, Math.round(maxDays / Math.max(1, timelineZoom * 4)));
+    const maxOffset = Math.max(0, maxDays - windowDays);
+    const offset = Math.round((1 - timelinePan) * maxOffset);
+    return { windowDays, offset, maxDays };
+  }, [timelineZoom, timelinePan]);
+
+  // Sync timeline to chartOffset and range when user interacts with timeline
+  const applyTimeline = useCallback((pan: number, zoom: number) => {
+    const maxDays = 365;
+    const windowDays = Math.max(7, Math.round(maxDays / Math.max(1, zoom * 4)));
+    const maxOffset = Math.max(0, maxDays - windowDays);
+    const offset = Math.round((1 - pan) * maxOffset);
+    setChartOffset(offset);
+    // Find closest standard range
+    if (windowDays <= 14) setRange(14);
+    else if (windowDays <= 30) setRange(30);
+    else if (windowDays <= 60) setRange(60);
+    else setRange(90);
+  }, []);
+
+  const handleTimelineMouseDown = useCallback((e: React.MouseEvent, action: "pan" | "resize-left" | "resize-right") => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (action === "pan") setIsDraggingTimeline(true);
+    else setIsResizingTimeline(action === "resize-left" ? "left" : "right");
+  }, []);
+
+  useEffect(() => {
+    if (!isDraggingTimeline && !isResizingTimeline) return;
+    const bar = timelineRef.current;
+    if (!bar) return;
+
+    const handleMove = (e: MouseEvent) => {
+      const rect = bar.getBoundingClientRect();
+      const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+
+      if (isDraggingTimeline) {
+        setTimelinePan(x);
+        applyTimeline(x, timelineZoom);
+      } else if (isResizingTimeline) {
+        // Resize changes zoom level
+        const currentWidth = 1 / Math.max(1, timelineZoom * 4);
+        const currentLeft = (1 - timelinePan) - currentWidth / 2;
+        if (isResizingTimeline === "left") {
+          const newLeft = Math.max(0, Math.min(x, currentLeft + currentWidth - 0.02));
+          const newWidth = (currentLeft + currentWidth) - newLeft;
+          const newZoom = Math.max(0.25, Math.min(10, (1 / newWidth) / 4));
+          const newPan = 1 - (newLeft + newWidth / 2);
+          setTimelineZoom(newZoom);
+          setTimelinePan(Math.max(0, Math.min(1, newPan)));
+          applyTimeline(Math.max(0, Math.min(1, newPan)), newZoom);
+        } else {
+          const newRight = Math.max(currentLeft + 0.02, Math.min(1, x));
+          const newWidth = newRight - currentLeft;
+          const newZoom = Math.max(0.25, Math.min(10, (1 / newWidth) / 4));
+          const newPan = 1 - (currentLeft + newWidth / 2);
+          setTimelineZoom(newZoom);
+          setTimelinePan(Math.max(0, Math.min(1, newPan)));
+          applyTimeline(Math.max(0, Math.min(1, newPan)), newZoom);
+        }
+      }
+    };
+
+    const handleUp = () => {
+      setIsDraggingTimeline(false);
+      setIsResizingTimeline(null);
+    };
+
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseup", handleUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup", handleUp);
+    };
+  }, [isDraggingTimeline, isResizingTimeline, timelineZoom, timelinePan, applyTimeline]);
+
+  const shortcutBar = (() => {
+    // Timeline thumb position and width
+    const thumbWidth = Math.max(0.05, 1 / Math.max(1, timelineZoom * 4));
+    const thumbLeft = Math.max(0, Math.min(1 - thumbWidth, (1 - timelinePan) - thumbWidth / 2));
+
+    // Generate month labels for the timeline
+    const today = new Date();
+    const yearAgo = new Date(today);
+    yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+    const months: { label: string; pos: number }[] = [];
+    const cur = new Date(yearAgo);
+    cur.setDate(1);
+    cur.setMonth(cur.getMonth() + 1);
+    while (cur <= today) {
+      const totalDays = (today.getTime() - yearAgo.getTime()) / (1000 * 60 * 60 * 24);
+      const dayOffset = (cur.getTime() - yearAgo.getTime()) / (1000 * 60 * 60 * 24);
+      months.push({ label: cur.toLocaleDateString("de-DE", { month: "short" }), pos: dayOffset / totalDays });
+      cur.setMonth(cur.getMonth() + 1);
+    }
+
+    return (
+      <div className="fixed bottom-0 left-0 right-0 z-40 px-6 pb-2 pt-1"
+        style={{ backgroundColor: P.shortcutBg, borderTop: `1px solid ${P.border}`, backdropFilter: "blur(8px)" }}>
+        {/* Timeline slider */}
+        <div className="mb-1.5">
+          {/* Month labels */}
+          <div className="relative h-3 mx-1" style={{ marginLeft: 240 }}>
+            {months.map((m, i) => (
+              <span key={i} className="absolute text-[9px] font-mono" style={{ left: `${m.pos * 100}%`, color: P.textMuted, transform: "translateX(-50%)" }}>{m.label}</span>
+            ))}
+          </div>
+          {/* Slider track */}
+          <div ref={timelineRef} className="relative h-6 rounded-md cursor-pointer mx-1"
+            style={{ backgroundColor: theme === "dark" ? "rgba(63,63,70,0.3)" : "rgba(228,228,231,0.5)", marginLeft: 240 }}
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              const x = (e.clientX - rect.left) / rect.width;
+              setTimelinePan(Math.max(0, Math.min(1, x)));
+              applyTimeline(Math.max(0, Math.min(1, x)), timelineZoom);
+            }}
+          >
+            {/* Month tick marks */}
+            {months.map((m, i) => (
+              <div key={i} className="absolute top-0 bottom-0 w-px" style={{ left: `${m.pos * 100}%`, backgroundColor: P.border, opacity: 0.4 }} />
+            ))}
+            {/* Thumb (draggable window) */}
+            <div
+              className="absolute top-0 bottom-0 rounded-md transition-none"
+              style={{
+                left: `${thumbLeft * 100}%`,
+                width: `${thumbWidth * 100}%`,
+                backgroundColor: theme === "dark" ? "rgba(99,102,241,0.35)" : "rgba(99,102,241,0.25)",
+                border: `1.5px solid ${theme === "dark" ? "rgba(99,102,241,0.7)" : "rgba(99,102,241,0.5)"}`,
+                cursor: isDraggingTimeline ? "grabbing" : "grab",
+                minWidth: 20,
+              }}
+              onMouseDown={(e) => handleTimelineMouseDown(e, "pan")}
+            >
+              {/* Left resize handle */}
+              <div className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize"
+                onMouseDown={(e) => handleTimelineMouseDown(e, "resize-left")} />
+              {/* Right resize handle */}
+              <div className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize"
+                onMouseDown={(e) => handleTimelineMouseDown(e, "resize-right")} />
+              {/* Center label */}
+              <div className="flex items-center justify-center h-full text-[10px] font-mono select-none" style={{ color: theme === "dark" ? "rgba(165,180,252,0.9)" : "rgba(79,70,229,0.8)" }}>
+                {range}T
+              </div>
+            </div>
+          </div>
         </div>
-      ))}
-      {/* Divider */}
-      <div style={{ width: 1, height: 20, backgroundColor: P.border }} />
-      {/* Time navigation */}
-      <div className="flex items-center gap-1.5">
-        <button onClick={() => handleChartNav("left")} className="p-1 rounded transition-colors" style={{ backgroundColor: P.bgInput, color: P.textSecondary }}>
-          <ChevronLeft size={14} />
-        </button>
-        <span className="text-xs font-mono" style={{ color: P.textMuted }}>
-          {chartOffset > 0 ? `−${chartOffset}d` : "Aktuell"}
-        </span>
-        <button onClick={() => handleChartNav("right")} className="p-1 rounded transition-colors"
-          style={{ backgroundColor: P.bgInput, color: chartOffset === 0 ? P.border : P.textSecondary, cursor: chartOffset === 0 ? "default" : "pointer" }}
-          disabled={chartOffset === 0}>
-          <ChevronRight size={14} />
-        </button>
+        {/* Keyboard shortcuts row */}
+        <div className="flex items-center justify-center gap-4">
+          <Keyboard size={16} style={{ color: P.textMuted }} />
+          {shortcuts.map(s => (
+            <div key={s.key} className="flex items-center gap-1.5">
+              <kbd className="text-xs px-2 py-1 rounded font-mono font-semibold min-w-[28px] text-center"
+                style={{ backgroundColor: P.shortcutKey, color: P.shortcutKeyText, boxShadow: theme === "dark" ? "0 1px 2px rgba(0,0,0,0.4)" : "0 1px 2px rgba(0,0,0,0.1)" }}>
+                {s.key}
+              </kbd>
+              <span className="text-xs" style={{ color: P.textMuted }}>{s.label}</span>
+            </div>
+          ))}
+          {/* Divider */}
+          <div style={{ width: 1, height: 20, backgroundColor: P.border }} />
+          {/* Time navigation */}
+          <div className="flex items-center gap-1.5">
+            <button onClick={() => handleChartNav("left")} className="p-1 rounded transition-colors" style={{ backgroundColor: P.bgInput, color: P.textSecondary }}>
+              <ChevronLeft size={14} />
+            </button>
+            <span className="text-xs font-mono" style={{ color: P.textMuted }}>
+              {chartOffset > 0 ? `−${chartOffset}d` : "Aktuell"}
+            </span>
+            <button onClick={() => handleChartNav("right")} className="p-1 rounded transition-colors"
+              style={{ backgroundColor: P.bgInput, color: chartOffset === 0 ? P.border : P.textSecondary, cursor: chartOffset === 0 ? "default" : "pointer" }}
+              disabled={chartOffset === 0}>
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  })();
 
   /* ═══════════════════════════════════════════════════════════════════════════════
      PATIENT DATA (static demo)
@@ -3381,7 +3538,7 @@ export default function VitalDashboard() {
         </div>
 
         {/* Content area - scrollable */}
-        <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div className="flex-1 overflow-y-auto px-6 py-5" style={{ paddingBottom: 90 }}>
           {tooltip}
           {sidePanelEl}
           {ecgDrawerEl}
@@ -3632,7 +3789,7 @@ export default function VitalDashboard() {
                 </div>
 
                 {/* ── Time range selector + view toggle ── */}
-                <div className="sticky top-0 z-20 flex items-center gap-2 flex-wrap py-2 -mx-6 px-6" style={{ backgroundColor: P.bg }}>
+                <div className="sticky top-0 z-20 flex items-center gap-2 flex-wrap py-2 -mx-6 px-6" style={{ backgroundColor: theme === "dark" ? "rgba(24,24,27,0.75)" : "rgba(255,255,255,0.75)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                   {RANGES.map((r) => (
                     <button
                       key={r}
