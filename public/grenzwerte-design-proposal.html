@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grenzwerte Settings — Design Proposal</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: #09090b;
+    color: #fafafa;
+    padding: 32px;
+    min-height: 100vh;
+  }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .page-header h1 { font-size: 20px; font-weight: 600; }
+  .page-header .subtitle { font-size: 13px; color: #71717a; margin-top: 2px; }
+
+  .template-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: rgba(24,24,27,0.8);
+    border: 1px solid rgba(39,39,42,0.6);
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+  .template-bar label { font-size: 12px; color: #71717a; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; }
+  .template-select {
+    background: rgba(39,39,42,0.6);
+    border: 1px solid rgba(63,63,70,0.5);
+    border-radius: 6px;
+    color: #fafafa;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-family: inherit;
+  }
+  .template-bar .save-template {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid rgba(63,63,70,0.5);
+    color: #a1a1aa;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  /* Parameter Cards */
+  .params-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .param-card {
+    background: rgba(24,24,27,0.8);
+    border: 1px solid rgba(39,39,42,0.6);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .param-header {
+    display: flex;
+    align-items: center;
+    padding: 14px 20px;
+    gap: 12px;
+    border-bottom: 1px solid rgba(39,39,42,0.4);
+  }
+  .param-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+  .param-name { font-size: 15px; font-weight: 600; }
+  .param-unit { font-size: 12px; color: #71717a; }
+  .param-toggle {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .toggle-pill {
+    width: 36px;
+    height: 20px;
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .toggle-pill.on { background: #2CC990; }
+  .toggle-pill.off { background: #3f3f46; }
+  .toggle-pill::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    transition: left 0.2s;
+  }
+  .toggle-pill.on::after { left: 18px; }
+  .toggle-pill.off::after { left: 2px; }
+
+  .param-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  .alarm-col {
+    padding: 16px 20px;
+  }
+  .alarm-col:first-child {
+    border-right: 1px solid rgba(39,39,42,0.4);
+  }
+
+  .alarm-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .alarm-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .alarm-dot.warning { background: #F59E0B; }
+  .alarm-dot.critical { background: #EF4444; }
+  .alarm-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .alarm-label.warning { color: #F59E0B; }
+  .alarm-label.critical { color: #EF4444; }
+
+  .alarm-toggles {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+  }
+  .alarm-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #71717a;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-family: inherit;
+  }
+  .alarm-toggle-btn.active { color: #a1a1aa; background: rgba(39,39,42,0.6); }
+  .alarm-toggle-btn svg { width: 14px; height: 14px; }
+
+  .rules-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .rule-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(39,39,42,0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(63,63,70,0.3);
+  }
+
+  .rule-operator {
+    font-size: 14px;
+    font-weight: 600;
+    color: #71717a;
+    width: 18px;
+    text-align: center;
+  }
+
+  .rule-input {
+    width: 64px;
+    background: rgba(9,9,11,0.5);
+    border: 1px solid rgba(63,63,70,0.5);
+    border-radius: 6px;
+    color: #fafafa;
+    padding: 6px 10px;
+    font-size: 14px;
+    font-family: 'IBM Plex Sans', monospace;
+    font-weight: 500;
+    text-align: center;
+  }
+  .rule-input:focus { outline: none; border-color: #4A9EDE; }
+
+  .rule-unit {
+    font-size: 12px;
+    color: #71717a;
+    min-width: 40px;
+  }
+
+  .rule-context {
+    font-size: 12px;
+    color: #52525b;
+  }
+
+  .disabled-overlay {
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  /* Email icon */
+  .icon-sm { width: 14px; height: 14px; }
+
+  .section-divider {
+    height: 1px;
+    background: rgba(39,39,42,0.4);
+    margin: 4px 0;
+  }
+
+  .legend-bar {
+    display: flex;
+    gap: 20px;
+    padding: 10px 20px;
+    margin-bottom: 16px;
+    font-size: 12px;
+    color: #71717a;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+</style>
+</head>
+<body>
+
+<div style="max-width: 1100px; margin: 0 auto;">
+
+  <div class="page-header">
+    <div>
+      <h1>⚙️ Grenzwert-Einstellungen</h1>
+      <div class="subtitle">Alarm-Schwellwerte und Benachrichtigungen konfigurieren</div>
+    </div>
+  </div>
+
+  <div class="template-bar">
+    <label>Template:</label>
+    <select class="template-select">
+      <option>Standard-Template</option>
+      <option>Herzinsuffizienz</option>
+      <option>Post-OP</option>
+    </select>
+    <button class="save-template">💾 Als neues Template speichern</button>
+  </div>
+
+  <div class="legend-bar">
+    <div class="legend-item">
+      <span class="alarm-dot warning"></span>
+      <span>Warnung (Gelb)</span>
+    </div>
+    <div class="legend-item">
+      <span class="alarm-dot critical"></span>
+      <span>Kritisch (Rot)</span>
+    </div>
+    <div class="legend-item">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4m-10-10h4m12 0h4"/></svg>
+      <span>Aktiv</span>
+    </div>
+    <div class="legend-item">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+      <span>E-Mail-Benachrichtigung</span>
+    </div>
+  </div>
+
+  <div class="params-grid">
+
+    <!-- Puls aus RR-Messung -->
+    <div class="param-card">
+      <div class="param-header">
+        <div class="param-icon" style="background: rgba(240,112,64,0.15);">❤️</div>
+        <div>
+          <div class="param-name">Puls aus RR-Messung</div>
+          <div class="param-unit">bpm</div>
+        </div>
+        <div class="param-toggle">
+          <div class="toggle-pill on"></div>
+        </div>
+      </div>
+      <div class="param-body">
+        <div class="alarm-col">
+          <div class="alarm-header">
+            <span class="alarm-dot warning"></span>
+            <span class="alarm-label warning">Warnung</span>
+            <div class="alarm-toggles">
+              <button class="alarm-toggle-btn active" title="Aktiv">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4m-10-10h4m12 0h4"/></svg>
+              </button>
+              <button class="alarm-toggle-btn active" title="E-Mail">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="rules-list">
+            <div class="rule-row">
+              <span class="rule-operator">&lt;</span>
+              <input class="rule-input" value="50" />
+              <span class="rule-unit">bpm</span>
+            </div>
+            <div class="rule-row">
+              <span class="rule-operator">&gt;</span>
+              <input class="rule-input" value="100" />
+              <span class="rule-unit">bpm</span>
+            </div>
+          </div>
+        </div>
+        <div class="alarm-col">
+          <div class="alarm-header">
+            <span class="alarm-dot critical"></span>
+            <span class="alarm-label critical">Kritisch</span>
+            <div class="alarm-toggles">
+              <button class="alarm-toggle-btn active" title="Aktiv">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4m-10-10h4m12 0h4"/></svg>
+              </button>
+              <button class="alarm-toggle-btn active" title="E-Mail">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="rules-list">
+            <div class="rule-row">
+              <span class="rule-operator">&lt;</span>
+              <input class="rule-input" value="40" />
+              <span class="rule-unit">bpm</span>
+            </div>
+            <div class="rule-row">
+              <span class="rule-operator">&gt;</span>
+              <input class="rule-input" value="120" />
+              <span class="rule-unit">bpm</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Blutdruck -->
+    <div class="param-card">
+      <div class="param-header">
+        <div class="param-icon" style="background: rgba(74,158,222,0.15);">🩺</div>
+        <div>
+          <div class="param-name">Blutdruck</div>
+          <div class="param-unit">mmHg (Systolisch / Diastolisch)</div>
+        </div>
+        <div class="param-toggle">
+          <div class="toggle-pill on"></div>
+        </div>
+      </div>
+      <div class="param-body">
+        <div class="alarm-col">
+          <div class="alarm-header">
+            <span class="alarm-dot warning"></span>
+            <span class="alarm-label warning">Warnung</span>
+            <div class="alarm-toggles">
+              <button class="alarm-toggle-btn active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4m-10-10h4m12 0h4"/></svg>
+              </button>
+              <button class="alarm-toggle-btn active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="rules-list">
+            <div style="font-size: 11px; color: #71717a; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; font-weight: 500;">Systolisch</div>
+            <div class="rule-row">
+              <span class="rule-operator">&lt;</span>
+              <input class="rule-input" value="90" />
+              <span class="rule-unit">mmHg</span>
+            </div>
+            <div class="rule-row">
+              <span class="rule-operator">&gt;</span>
+              <input class="rule-input" value="140" />
+              <span class="rule-unit">mmHg</span>
+            </div>
+            <div style="font-size: 11px; color: #71717a; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; margin-top: 8px; font-weight: 500;">Diastolisch</div>
+            <div class="rule-row">
+              <span class="rule-operator">&lt;</span>
+              <input class="rule-input" value="40" />
+              <span class="rule-unit">mmHg</span>
+            </div>
+            <div class="rule-row">
+              <span class="rule-operator">&gt;</span>
+              <input class="rule-input" value="90" />
+              <span class="rule-unit">mmHg</span>
+            </div>
+          </div>
+        </div>
+        <div class="alarm-col">
+          <div class="alarm-header">
+            <span class="alarm-dot critical"></span>
+            <span class="alarm-label critical">Kritisch</span>
+            <div class="alarm-toggles">
+              <button class="alarm-toggle-btn active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4m-10-10h4m12 0h4"/></svg>
+              </button>
+              <button class="alarm-toggle-btn active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="rules-list">
+            <div style="font-size: 11px; color: #71717a; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; font-weight: 500;">Systolisch</div>
+            <div class="rule-row">
+              <span class="rule-operator">&lt;</span>
+              <input class="rule-input" value="80" />
+              <span class="rule-unit">mmHg</span>
+            </div>
+            <div class="rule-row">
+              <span class="rule-operator">&gt;</span>
+              <input class="rule-input" value="160" />
+              <span class="rule-unit">mmHg</span>
+            </div>
+            <div style="font-size: 11px; color: #71717a; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; margin-top: 8px; font-weight: 500;">Diastolisch</div>
+            <div class="rule-row">
+              <span class="rule-operator">&lt;</span>
+              <input class="rule-input" value="30" />
+              <span class="rule-unit">mmHg</span>
+            </div>
+            <div class="rule-row">
+              <span class="rule-operator">&gt;</span>
+              <input class="rule-input" value="100" />
+              <span class="rule-unit">mmHg</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gewicht -->
+    <div class="param-card">
+      <div class="param-header">
+        <div class="param-icon" style="background: rgba(44,201,144,0.15);">⚖️</div>
+        <div>
+          <div class="param-name">Gewicht</div>
+          <div class="param-unit">kg — Gewichtszunahme über Zeitraum</div>
+        </div>
+        <div class="param-toggle">
+          <div class="toggle-pill on"></div>
+        </div>
+      </div>
+      <div class="param-body">
+        <div class="alarm-col">
+          <div class="alarm-header">
+            <span class="alarm-dot warning"></span>
+            <span class="alarm-label warning">Warnung</span>
+            <div class="alarm-toggles">
+              <button class="alarm-toggle-btn active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4m-10-10h4m12 0h4"/></svg>
+              </button>
+              <button class="alarm-toggle-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="rules-list">
+            <div class="rule-row">
+              <span class="rule-operator">&gt;</span>
+              <input class="rule-input" value="1" />
+              <span class="rule-unit">kg in</span>
+              <input class="rule-input" style="width: 40px;" value="1" />
+              <span class="rule-unit">Tag</span>
+            </div>
+            <div class="rule-row">
+              <span class="rule-operator">&gt;</span>
+              <input class="rule-input" value="2" />
+              <span class="rule-unit">kg in</span>
+              <input class="rule-input" style="width: 40px;" value="3" />
+              <span class="rule-unit">Tagen</span>
+            </div>
+            <div class="rule-row">
+              <span class="rule-operator">&gt;</span>
+              <input class="rule-input" value="2,5" />
+              <span class="rule-unit">kg in</span>
+              <input class="rule-input" style="width: 40px;" value="8" />
+              <span class="rule-unit">Tagen</span>
+            </div>
+          </div>
+        </div>
+        <div class="alarm-col">
+          <div class="alarm-header">
+            <span class="alarm-dot critical"></span>
+            <span class="alarm-label critical">Kritisch</span>
+            <div class="alarm-toggles">
+              <button class="alarm-toggle-btn active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4m-10-10h4m12 0h4"/></svg>
+              </button>
+              <button class="alarm-toggle-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="rules-list">
+            <div class="rule-row">
+              <span class="rule-operator">&gt;</span>
+              <input class="rule-input" value="1,5" />
+              <span class="rule-unit">kg in</span>
+              <input class="rule-input" style="width: 40px;" value="1" />
+              <span class="rule-unit">Tag</span>
+            </div>
+            <div class="rule-row">
+              <span class="rule-operator">&gt;</span>
+              <input class="rule-input" value="3" />
+              <span class="rule-unit">kg in</span>
+              <input class="rule-input" style="width: 40px;" value="3" />
+              <span class="rule-unit">Tagen</span>
+            </div>
+            <div class="rule-row">
+              <span class="rule-operator">&gt;</span>
+              <input class="rule-input" value="4" />
+              <span class="rule-unit">kg in</span>
+              <input class="rule-input" style="width: 40px;" value="8" />
+              <span class="rule-unit">Tagen</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sauerstoffsättigung (disabled) -->
+    <div class="param-card" style="opacity: 0.5;">
+      <div class="param-header">
+        <div class="param-icon" style="background: rgba(96,165,250,0.15);">🫁</div>
+        <div>
+          <div class="param-name">Sauerstoffsättigung</div>
+          <div class="param-unit">SpO₂ %</div>
+        </div>
+        <div class="param-toggle">
+          <div class="toggle-pill off"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Befinden -->
+    <div class="param-card">
+      <div class="param-header">
+        <div class="param-icon" style="background: rgba(245,184,64,0.15);">😊</div>
+        <div>
+          <div class="param-name">Befinden</div>
+          <div class="param-unit">Stimmungswert 1–5</div>
+        </div>
+        <div class="param-toggle">
+          <div class="toggle-pill on"></div>
+        </div>
+      </div>
+      <div class="param-body">
+        <div class="alarm-col">
+          <div class="alarm-header">
+            <span class="alarm-dot warning"></span>
+            <span class="alarm-label warning">Warnung</span>
+            <div class="alarm-toggles">
+              <button class="alarm-toggle-btn active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4m-10-10h4m12 0h4"/></svg>
+              </button>
+              <button class="alarm-toggle-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="rules-list">
+            <div class="rule-row">
+              <span class="rule-operator">≤</span>
+              <input class="rule-input" value="2" />
+              <span class="rule-unit">an</span>
+              <input class="rule-input" style="width: 40px;" value="3" />
+              <span class="rule-unit">Tagen in Folge</span>
+            </div>
+          </div>
+        </div>
+        <div class="alarm-col">
+          <div class="alarm-header">
+            <span class="alarm-dot critical"></span>
+            <span class="alarm-label critical">Kritisch</span>
+            <div class="alarm-toggles">
+              <button class="alarm-toggle-btn active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4m-10-10h4m12 0h4"/></svg>
+              </button>
+              <button class="alarm-toggle-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="rules-list">
+            <div class="rule-row">
+              <span class="rule-operator">≤</span>
+              <input class="rule-input" value="1" />
+              <span class="rule-unit">an</span>
+              <input class="rule-input" style="width: 40px;" value="3" />
+              <span class="rule-unit">Tagen in Folge</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keine eingegangene Messung -->
+    <div class="param-card">
+      <div class="param-header">
+        <div class="param-icon" style="background: rgba(113,113,122,0.15);">⏰</div>
+        <div>
+          <div class="param-name">Keine eingegangene Messung</div>
+          <div class="param-unit">Tage ohne Dateneingang</div>
+        </div>
+        <div class="param-toggle">
+          <div class="toggle-pill on"></div>
+        </div>
+      </div>
+      <div class="param-body">
+        <div class="alarm-col">
+          <div class="alarm-header">
+            <span class="alarm-dot warning"></span>
+            <span class="alarm-label warning">Warnung</span>
+            <div class="alarm-toggles">
+              <button class="alarm-toggle-btn active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4m-10-10h4m12 0h4"/></svg>
+              </button>
+              <button class="alarm-toggle-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="rules-list">
+            <div class="rule-row">
+              <span class="rule-operator">&gt;</span>
+              <input class="rule-input" value="3" />
+              <span class="rule-unit">Tage</span>
+            </div>
+          </div>
+        </div>
+        <div class="alarm-col disabled-overlay">
+          <div class="alarm-header">
+            <span class="alarm-dot critical"></span>
+            <span class="alarm-label critical">Kritisch</span>
+            <div class="alarm-toggles">
+              <button class="alarm-toggle-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v4m0 12v4m-10-10h4m12 0h4"/></svg>
+              </button>
+              <button class="alarm-toggle-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="rules-list">
+            <div class="rule-row">
+              <span class="rule-operator">&gt;</span>
+              <input class="rule-input" value="—" disabled />
+              <span class="rule-unit">Tage</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EKG eingegangen -->
+    <div class="param-card">
+      <div class="param-header">
+        <div class="param-icon" style="background: rgba(44,201,144,0.15);">📈</div>
+        <div>
+          <div class="param-name">EKG eingegangen</div>
+          <div class="param-unit">Benachrichtigung bei neuem EKG-Eingang</div>
+        </div>
+        <div class="param-toggle">
+          <div class="toggle-pill on"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
