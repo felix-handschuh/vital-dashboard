@@ -1068,10 +1068,10 @@ export default function VitalDashboard() {
   };
 
   const xDomain = useMemo(() => {
-    const end = NOW;
-    const start = new Date(NOW); start.setDate(start.getDate() - range);
+    const end = new Date(NOW); end.setDate(end.getDate() - chartOffset);
+    const start = new Date(end); start.setDate(start.getDate() - range);
     return [start, end] as [Date, Date];
-  }, [range]);
+  }, [range, chartOffset]);
 
   /* Chart dimensions — responsive: fill container width */
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -2483,22 +2483,7 @@ export default function VitalDashboard() {
         style={{ backgroundColor: P.shortcutBg, borderTop: `1px solid ${P.border}`, backdropFilter: "blur(8px)" }}>
         {/* Timeline slider */}
         <div className="relative mb-1.5">
-          {/* Drag label - shows month/year while dragging */}
-          {isDraggingTimeline && (
-            <div className="absolute text-xs font-semibold px-2 py-0.5 rounded pointer-events-none"
-              style={{
-                left: `calc(${thumbCenter * 100}%)`,
-                top: -20,
-                transform: "translateX(-50%)",
-                backgroundColor: theme === "dark" ? "rgba(99,102,241,0.9)" : "rgba(99,102,241,0.85)",
-                color: "#fff",
-                zIndex: 50,
-                whiteSpace: "nowrap",
-                marginLeft: 240,
-              }}>
-              {dragLabel}
-            </div>
-          )}
+          {/* Drag label - shows month/year while dragging (centered above slider track) */}
           <div className="relative h-3" style={{ marginLeft: 240, marginRight: 8 }}>
             {months.map((m, i) => (
               <span key={i} className="absolute text-[9px] font-mono" style={{ left: `${m.pos * 100}%`, color: P.textMuted, transform: "translateX(-50%)" }}>{m.label}</span>
@@ -2511,6 +2496,21 @@ export default function VitalDashboard() {
             {months.map((m, i) => (
               <div key={i} className="absolute top-0 bottom-0 w-px" style={{ left: `${m.pos * 100}%`, backgroundColor: P.border, opacity: 0.3 }} />
             ))}
+            {/* Drag label - centered above slider */}
+            {isDraggingTimeline && (
+              <div className="absolute text-xs font-semibold px-2.5 py-1 rounded-md pointer-events-none"
+                style={{
+                  left: `${thumbCenter * 100}%`,
+                  top: -28,
+                  transform: "translateX(-50%)",
+                  backgroundColor: theme === "dark" ? "rgba(99,102,241,0.9)" : "rgba(99,102,241,0.85)",
+                  color: "#fff",
+                  zIndex: 50,
+                  whiteSpace: "nowrap",
+                }}>
+                {dragLabel}
+              </div>
+            )}
             {/* Thumb */}
             <div
               className="absolute top-0 bottom-0 rounded-md"
