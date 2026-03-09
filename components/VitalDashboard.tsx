@@ -1004,6 +1004,36 @@ export default function VitalDashboard() {
     };
   }, [allData, range, chartOffset]);
 
+  const chartData = useMemo(() => {
+    if (range < 60) return filteredData;
+    // Aggregate by day: compute daily averages
+    const aggregateByDay = <T extends { date: string }>(arr: T[], valueKeys: string[]): T[] => {
+      const groups = new Map<string, T[]>();
+      arr.forEach(item => {
+        const day = item.date.substring(0, 10);
+        if (!groups.has(day)) groups.set(day, []);
+        groups.get(day)!.push(item);
+      });
+      return Array.from(groups.entries()).map(([day, items]) => {
+        const avg: any = { ...items[0], date: day };
+        valueKeys.forEach(key => {
+          const vals = items.map(i => (i as any)[key]).filter((v: any) => typeof v === "number");
+          if (vals.length > 0) avg[key] = Math.round(vals.reduce((a: number, b: number) => a + b, 0) / vals.length * 10) / 10;
+        });
+        return avg as T;
+      });
+    };
+    return {
+      bp: aggregateByDay(filteredData.bp, ["systolic", "diastolic"]),
+      hr: aggregateByDay(filteredData.hr, ["value"]),
+      weight: aggregateByDay(filteredData.weight, ["value"]),
+      mood: aggregateByDay(filteredData.mood, ["value"]),
+      events: filteredData.events,
+      ecgs: filteredData.ecgs,
+      missed: filteredData.missed,
+    };
+  }, [filteredData, range]);
+
   /* Keyboard shortcuts */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -1219,7 +1249,7 @@ export default function VitalDashboard() {
   };
 
   /* ─── BP Chart ─── */
-  const bpAllVals = useMemo(() => [...filteredData.bp.map(p => p.systolic), ...filteredData.bp.map(p => p.diastolic)], [filteredData.bp]);
+  const bpAllVals = useMemo(() => [...chartData.bp.map(p => p.systolic), ...chartData.bp.map(p => p.diastolic)], [chartData.bp]);
   const bpYDomain = useMemo(() => niceYDomain(bpAllVals, 0.08), [bpAllVals]);
   const bpChart = renderChart("bp", tr.bloodPressure, <Activity size={18} color={P.bpSystolic} />, P.bpSystolic,
     (xS, yS, iH) => {
@@ -1231,13 +1261,13 @@ export default function VitalDashboard() {
         if (i === 0) return true;
         return (new Date(d.date).getTime() - new Date(arr[i - 1].date).getTime()) < 48 * 3600 * 1000;
       }).curve(d3.curveMonotoneX);
-      const medVals = rollingMedian(filteredData.bp.map(p => ({ date: p.date, v: p.systolic })));
+      const medVals = rollingMedian(chartData.bp.map(p => ({ date: p.date, v: p.systolic })));
       const medLine = d3.line<{ date: string; v: number }>().x(d => xS(new Date(d.date))).y(d => yS(d.v)).curve(d3.curveCatmullRom);
 
       return (
         <g>
-          <path d={sysLine(filteredData.bp) || ""} fill="none" stroke={P.bpSystolic} strokeWidth={detail.lineWidth} />
-          <path d={diaLine(filteredData.bp) || ""} fill="none" stroke={P.bpDiastolic} strokeWidth={detail.lineWidth} />
+          <path d={sysLine(chartData.bp) || ""} fill="none" stroke={P.bpSystolic} strokeWidth={detail.lineWidth} />
+          <path d={diaLine(chartData.bp) || ""} fill="none" stroke={P.bpDiastolic} strokeWidth={detail.lineWidth} />
           <path d={medLine(medVals) || ""} fill="none" stroke={P.median} strokeWidth={detail.medianWidth} strokeDasharray="4,4" opacity={0.5} />
           {/* Median hover points */}
           {medVals.map((mv, i) => {
@@ -1252,7 +1282,7 @@ export default function VitalDashboard() {
               </g>
             );
           })}
-          {filteredData.bp.map((p, i) => {
+          {chartData.bp.map((p, i) => {
             const x = xS(new Date(p.date));
             const ySys = yS(p.systolic);
             const yDia = yS(p.diastolic);
@@ -1280,9 +1310,9 @@ export default function VitalDashboard() {
               </g>
             );
           })}
-          {filteredData.bp.length > 7 && (() => {
-            const trend = detectTrend(filteredData.bp.map(p => p.systolic));
-            const last = filteredData.bp[filteredData.bp.length - 1];
+          {chartData.bp.length > 7 && (() => {
+            const trend = detectTrend(chartData.bp.map(p => p.systolic));
+            const last = chartData.bp[chartData.bp.length - 1];
             if (trend === "stable") return null;
             return <g transform={`translate(${xS(new Date(last.date)) + 12},${yS(last.systolic) - 10})`}><SvgTrendArrow trend={trend} color={trend === "up" ? P.danger : P.good} /></g>;
           })()}
@@ -1293,19 +1323,19 @@ export default function VitalDashboard() {
   );
 
   /* ─── HR Chart ─── */
-  const hrYDomain = useMemo(() => niceYDomain(filteredData.hr.map(p => p.value), 0.1), [filteredData.hr]);
+  const hrYDomain = useMemo(() => niceYDomain(chartData.hr.map(p => p.value), 0.1), [chartData.hr]);
   const hrChart = renderChart("hr", tr.heartRate, <Heart size={18} color={P.heartRate} />, P.heartRate,
     (xS, yS, iH) => {
       const line = d3.line<HrPoint>().x(d => xS(new Date(d.date))).y(d => yS(d.value)).defined((d, i, arr) => {
         if (i === 0) return true;
         return (new Date(d.date).getTime() - new Date(arr[i - 1].date).getTime()) < 48 * 3600 * 1000;
       }).curve(d3.curveMonotoneX);
-      const medVals = rollingMedian(filteredData.hr.map(p => ({ date: p.date, v: p.value })));
+      const medVals = rollingMedian(chartData.hr.map(p => ({ date: p.date, v: p.value })));
       const medLine = d3.line<{ date: string; v: number }>().x(d => xS(new Date(d.date))).y(d => yS(d.v)).curve(d3.curveCatmullRom);
 
       return (
         <g>
-          <path d={line(filteredData.hr) || ""} fill="none" stroke={P.heartRate} strokeWidth={detail.lineWidth} />
+          <path d={line(chartData.hr) || ""} fill="none" stroke={P.heartRate} strokeWidth={detail.lineWidth} />
           <path d={medLine(medVals) || ""} fill="none" stroke={P.median} strokeWidth={detail.medianWidth} strokeDasharray="4,4" opacity={0.5} />
           {/* Median hover points */}
           {medVals.map((mv, i) => {
@@ -1320,7 +1350,7 @@ export default function VitalDashboard() {
               </g>
             );
           })}
-          {filteredData.hr.map((p, i) => {
+          {chartData.hr.map((p, i) => {
             const x = xS(new Date(p.date));
             const y = yS(p.value);
             const s = detail.dotRadius;
@@ -1340,9 +1370,9 @@ export default function VitalDashboard() {
               </g>
             );
           })}
-          {filteredData.hr.length > 7 && (() => {
-            const trend = detectTrend(filteredData.hr.map(p => p.value));
-            const last = filteredData.hr[filteredData.hr.length - 1];
+          {chartData.hr.length > 7 && (() => {
+            const trend = detectTrend(chartData.hr.map(p => p.value));
+            const last = chartData.hr[chartData.hr.length - 1];
             if (trend === "stable") return null;
             return <g transform={`translate(${xS(new Date(last.date)) + 12},${yS(last.value) - 10})`}><SvgTrendArrow trend={trend} color={trend === "up" ? P.warning : P.good} /></g>;
           })()}
@@ -1353,7 +1383,7 @@ export default function VitalDashboard() {
   );
 
   /* ─── Weight Chart ─── */
-  const wYDomain = useMemo(() => niceYDomain(filteredData.weight.map(p => p.value), 0.12), [filteredData.weight]);
+  const wYDomain = useMemo(() => niceYDomain(chartData.weight.map(p => p.value), 0.12), [chartData.weight]);
   const weightChart = renderChart("weight", tr.weight, <Weight size={18} color={P.weight} />, P.weight,
     (xS, yS, iH) => {
       const line = d3.line<WeightPoint>().x(d => xS(new Date(d.date))).y(d => yS(d.value)).defined((d, i, arr) => {
@@ -1363,8 +1393,8 @@ export default function VitalDashboard() {
 
       return (
         <g>
-          <path d={line(filteredData.weight) || ""} fill="none" stroke={P.weight} strokeWidth={detail.lineWidth} />
-          {filteredData.weight.map((p, i) => {
+          <path d={line(chartData.weight) || ""} fill="none" stroke={P.weight} strokeWidth={detail.lineWidth} />
+          {chartData.weight.map((p, i) => {
             const x = xS(new Date(p.date));
             const y = yS(p.value);
             return (
@@ -1393,7 +1423,7 @@ export default function VitalDashboard() {
   const moodChart = renderChart("mood", tr.mood, <Smile size={18} color={P.mood} />, P.mood,
     (xS, yS, iH) => (
       <g>
-        {filteredData.mood.map((p, i) => {
+        {chartData.mood.map((p, i) => {
           const x = xS(new Date(p.date));
           const y = yS(p.value);
           return (
@@ -1475,7 +1505,7 @@ export default function VitalDashboard() {
       }
       const xValue = xScale.invert(x);
       const data: Record<string, any> = {};
-      let yPos = 0;
+      let yPos = iH;
 
       if (overviewVisible.sys && filteredData.bp.length > 0) {
         const nearest = filteredData.bp.reduce((prev, curr) =>
@@ -1483,7 +1513,7 @@ export default function VitalDashboard() {
           Math.abs(new Date(prev.date).getTime() - xValue.getTime()) ? curr : prev
         );
         data.sys = { value: nearest.systolic, date: nearest.date };
-        yPos = yScaleLeft(nearest.systolic);
+        yPos = Math.min(yPos, yScaleLeft(nearest.systolic));
       }
       if (overviewVisible.hr && filteredData.hr.length > 0) {
         const nearest = filteredData.hr.reduce((prev, curr) =>
@@ -1491,7 +1521,7 @@ export default function VitalDashboard() {
           Math.abs(new Date(prev.date).getTime() - xValue.getTime()) ? curr : prev
         );
         data.hr = { value: nearest.value, date: nearest.date };
-        if (yPos === 0) yPos = yScaleLeft(nearest.value);
+        yPos = Math.min(yPos, yScaleLeft(nearest.value));
       }
       if (overviewVisible.weight && filteredData.weight.length > 0) {
         const nearest = filteredData.weight.reduce((prev, curr) =>
@@ -1499,6 +1529,7 @@ export default function VitalDashboard() {
           Math.abs(new Date(prev.date).getTime() - xValue.getTime()) ? curr : prev
         );
         data.weight = { value: nearest.value, date: nearest.date };
+        yPos = Math.min(yPos, yScaleRight(nearest.value));
       }
       if (overviewVisible.mood && filteredData.mood.length > 0) {
         const nearest = filteredData.mood.reduce((prev, curr) =>
@@ -1506,6 +1537,7 @@ export default function VitalDashboard() {
           Math.abs(new Date(prev.date).getTime() - xValue.getTime()) ? curr : prev
         );
         data.mood = { value: nearest.value, date: nearest.date };
+        yPos = Math.min(yPos, yScaleLeft(mapMoodToLeftScale(nearest.value)));
       }
 
       setOverviewHover({ xPos: x, yPos, data });
@@ -1589,10 +1621,10 @@ export default function VitalDashboard() {
               ))}
               {/* Clipped content */}
               <g clipPath="url(#clip-overview)">
-                {overviewVisible.sys && <path d={sysLine(filteredData.bp) || ""} fill="none" stroke={P.bpSystolic} strokeWidth={1.8} opacity={0.9} />}
-                {overviewVisible.hr && <path d={hrLine(filteredData.hr) || ""} fill="none" stroke={P.heartRate} strokeWidth={1.8} opacity={0.9} />}
-                {overviewVisible.weight && <path d={weightLine(filteredData.weight) || ""} fill="none" stroke={P.weight} strokeWidth={1.8} opacity={0.9} />}
-                {overviewVisible.mood && <path d={moodLine(filteredData.mood) || ""} fill="none" stroke={P.mood} strokeWidth={1.8} opacity={0.9} />}
+                {overviewVisible.sys && <path d={sysLine(chartData.bp) || ""} fill="none" stroke={P.bpSystolic} strokeWidth={1.8} opacity={0.9} />}
+                {overviewVisible.hr && <path d={hrLine(chartData.hr) || ""} fill="none" stroke={P.heartRate} strokeWidth={1.8} opacity={0.9} />}
+                {overviewVisible.weight && <path d={weightLine(chartData.weight) || ""} fill="none" stroke={P.weight} strokeWidth={1.8} opacity={0.9} />}
+                {overviewVisible.mood && <path d={moodLine(chartData.mood) || ""} fill="none" stroke={P.mood} strokeWidth={1.8} opacity={0.9} />}
                 {/* Hover vertical line */}
                 {overviewHover && (
                   <line x1={overviewHover.xPos} y1={0} x2={overviewHover.xPos} y2={iH} stroke={P.textMuted} strokeWidth={1} opacity={0.5} strokeDasharray="3,3" />
@@ -1606,7 +1638,7 @@ export default function VitalDashboard() {
               style={{
                 position: "absolute",
                 left: `calc(${(margin.left + overviewHover.xPos) / chartW * 100}% - 50px)`,
-                top: `${Math.max(0, margin.top + overviewHover.yPos - 60)}px`,
+                top: `${Math.max(0, margin.top + overviewHover.yPos - 80)}px`,
                 backgroundColor: P.bgPanel,
                 border: `1px solid ${P.border}`,
                 borderRadius: "6px",
@@ -2361,6 +2393,22 @@ export default function VitalDashboard() {
           <span className="text-xs" style={{ color: P.textMuted }}>{s.label}</span>
         </div>
       ))}
+      {/* Divider */}
+      <div style={{ width: 1, height: 20, backgroundColor: P.border }} />
+      {/* Time navigation */}
+      <div className="flex items-center gap-1.5">
+        <button onClick={() => handleChartNav("left")} className="p-1 rounded transition-colors" style={{ backgroundColor: P.bgInput, color: P.textSecondary }}>
+          <ChevronLeft size={14} />
+        </button>
+        <span className="text-xs font-mono" style={{ color: P.textMuted }}>
+          {chartOffset > 0 ? `−${chartOffset}d` : "Aktuell"}
+        </span>
+        <button onClick={() => handleChartNav("right")} className="p-1 rounded transition-colors"
+          style={{ backgroundColor: P.bgInput, color: chartOffset === 0 ? P.border : P.textSecondary, cursor: chartOffset === 0 ? "default" : "pointer" }}
+          disabled={chartOffset === 0}>
+          <ChevronRight size={14} />
+        </button>
+      </div>
     </div>
   );
 
@@ -3584,12 +3632,7 @@ export default function VitalDashboard() {
                 </div>
 
                 {/* ── Time range selector + view toggle ── */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <button onClick={() => handleChartNav("left")} 
-                    className="p-1.5 rounded transition-colors"
-                    style={{ backgroundColor: P.bgInput, color: P.textSecondary }}>
-                    <ChevronLeft size={16} />
-                  </button>
+                <div className="sticky top-0 z-20 flex items-center gap-2 flex-wrap py-2 -mx-6 px-6" style={{ backgroundColor: P.bg }}>
                   {RANGES.map((r) => (
                     <button
                       key={r}
@@ -3608,12 +3651,6 @@ export default function VitalDashboard() {
                       {r}T
                     </button>
                   ))}
-                  <button onClick={() => handleChartNav("right")}
-                    className="p-1.5 rounded transition-colors"
-                    style={{ backgroundColor: P.bgInput, color: chartOffset === 0 ? P.border : P.textSecondary, cursor: chartOffset === 0 ? "default" : "pointer" }}
-                    disabled={chartOffset === 0}>
-                    <ChevronRight size={16} />
-                  </button>
                   <div className="relative">
                     <button
                       onClick={() => setDatePickerOpen(!datePickerOpen)}
