@@ -753,6 +753,8 @@ export default function VitalDashboard() {
   const [thresholdModified, setThresholdModified] = useState(false);
   const [saveTemplateName, setSaveTemplateName] = useState("");
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [openThresholdParam, setOpenThresholdParam] = useState<string | null>(null);
+  const [autoCorrectFlash, setAutoCorrectFlash] = useState<string | null>(null);
 
   const activeTemplate = templates.find(t => t.id === activeTemplateId);
   const displayTemplateName = activeTemplate
@@ -2230,8 +2232,71 @@ export default function VitalDashboard() {
   const handleRuleValueChange = (paramId: string, level: "yellow" | "red", ruleId: string, field: "value" | "secondValue", newVal: number) => {
     setThresholdParams(prev => prev.map(p => {
       if (p.id !== paramId) return p;
-      const lvl = { ...p[level], rules: p[level].rules.map(r => r.id === ruleId ? { ...r, [field]: newVal } : r) };
-      return { ...p, [level]: lvl };
+
+      // Get the rule being changed
+      const changedRuleIndex = p[level].rules.findIndex(r => r.id === ruleId);
+      if (changedRuleIndex === -1) return p;
+
+      const changedRule = p[level].rules[changedRuleIndex];
+      const otherLevel = level === "yellow" ? "red" : "yellow";
+      const correspondingRule = p[otherLevel].rules[changedRuleIndex];
+
+      // If no corresponding rule in other level, just update normally
+      if (!correspondingRule) {
+        const lvl = { ...p[level], rules: p[level].rules.map(r => r.id === ruleId ? { ...r, [field]: newVal } : r) };
+        return { ...p, [level]: lvl };
+      }
+
+      // Validation logic: ensure red is stricter than yellow
+      let newYellow = { ...p.yellow };
+      let newRed = { ...p.red };
+
+      if (level === "yellow") {
+        // User changed yellow value
+        const updatedRule = { ...changedRule, [field]: newVal };
+
+        // For ">" or "≥" (upper thresholds): red must be >= yellow
+        if (changedRule.operator === ">" || changedRule.operator === "≥") {
+          if (field === "value" && correspondingRule.value < newVal) {
+            // Auto-adjust red up to match yellow
+            setAutoCorrectFlash(`${paramId}-${otherLevel}`);
+            newRed = { ...p.red, rules: p.red.rules.map((r, idx) => idx === changedRuleIndex ? { ...r, value: newVal } : r) };
+          }
+        }
+        // For "<" or "≤" (lower thresholds): red must be <= yellow
+        else if (changedRule.operator === "<" || changedRule.operator === "≤") {
+          if (field === "value" && correspondingRule.value > newVal) {
+            // Auto-adjust red down to match yellow
+            setAutoCorrectFlash(`${paramId}-${otherLevel}`);
+            newRed = { ...p.red, rules: p.red.rules.map((r, idx) => idx === changedRuleIndex ? { ...r, value: newVal } : r) };
+          }
+        }
+        newYellow = { ...p.yellow, rules: p.yellow.rules.map(r => r.id === ruleId ? updatedRule : r) };
+      } else {
+        // User changed red value
+        const updatedRule = { ...changedRule, [field]: newVal };
+
+        // For ">" or "≥" (upper thresholds): red must be >= yellow
+        if (changedRule.operator === ">" || changedRule.operator === "≥") {
+          if (field === "value" && correspondingRule.value > newVal) {
+            // Auto-adjust yellow down to match red
+            setAutoCorrectFlash(`${paramId}-yellow`);
+            newYellow = { ...p.yellow, rules: p.yellow.rules.map((r, idx) => idx === changedRuleIndex ? { ...r, value: newVal } : r) };
+          }
+        }
+        // For "<" or "≤" (lower thresholds): red must be <= yellow
+        else if (changedRule.operator === "<" || changedRule.operator === "≤") {
+          if (field === "value" && correspondingRule.value < newVal) {
+            // Auto-adjust yellow up to match red
+            setAutoCorrectFlash(`${paramId}-yellow`);
+            newYellow = { ...p.yellow, rules: p.yellow.rules.map((r, idx) => idx === changedRuleIndex ? { ...r, value: newVal } : r) };
+          }
+        }
+        newRed = { ...p.red, rules: p.red.rules.map(r => r.id === ruleId ? updatedRule : r) };
+      }
+
+      setTimeout(() => setAutoCorrectFlash(null), 600);
+      return { ...p, yellow: newYellow, red: newRed };
     }));
     setThresholdModified(true);
   };
@@ -2265,6 +2330,19 @@ export default function VitalDashboard() {
     if (activeTemplateId === templateId) {
       handleTemplateChange("standard");
     }
+  };
+
+  /* ── Icon mapping for threshold parameters ── */
+  const paramIconMap: Record<string, React.ReactNode> = {
+    pulse: <Heart size={18} />,
+    bp: <Activity size={18} />,
+    weight: <Weight size={18} />,
+    spo2: <Activity size={18} />,
+    mood: <Smile size={18} />,
+    nodata: <Clock size={18} />,
+    ecg_received: <FileHeart size={18} />,
+    ecg_findings: <FileHeart size={18} />,
+    implant_template: <Cpu size={18} />,
   };
 
   /* ── Threshold Settings Page ── */
@@ -2362,14 +2440,14 @@ export default function VitalDashboard() {
       )}
 
       {/* Alarm legend */}
-      <div className="flex items-center gap-4 text-sm" style={{ color: P.textSecondary }}>
+      <div className="flex items-center gap-4 text-sm flex-wrap" style={{ color: P.textSecondary }}>
         <span className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded" style={{ backgroundColor: P.alarmYellow }} />
-          <span>1. Schwellwert (Warnung)</span>
+          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: P.alarmYellow }} />
+          <span>Warnung</span>
         </span>
         <span className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded" style={{ backgroundColor: P.alarmRed }} />
-          <span>2. Schwellwert (Kritisch)</span>
+          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: P.alarmRed }} />
+          <span>Kritisch</span>
         </span>
         <span className="flex items-center gap-2">
           <Mail size={14} />
@@ -2377,131 +2455,193 @@ export default function VitalDashboard() {
         </span>
       </div>
 
-      {/* Threshold table */}
-      <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
-        {/* Table header */}
-        <div className="grid grid-cols-[240px_1fr_1fr] text-sm font-semibold" style={{ borderBottom: `2px solid ${P.border}` }}>
-          <div className="px-5 py-3" style={{ color: P.textMuted }}>Parameter</div>
-          <div className="px-5 py-3 text-center" style={{ backgroundColor: "rgba(234,179,8,0.08)", color: P.alarmYellow }}>
-            1. Schwellwert (Warnung)
-          </div>
-          <div className="px-5 py-3 text-center" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: P.alarmRed }}>
-            2. Schwellwert (Kritisch)
-          </div>
-        </div>
+      {/* Accordion parameter cards */}
+      <div className="space-y-3">
+        {thresholdParams.map((param) => {
+          const isOpen = openThresholdParam === param.id;
+          const hasYellowAlarm = param.yellow.enabled;
+          const hasRedAlarm = param.red.enabled;
+          const icon = paramIconMap[param.id] || <Activity size={18} />;
 
-        {/* Table rows */}
-        {thresholdParams.map((param, idx) => {
-          const isLast = idx === thresholdParams.length - 1;
           return (
-            <div key={param.id} className="grid grid-cols-[240px_1fr_1fr]"
-              style={{ borderBottom: isLast ? "none" : `1px solid ${P.border}` }}>
-              {/* Parameter label */}
-              <div className="px-5 py-4 flex items-start">
-                <span className="text-sm font-medium" style={{ color: P.text }}>{param.label}</span>
-              </div>
-
-              {/* Yellow alarm column */}
-              <div className="px-4 py-3 space-y-2" style={{ backgroundColor: "rgba(234,179,8,0.04)", borderLeft: `1px solid ${P.border}` }}>
-                <div className="flex items-center gap-3">
-                  <button onClick={() => handleParamChange(param.id, "yellow", "enabled", !param.yellow.enabled)}
-                    className="transition-colors" style={{ color: param.yellow.enabled ? P.alarmYellow : P.textDim }}>
-                    {param.yellow.enabled ? <ToggleRight size={22} /> : <ToggleLeft size={22} />}
-                  </button>
-                  <button onClick={() => handleParamChange(param.id, "yellow", "emailNotify", !param.yellow.emailNotify)}
-                    className="p-1 rounded transition-colors"
-                    style={{ color: param.yellow.emailNotify ? P.bpSystolic : P.textDim }}
-                    title={param.yellow.emailNotify ? "E-Mail aktiv" : "E-Mail deaktiviert"}>
-                    <Mail size={16} />
-                  </button>
+            <div key={param.id} className="rounded-lg overflow-hidden shadow-sm transition-all"
+              style={{
+                backgroundColor: P.bgCard,
+                border: `1px solid ${(hasYellowAlarm || hasRedAlarm) ? P.border : P.border}`,
+                borderColor: (hasYellowAlarm || hasRedAlarm) ? "rgba(245, 158, 11, 0.3)" : P.border,
+              }}>
+              {/* Accordion Header */}
+              <button
+                onClick={() => setOpenThresholdParam(isOpen ? null : param.id)}
+                className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:opacity-75"
+                style={{ backgroundColor: isOpen ? P.bgInput : "transparent" }}>
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div style={{ color: P.textSecondary, flexShrink: 0 }}>
+                    {icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold" style={{ color: P.text }}>{param.label}</div>
+                    {param.unit && <div className="text-xs" style={{ color: P.textMuted }}>{param.unit}</div>}
+                  </div>
                 </div>
-                {param.yellow.enabled && param.yellow.rules.length > 0 && (
-                  <div className="space-y-1.5 pl-1">
-                    {param.yellow.rules.map(rule => (
-                      <div key={rule.id} className="flex items-center gap-1.5 text-sm flex-wrap">
-                        <span style={{ color: P.textMuted }}>{rule.operator}</span>
-                        <input
-                          type="number"
-                          value={rule.value}
-                          onChange={(e) => handleRuleValueChange(param.id, "yellow", rule.id, "value", parseFloat(e.target.value) || 0)}
-                          className="w-14 px-2 py-1 rounded text-sm text-center font-mono font-semibold outline-none border-0"
-                          style={{ backgroundColor: P.bgInput, color: P.text }}
-                          step={rule.suffix?.includes("kg") ? 0.5 : 1}
-                        />
-                        {rule.suffix && <span className="text-xs" style={{ color: P.textMuted }}>{rule.suffix}</span>}
-                        {rule.secondValue !== undefined && (
-                          <>
-                            <input
-                              type="number"
-                              value={rule.secondValue}
-                              onChange={(e) => handleRuleValueChange(param.id, "yellow", rule.id, "secondValue", parseInt(e.target.value) || 0)}
-                              className="w-12 px-2 py-1 rounded text-sm text-center font-mono font-semibold outline-none border-0"
-                              style={{ backgroundColor: P.bgInput, color: P.text }}
-                            />
-                            {rule.secondSuffix && <span className="text-xs" style={{ color: P.textMuted }}>{rule.secondSuffix}</span>}
-                          </>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {param.yellow.enabled && param.yellow.rules.length === 0 && param.id !== "nodata" && (
-                  <div className="pl-1 py-1">
-                    <span className="text-xs" style={{ color: P.textMuted }}>Aktiv (keine Parameter)</span>
-                  </div>
-                )}
-              </div>
 
-              {/* Red alarm column */}
-              <div className="px-4 py-3 space-y-2" style={{ backgroundColor: "rgba(239,68,68,0.04)", borderLeft: `1px solid ${P.border}` }}>
-                <div className="flex items-center gap-3">
-                  <button onClick={() => handleParamChange(param.id, "red", "enabled", !param.red.enabled)}
-                    className="transition-colors" style={{ color: param.red.enabled ? P.alarmRed : P.textDim }}>
-                    {param.red.enabled ? <ToggleRight size={22} /> : <ToggleLeft size={22} />}
-                  </button>
-                  <button onClick={() => handleParamChange(param.id, "red", "emailNotify", !param.red.emailNotify)}
-                    className="p-1 rounded transition-colors"
-                    style={{ color: param.red.emailNotify ? P.bpSystolic : P.textDim }}
-                    title={param.red.emailNotify ? "E-Mail aktiv" : "E-Mail deaktiviert"}>
-                    <Mail size={16} />
-                  </button>
+                {/* Status badges */}
+                <div className="flex items-center gap-2 flex-wrap justify-end">
+                  {hasYellowAlarm && (
+                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold"
+                      style={{ backgroundColor: `${P.alarmYellow}22`, color: P.alarmYellow }}>
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.alarmYellow }} />
+                      Warnung
+                    </span>
+                  )}
+                  {hasRedAlarm && (
+                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold"
+                      style={{ backgroundColor: `${P.alarmRed}22`, color: P.alarmRed }}>
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.alarmRed }} />
+                      Kritisch
+                    </span>
+                  )}
+                  {!hasYellowAlarm && !hasRedAlarm && (
+                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold"
+                      style={{ backgroundColor: `${P.textMuted}22`, color: P.textMuted }}>
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.textMuted }} />
+                      Inaktiv
+                    </span>
+                  )}
                 </div>
-                {param.red.enabled && param.red.rules.length > 0 && (
-                  <div className="space-y-1.5 pl-1">
-                    {param.red.rules.map(rule => (
-                      <div key={rule.id} className="flex items-center gap-1.5 text-sm flex-wrap">
-                        <span style={{ color: P.textMuted }}>{rule.operator}</span>
-                        <input
-                          type="number"
-                          value={rule.value}
-                          onChange={(e) => handleRuleValueChange(param.id, "red", rule.id, "value", parseFloat(e.target.value) || 0)}
-                          className="w-14 px-2 py-1 rounded text-sm text-center font-mono font-semibold outline-none border-0"
-                          style={{ backgroundColor: P.bgInput, color: P.text }}
-                          step={rule.suffix?.includes("kg") ? 0.5 : 1}
-                        />
-                        {rule.suffix && <span className="text-xs" style={{ color: P.textMuted }}>{rule.suffix}</span>}
-                        {rule.secondValue !== undefined && (
-                          <>
-                            <input
-                              type="number"
-                              value={rule.secondValue}
-                              onChange={(e) => handleRuleValueChange(param.id, "red", rule.id, "secondValue", parseInt(e.target.value) || 0)}
-                              className="w-12 px-2 py-1 rounded text-sm text-center font-mono font-semibold outline-none border-0"
-                              style={{ backgroundColor: P.bgInput, color: P.text }}
-                            />
-                            {rule.secondSuffix && <span className="text-xs" style={{ color: P.textMuted }}>{rule.secondSuffix}</span>}
-                          </>
-                        )}
+
+                {/* Chevron */}
+                <div style={{ color: P.textMuted, flexShrink: 0, transition: "transform 0.2s", transform: isOpen ? "rotate(90deg)" : "rotate(0deg)" }}>
+                  <ChevronRight size={18} />
+                </div>
+              </button>
+
+              {/* Accordion Body */}
+              {isOpen && (
+                <div className="px-5 py-4 space-y-4" style={{ borderTop: `1px solid ${P.border}`, backgroundColor: P.bgInput }}>
+                  {/* Yellow alarm column */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: P.alarmYellow }} />
+                      <span className="text-sm font-semibold" style={{ color: P.alarmYellow }}>Warnung</span>
+                    </div>
+                    <div className="space-y-2">
+                      {/* Toggle button */}
+                      <div className="flex items-center gap-3">
+                        <button onClick={() => handleParamChange(param.id, "yellow", "enabled", !param.yellow.enabled)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                          style={{ backgroundColor: param.yellow.enabled ? `${P.alarmYellow}22` : P.bgCard, color: param.yellow.enabled ? P.alarmYellow : P.textMuted }}>
+                          {param.yellow.enabled ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
+                          <span>{param.yellow.enabled ? "Aktiv" : "Inaktiv"}</span>
+                        </button>
+                        {/* Email chip */}
+                        <button onClick={() => handleParamChange(param.id, "yellow", "emailNotify", !param.yellow.emailNotify)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                          style={{ backgroundColor: param.yellow.emailNotify ? `${P.alarmYellow}22` : P.bgCard, color: param.yellow.emailNotify ? P.alarmYellow : P.textMuted }}>
+                          <Mail size={16} />
+                          <span>E-Mail</span>
+                        </button>
                       </div>
-                    ))}
+                      {/* Rules */}
+                      {param.yellow.enabled && param.yellow.rules.length > 0 && (
+                        <div className="space-y-2 ml-2">
+                          {param.yellow.rules.map((rule, ruleIdx) => (
+                            <div key={rule.id} className="flex items-center gap-1.5 text-sm flex-wrap p-2 rounded-lg"
+                              style={{ backgroundColor: autoCorrectFlash === `${param.id}-yellow` && ruleIdx === 0 ? `${P.alarmYellow}33` : P.bgCard, transition: "background-color 0.3s" }}>
+                              <span style={{ color: P.textMuted, fontWeight: 600 }}>{rule.operator}</span>
+                              <input
+                                type="number"
+                                value={rule.value}
+                                onChange={(e) => handleRuleValueChange(param.id, "yellow", rule.id, "value", parseFloat(e.target.value) || 0)}
+                                className="w-16 px-2 py-1 rounded text-sm text-center font-mono font-semibold outline-none border-0"
+                                style={{ backgroundColor: P.bgPanel, color: P.text }}
+                                step={rule.suffix?.includes("kg") ? 0.5 : 1}
+                              />
+                              {rule.suffix && <span className="text-xs" style={{ color: P.textMuted }}>{rule.suffix}</span>}
+                              {rule.secondValue !== undefined && (
+                                <>
+                                  <input
+                                    type="number"
+                                    value={rule.secondValue}
+                                    onChange={(e) => handleRuleValueChange(param.id, "yellow", rule.id, "secondValue", parseInt(e.target.value) || 0)}
+                                    className="w-14 px-2 py-1 rounded text-sm text-center font-mono font-semibold outline-none border-0"
+                                    style={{ backgroundColor: P.bgPanel, color: P.text }}
+                                  />
+                                  {rule.secondSuffix && <span className="text-xs" style={{ color: P.textMuted }}>{rule.secondSuffix}</span>}
+                                </>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {param.yellow.enabled && param.yellow.rules.length === 0 && param.id !== "nodata" && (
+                        <div className="ml-2 p-2 text-xs" style={{ color: P.textMuted }}>Aktiv (keine Parameter)</div>
+                      )}
+                    </div>
                   </div>
-                )}
-                {param.red.enabled && param.red.rules.length === 0 && (
-                  <div className="pl-1 py-1">
-                    <span className="text-xs" style={{ color: P.textMuted }}>Aktiv (keine Parameter)</span>
+
+                  {/* Red alarm column */}
+                  <div className="space-y-3 pt-3" style={{ borderTop: `1px solid ${P.border}` }}>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: P.alarmRed }} />
+                      <span className="text-sm font-semibold" style={{ color: P.alarmRed }}>Kritisch</span>
+                    </div>
+                    <div className="space-y-2">
+                      {/* Toggle button */}
+                      <div className="flex items-center gap-3">
+                        <button onClick={() => handleParamChange(param.id, "red", "enabled", !param.red.enabled)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                          style={{ backgroundColor: param.red.enabled ? `${P.alarmRed}22` : P.bgCard, color: param.red.enabled ? P.alarmRed : P.textMuted }}>
+                          {param.red.enabled ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
+                          <span>{param.red.enabled ? "Aktiv" : "Inaktiv"}</span>
+                        </button>
+                        {/* Email chip */}
+                        <button onClick={() => handleParamChange(param.id, "red", "emailNotify", !param.red.emailNotify)}
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                          style={{ backgroundColor: param.red.emailNotify ? `${P.alarmRed}22` : P.bgCard, color: param.red.emailNotify ? P.alarmRed : P.textMuted }}>
+                          <Mail size={16} />
+                          <span>E-Mail</span>
+                        </button>
+                      </div>
+                      {/* Rules */}
+                      {param.red.enabled && param.red.rules.length > 0 && (
+                        <div className="space-y-2 ml-2">
+                          {param.red.rules.map((rule, ruleIdx) => (
+                            <div key={rule.id} className="flex items-center gap-1.5 text-sm flex-wrap p-2 rounded-lg"
+                              style={{ backgroundColor: autoCorrectFlash === `${param.id}-red` && ruleIdx === 0 ? `${P.alarmRed}33` : P.bgCard, transition: "background-color 0.3s" }}>
+                              <span style={{ color: P.textMuted, fontWeight: 600 }}>{rule.operator}</span>
+                              <input
+                                type="number"
+                                value={rule.value}
+                                onChange={(e) => handleRuleValueChange(param.id, "red", rule.id, "value", parseFloat(e.target.value) || 0)}
+                                className="w-16 px-2 py-1 rounded text-sm text-center font-mono font-semibold outline-none border-0"
+                                style={{ backgroundColor: P.bgPanel, color: P.text }}
+                                step={rule.suffix?.includes("kg") ? 0.5 : 1}
+                              />
+                              {rule.suffix && <span className="text-xs" style={{ color: P.textMuted }}>{rule.suffix}</span>}
+                              {rule.secondValue !== undefined && (
+                                <>
+                                  <input
+                                    type="number"
+                                    value={rule.secondValue}
+                                    onChange={(e) => handleRuleValueChange(param.id, "red", rule.id, "secondValue", parseInt(e.target.value) || 0)}
+                                    className="w-14 px-2 py-1 rounded text-sm text-center font-mono font-semibold outline-none border-0"
+                                    style={{ backgroundColor: P.bgPanel, color: P.text }}
+                                  />
+                                  {rule.secondSuffix && <span className="text-xs" style={{ color: P.textMuted }}>{rule.secondSuffix}</span>}
+                                </>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {param.red.enabled && param.red.rules.length === 0 && (
+                        <div className="ml-2 p-2 text-xs" style={{ color: P.textMuted }}>Aktiv (keine Parameter)</div>
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           );
         })}
@@ -2511,9 +2651,8 @@ export default function VitalDashboard() {
       <div className="flex items-start gap-3 px-4 py-3 rounded-md text-sm" style={{ backgroundColor: P.bgInput, color: P.textSecondary }}>
         <Info size={16} className="mt-0.5 shrink-0" />
         <div>
-          <strong style={{ color: P.text }}>Hinweis:</strong> Gelbe Alarme (1. Schwellwert) zeigen Warnungen an. Rote Alarme (2. Schwellwert) kennzeichnen kritische Überschreitungen.
+          <strong style={{ color: P.text }}>Hinweis:</strong> Kritische Schwellwerte (rot) werden automatisch strenger als Warn-Schwellwerte (gelb) gehalten.
           Bei aktivierter E-Mail-Benachrichtigung wird der zuständige Arzt per Mail informiert.
-          Geänderte Templates werden mit einem <strong style={{ color: P.warning }}>+</strong> gekennzeichnet.
         </div>
       </div>
     </div>
