@@ -650,6 +650,7 @@ interface AllData { bp: BpPoint[]; hr: HrPoint[]; weight: WeightPoint[]; mood: M
    DATA GENERATION — multi-measurement per day, many events
    ═══════════════════════════════════════════════════════════════════════════════ */
 const NOW = new Date(2026, 2, 6);
+const DATA_START = new Date(2024, 10, 1); // Nov 1, 2024
 
 const generateEcgWaveform = (len: number): number[] => {
   const w: number[] = [];
@@ -669,7 +670,7 @@ const randTime = (hourMin = 6, hourMax = 22): string => {
 };
 
 const generateData = (): AllData => {
-  const days = 100;
+  const days = Math.ceil((NOW.getTime() - DATA_START.getTime()) / (1000 * 60 * 60 * 24));
   const data: AllData = { bp: [], hr: [], weight: [], mood: [], events: [], ecgs: [], missed: [] };
   let bW = 72.3, bS = 128, bD = 82, bHR = 72;
   const outlierDays = new Set([5, 12, 20, 35, 50, 65, 80]);
@@ -2384,7 +2385,7 @@ export default function VitalDashboard() {
   ];
 
   /* ── Timeline slider — derives position from chartOffset + range ── */
-  const TIMELINE_DAYS = 365;
+  const TIMELINE_DAYS = Math.ceil((NOW.getTime() - DATA_START.getTime()) / (1000 * 60 * 60 * 24));
 
   useEffect(() => {
     if (!isDraggingTimeline) return;
@@ -2438,17 +2439,26 @@ export default function VitalDashboard() {
     const thumbRight = 1 - chartOffset / TIMELINE_DAYS;
     const thumbLeft = Math.max(0, thumbRight - thumbWidth);
 
+    // Current view date range for label
+    const viewEndDate = new Date(NOW);
+    viewEndDate.setDate(viewEndDate.getDate() - chartOffset);
+    const viewStartDate = new Date(viewEndDate);
+    viewStartDate.setDate(viewStartDate.getDate() - range);
+    const viewCenterDate = new Date((viewStartDate.getTime() + viewEndDate.getTime()) / 2);
+    const dragLabel = viewCenterDate.toLocaleDateString("de-DE", { month: "long", year: "numeric" });
+    const thumbCenter = thumbLeft + (thumbRight - thumbLeft) / 2;
+
     // Month labels
-    const today = new Date();
-    const yearAgo = new Date(today);
-    yearAgo.setFullYear(yearAgo.getFullYear() - 1);
-    const totalMs = today.getTime() - yearAgo.getTime();
+    const totalMs = NOW.getTime() - DATA_START.getTime();
     const months: { label: string; pos: number }[] = [];
-    const mc = new Date(yearAgo);
+    const mc = new Date(DATA_START);
     mc.setDate(1);
     mc.setMonth(mc.getMonth() + 1);
-    while (mc <= today) {
-      months.push({ label: mc.toLocaleDateString("de-DE", { month: "short" }), pos: (mc.getTime() - yearAgo.getTime()) / totalMs });
+    while (mc <= NOW) {
+      months.push({
+        label: mc.toLocaleDateString("de-DE", { month: "short" }) + (mc.getMonth() === 0 ? " " + mc.getFullYear() : ""),
+        pos: (mc.getTime() - DATA_START.getTime()) / totalMs
+      });
       mc.setMonth(mc.getMonth() + 1);
     }
 
@@ -2472,7 +2482,23 @@ export default function VitalDashboard() {
       <div className="fixed bottom-0 left-0 right-0 z-40 px-6 pb-2 pt-1"
         style={{ backgroundColor: P.shortcutBg, borderTop: `1px solid ${P.border}`, backdropFilter: "blur(8px)" }}>
         {/* Timeline slider */}
-        <div className="mb-1.5">
+        <div className="relative mb-1.5">
+          {/* Drag label - shows month/year while dragging */}
+          {isDraggingTimeline && (
+            <div className="absolute text-xs font-semibold px-2 py-0.5 rounded pointer-events-none"
+              style={{
+                left: `calc(${thumbCenter * 100}%)`,
+                top: -20,
+                transform: "translateX(-50%)",
+                backgroundColor: theme === "dark" ? "rgba(99,102,241,0.9)" : "rgba(99,102,241,0.85)",
+                color: "#fff",
+                zIndex: 50,
+                whiteSpace: "nowrap",
+                marginLeft: 240,
+              }}>
+              {dragLabel}
+            </div>
+          )}
           <div className="relative h-3" style={{ marginLeft: 240, marginRight: 8 }}>
             {months.map((m, i) => (
               <span key={i} className="absolute text-[9px] font-mono" style={{ left: `${m.pos * 100}%`, color: P.textMuted, transform: "translateX(-50%)" }}>{m.label}</span>
@@ -2521,20 +2547,6 @@ export default function VitalDashboard() {
               <span className="text-xs" style={{ color: P.textMuted }}>{s.label}</span>
             </div>
           ))}
-          <div style={{ width: 1, height: 20, backgroundColor: P.border }} />
-          <div className="flex items-center gap-1.5">
-            <button onClick={() => handleChartNav("left")} className="p-1 rounded transition-colors" style={{ backgroundColor: P.bgInput, color: P.textSecondary }}>
-              <ChevronLeft size={14} />
-            </button>
-            <span className="text-xs font-mono" style={{ color: P.textMuted }}>
-              {chartOffset > 0 ? `−${chartOffset}d` : "Aktuell"}
-            </span>
-            <button onClick={() => handleChartNav("right")} className="p-1 rounded transition-colors"
-              style={{ backgroundColor: P.bgInput, color: chartOffset === 0 ? P.border : P.textSecondary, cursor: chartOffset === 0 ? "default" : "pointer" }}
-              disabled={chartOffset === 0}>
-              <ChevronRight size={14} />
-            </button>
-          </div>
         </div>
       </div>
     );
