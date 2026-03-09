@@ -2439,22 +2439,6 @@ export default function VitalDashboard() {
         </div>
       )}
 
-      {/* Alarm legend */}
-      <div className="flex items-center gap-4 text-sm flex-wrap" style={{ color: P.textSecondary }}>
-        <span className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: P.alarmYellow }} />
-          <span>Warnung</span>
-        </span>
-        <span className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: P.alarmRed }} />
-          <span>Kritisch</span>
-        </span>
-        <span className="flex items-center gap-2">
-          <Mail size={14} />
-          <span>E-Mail-Benachrichtigung</span>
-        </span>
-      </div>
-
       {/* Accordion parameter cards */}
       <div className="space-y-3">
         {thresholdParams.map((param) => {
@@ -2467,8 +2451,7 @@ export default function VitalDashboard() {
             <div key={param.id} className="rounded-lg overflow-hidden shadow-sm transition-all"
               style={{
                 backgroundColor: P.bgCard,
-                border: `1px solid ${(hasYellowAlarm || hasRedAlarm) ? P.border : P.border}`,
-                borderColor: (hasYellowAlarm || hasRedAlarm) ? "rgba(245, 158, 11, 0.3)" : P.border,
+                border: `1px solid ${P.border}`,
               }}>
               {/* Accordion Header */}
               <button
@@ -2516,37 +2499,54 @@ export default function VitalDashboard() {
                 </div>
               </button>
 
-              {/* Accordion Body */}
               {isOpen && (
-                <div className="px-5 py-4 space-y-4" style={{ borderTop: `1px solid ${P.border}`, backgroundColor: P.bgInput }}>
-                  {/* Yellow alarm column */}
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: P.alarmYellow }} />
-                      <span className="text-sm font-semibold" style={{ color: P.alarmYellow }}>Warnung</span>
-                    </div>
-                    <div className="space-y-2">
-                      {/* Toggle button */}
-                      <div className="flex items-center gap-3">
-                        <button onClick={() => handleParamChange(param.id, "yellow", "enabled", !param.yellow.enabled)}
-                          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-                          style={{ backgroundColor: param.yellow.enabled ? `${P.alarmYellow}22` : P.bgCard, color: param.yellow.enabled ? P.alarmYellow : P.textMuted }}>
-                          {param.yellow.enabled ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
-                          <span>{param.yellow.enabled ? "Aktiv" : "Inaktiv"}</span>
-                        </button>
-                        {/* Email chip */}
-                        <button onClick={() => handleParamChange(param.id, "yellow", "emailNotify", !param.yellow.emailNotify)}
-                          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-                          style={{ backgroundColor: param.yellow.emailNotify ? `${P.alarmYellow}22` : P.bgCard, color: param.yellow.emailNotify ? P.alarmYellow : P.textMuted }}>
-                          <Mail size={16} />
-                          <span>E-Mail</span>
-                        </button>
+                <div className="px-5 py-4" style={{ borderTop: `1px solid ${P.border}`, backgroundColor: P.bgInput }}>
+                  {/* Two-column layout */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Yellow alarm column */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: P.alarmYellow }} />
+                          <span className="text-sm font-semibold" style={{ color: P.alarmYellow }}>Warnung</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {/* iOS Toggle for yellow */}
+                          <div onClick={() => handleParamChange(param.id, "yellow", "enabled", !param.yellow.enabled)}
+                            style={{
+                              width: 36,
+                              height: 20,
+                              borderRadius: 10,
+                              position: "relative",
+                              cursor: "pointer",
+                              backgroundColor: param.yellow.enabled ? "#2CC990" : "#3f3f46",
+                              transition: "background-color 0.2s"
+                            }}>
+                            <div style={{
+                              position: "absolute",
+                              top: 2,
+                              width: 16,
+                              height: 16,
+                              borderRadius: "50%",
+                              backgroundColor: "white",
+                              transition: "left 0.2s",
+                              left: param.yellow.enabled ? 18 : 2,
+                            }} />
+                          </div>
+                          {/* Email toggle for yellow */}
+                          <button onClick={() => handleParamChange(param.id, "yellow", "emailNotify", !param.yellow.emailNotify)}
+                            className="p-1.5 rounded transition-colors"
+                            style={{ backgroundColor: param.yellow.emailNotify ? `${P.alarmYellow}22` : "transparent", color: param.yellow.emailNotify ? P.alarmYellow : P.textMuted }}>
+                            <Mail size={16} />
+                          </button>
+                        </div>
                       </div>
-                      {/* Rules */}
+                      
+                      {/* Rules - horizontal layout */}
                       {param.yellow.enabled && param.yellow.rules.length > 0 && (
-                        <div className="space-y-2 ml-2">
+                        <div className="flex flex-wrap gap-3">
                           {param.yellow.rules.map((rule, ruleIdx) => (
-                            <div key={rule.id} className="flex items-center gap-1.5 text-sm flex-wrap p-2 rounded-lg"
+                            <div key={rule.id} className="flex items-center gap-1.5 text-sm p-2 rounded-lg"
                               style={{ backgroundColor: autoCorrectFlash === `${param.id}-yellow` && ruleIdx === 0 ? `${P.alarmYellow}33` : P.bgCard, transition: "background-color 0.3s" }}>
                               <span style={{ color: P.textMuted, fontWeight: 600 }}>{rule.operator}</span>
                               <input
@@ -2575,39 +2575,57 @@ export default function VitalDashboard() {
                         </div>
                       )}
                       {param.yellow.enabled && param.yellow.rules.length === 0 && param.id !== "nodata" && (
-                        <div className="ml-2 p-2 text-xs" style={{ color: P.textMuted }}>Aktiv (keine Parameter)</div>
+                        <div className="p-2 text-xs" style={{ color: P.textMuted }}>Aktiv (keine Parameter)</div>
                       )}
                     </div>
-                  </div>
 
-                  {/* Red alarm column */}
-                  <div className="space-y-3 pt-3" style={{ borderTop: `1px solid ${P.border}` }}>
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: P.alarmRed }} />
-                      <span className="text-sm font-semibold" style={{ color: P.alarmRed }}>Kritisch</span>
-                    </div>
-                    <div className="space-y-2">
-                      {/* Toggle button */}
-                      <div className="flex items-center gap-3">
-                        <button onClick={() => handleParamChange(param.id, "red", "enabled", !param.red.enabled)}
-                          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-                          style={{ backgroundColor: param.red.enabled ? `${P.alarmRed}22` : P.bgCard, color: param.red.enabled ? P.alarmRed : P.textMuted }}>
-                          {param.red.enabled ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
-                          <span>{param.red.enabled ? "Aktiv" : "Inaktiv"}</span>
-                        </button>
-                        {/* Email chip */}
-                        <button onClick={() => handleParamChange(param.id, "red", "emailNotify", !param.red.emailNotify)}
-                          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-                          style={{ backgroundColor: param.red.emailNotify ? `${P.alarmRed}22` : P.bgCard, color: param.red.emailNotify ? P.alarmRed : P.textMuted }}>
-                          <Mail size={16} />
-                          <span>E-Mail</span>
-                        </button>
+                    {/* Vertical divider */}
+                    <div style={{ borderLeft: `1px solid ${P.border}` }}></div>
+
+                    {/* Red alarm column */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: P.alarmRed }} />
+                          <span className="text-sm font-semibold" style={{ color: P.alarmRed }}>Kritisch</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {/* iOS Toggle for red */}
+                          <div onClick={() => handleParamChange(param.id, "red", "enabled", !param.red.enabled)}
+                            style={{
+                              width: 36,
+                              height: 20,
+                              borderRadius: 10,
+                              position: "relative",
+                              cursor: "pointer",
+                              backgroundColor: param.red.enabled ? "#2CC990" : "#3f3f46",
+                              transition: "background-color 0.2s"
+                            }}>
+                            <div style={{
+                              position: "absolute",
+                              top: 2,
+                              width: 16,
+                              height: 16,
+                              borderRadius: "50%",
+                              backgroundColor: "white",
+                              transition: "left 0.2s",
+                              left: param.red.enabled ? 18 : 2,
+                            }} />
+                          </div>
+                          {/* Email toggle for red */}
+                          <button onClick={() => handleParamChange(param.id, "red", "emailNotify", !param.red.emailNotify)}
+                            className="p-1.5 rounded transition-colors"
+                            style={{ backgroundColor: param.red.emailNotify ? `${P.alarmRed}22` : "transparent", color: param.red.emailNotify ? P.alarmRed : P.textMuted }}>
+                            <Mail size={16} />
+                          </button>
+                        </div>
                       </div>
-                      {/* Rules */}
+                      
+                      {/* Rules - horizontal layout */}
                       {param.red.enabled && param.red.rules.length > 0 && (
-                        <div className="space-y-2 ml-2">
+                        <div className="flex flex-wrap gap-3">
                           {param.red.rules.map((rule, ruleIdx) => (
-                            <div key={rule.id} className="flex items-center gap-1.5 text-sm flex-wrap p-2 rounded-lg"
+                            <div key={rule.id} className="flex items-center gap-1.5 text-sm p-2 rounded-lg"
                               style={{ backgroundColor: autoCorrectFlash === `${param.id}-red` && ruleIdx === 0 ? `${P.alarmRed}33` : P.bgCard, transition: "background-color 0.3s" }}>
                               <span style={{ color: P.textMuted, fontWeight: 600 }}>{rule.operator}</span>
                               <input
@@ -2636,7 +2654,7 @@ export default function VitalDashboard() {
                         </div>
                       )}
                       {param.red.enabled && param.red.rules.length === 0 && (
-                        <div className="ml-2 p-2 text-xs" style={{ color: P.textMuted }}>Aktiv (keine Parameter)</div>
+                        <div className="p-2 text-xs" style={{ color: P.textMuted }}>Aktiv (keine Parameter)</div>
                       )}
                     </div>
                   </div>
