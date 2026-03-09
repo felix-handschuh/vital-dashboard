@@ -64,6 +64,12 @@ const Globe = ({ size = 24, color, className }: { size?: number; color?: string;
     <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
   </svg>
 );
+const ImplantIcon = ({ size = 14, color = "currentColor" }: { size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3.332.834-4.5 2.168C10.832 3.834 9.26 3 7.5 3A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+    <line x1="12" y1="9" x2="12" y2="15" />
+  </svg>
+);
 const Clock = hi(Clock01Icon);
 const BarChart3 = hi(BarChartIcon);
 const ZoomIn = hi(ZoomInAreaIcon);
@@ -101,6 +107,11 @@ const ArrowBack = hi(ArrowTurnBackwardIcon);
    THEME SYSTEM — dark / light mode
    ═══════════════════════════════════════════════════════════════════════════════ */
 type Theme = "dark" | "light";
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   TAB KEYS
+   ═══════════════════════════════════════════════════════════════════════════════ */
+type TabKey = "dashboard" | "patient-info" | "telemonitoring" | "insurance" | "documents" | "app" | "contact-persons";
 
 const darkPalette = {
   bg: "#09090b", bgCard: "rgba(24,24,27,0.8)", bgCardHover: "rgba(39,39,42,0.6)",
@@ -147,9 +158,9 @@ const translations = {
   de: {
     // Tabs
     dashboard: "Dashboard",
-    patientInfo: "Patient Info",
+    patientInfo: "Patienteninfo",
     telemonitoring: "Telemonitoring",
-    insurance: "Insurance",
+    insurance: "Versicherung",
     documents: "Dokumente",
     app: "App",
     contactPersons: "Kontaktpersonen",
@@ -193,6 +204,15 @@ const translations = {
     dayAbbrev: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
     patients: "Patienten",
     searchPlaceholder: "Patient suchen",
+    from: "Von",
+    to: "Bis",
+    custom: "Benutzerdefiniert",
+    save: "Speichern",
+    cancel: "Abbrechen",
+    monitoring: "Monitoring",
+    years: "Jahre",
+    class: "Klasse",
+    details: "Details",
   },
   en: {
     dashboard: "Dashboard",
@@ -235,6 +255,15 @@ const translations = {
     dayAbbrev: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     patients: "Patients",
     searchPlaceholder: "Search patient",
+    from: "From",
+    to: "To",
+    custom: "Custom",
+    save: "Save",
+    cancel: "Cancel",
+    monitoring: "Monitoring",
+    years: "years",
+    class: "Class",
+    details: "Details",
   },
   hu: {
     dashboard: "Irányítópult",
@@ -277,6 +306,15 @@ const translations = {
     dayAbbrev: ["Hé", "Ke", "Sze", "Csü", "Pé", "Szo", "Va"],
     patients: "Betegek",
     searchPlaceholder: "Beteg keresése",
+    from: "Tól",
+    to: "Ig",
+    custom: "Egyéni",
+    save: "Save",
+    cancel: "Mégse",
+    monitoring: "Monitoring",
+    years: "év",
+    class: "Osztály",
+    details: "Részletek",
   },
 };
 
@@ -696,7 +734,7 @@ export default function VitalDashboard() {
   const [theme, setTheme] = useState<Theme>("dark");
   const [page, setPage] = useState<"dashboard" | "thresholds">("dashboard");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [patientTab, setPatientTab] = useState<string>("dashboard");
+  const [patientTab, setPatientTab] = useState<TabKey>("dashboard");
   const [calendarSelectedDay, setCalendarSelectedDay] = useState<string | null>(null);
   const [calendarHoverDay, setCalendarHoverDay] = useState<{ dateStr: string; cx: number; cy: number } | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -705,6 +743,8 @@ export default function VitalDashboard() {
   const [langOpen, setLangOpen] = useState(false);
   const [customDateRange, setCustomDateRange] = useState<[string, string] | null>(null);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [overviewVisible, setOverviewVisible] = useState({ sys: true, hr: true, weight: true, mood: true });
+  const [overviewHover, setOverviewHover] = useState<{ xPos: number; data: Record<string, any> } | null>(null);
 
   /* ── Threshold settings state ── */
   const [templates, setTemplates] = useState<ThresholdTemplate[]>(() => [createDefaultTemplate()]);
@@ -722,7 +762,7 @@ export default function VitalDashboard() {
   const P = theme === "dark" ? darkPalette : lightPalette;
   const ALARM_COLORS: Record<string, string> = { critical: P.alarmRed, warning: P.alarmYellow, change: P.alarmBlue, info: P.alarmGray };
 
-  const t = useMemo(() => translations[lang], [lang]);
+  const tr = useMemo(() => translations[lang], [lang]);
 
   const score = useMemo(() => complianceScore(allData, range), [allData, range]);
 
@@ -958,7 +998,7 @@ export default function VitalDashboard() {
   /* ─── BP Chart ─── */
   const bpAllVals = useMemo(() => [...filteredData.bp.map(p => p.systolic), ...filteredData.bp.map(p => p.diastolic)], [filteredData.bp]);
   const bpYDomain = useMemo(() => niceYDomain(bpAllVals, 0.08), [bpAllVals]);
-  const bpChart = renderChart("bp", "Blutdruck", <Activity size={18} color={P.bpSystolic} />, P.bpSystolic,
+  const bpChart = renderChart("bp", tr.bloodPressure, <Activity size={18} color={P.bpSystolic} />, P.bpSystolic,
     (xS, yS, iH) => {
       const sysLine = d3.line<BpPoint>().x(d => xS(new Date(d.date))).y(d => yS(d.systolic)).defined((d, i, arr) => {
         if (i === 0) return true;
@@ -1031,7 +1071,7 @@ export default function VitalDashboard() {
 
   /* ─── HR Chart ─── */
   const hrYDomain = useMemo(() => niceYDomain(filteredData.hr.map(p => p.value), 0.1), [filteredData.hr]);
-  const hrChart = renderChart("hr", "Herzfrequenz", <Heart size={18} color={P.heartRate} />, P.heartRate,
+  const hrChart = renderChart("hr", tr.heartRate, <Heart size={18} color={P.heartRate} />, P.heartRate,
     (xS, yS, iH) => {
       const line = d3.line<HrPoint>().x(d => xS(new Date(d.date))).y(d => yS(d.value)).defined((d, i, arr) => {
         if (i === 0) return true;
@@ -1091,7 +1131,7 @@ export default function VitalDashboard() {
 
   /* ─── Weight Chart ─── */
   const wYDomain = useMemo(() => niceYDomain(filteredData.weight.map(p => p.value), 0.12), [filteredData.weight]);
-  const weightChart = renderChart("weight", "Gewicht", <Weight size={18} color={P.weight} />, P.weight,
+  const weightChart = renderChart("weight", tr.weight, <Weight size={18} color={P.weight} />, P.weight,
     (xS, yS, iH) => {
       const line = d3.line<WeightPoint>().x(d => xS(new Date(d.date))).y(d => yS(d.value)).defined((d, i, arr) => {
         if (i === 0) return true;
@@ -1127,7 +1167,7 @@ export default function VitalDashboard() {
   );
 
   /* ─── Mood Chart ─── */
-  const moodChart = renderChart("mood", "Stimmung", <Smile size={18} color={P.mood} />, P.mood,
+  const moodChart = renderChart("mood", tr.mood, <Smile size={18} color={P.mood} />, P.mood,
     (xS, yS, iH) => (
       <g>
         {filteredData.mood.map((p, i) => {
@@ -1150,27 +1190,28 @@ export default function VitalDashboard() {
     [0.5, 5.5], "", undefined
   );
 
-  /* ─── Overview Chart (normalized combined view) ─── */
+  /* ─── Overview Chart (dual Y-axis: left for BP/HR/Mood, right for Weight) ─── */
   const overviewChart = (() => {
-    // Normalize all parameters to 0-100 scale
-    const normalizeValue = (value: number, min: number, max: number) => {
-      if (max === min) return 50;
-      return ((value - min) / (max - min)) * 100;
-    };
-
-    const bpSysMin = 80, bpSysMax = 160;
-    const hrMin = 40, hrMax = 120;
-    const weightMin = Math.min(...filteredData.weight.map(p => p.value)), weightMax = Math.max(...filteredData.weight.map(p => p.value));
-    const moodMin = 1, moodMax = 5;
-
-    const overviewYDomain: [number, number] = [0, 100];
     const h = 200;
     const iH = h - margin.top - margin.bottom;
-    const yS = d3.scaleLinear().domain(overviewYDomain).range([iH, 0]);
+
+    // Left scale: BP/HR/Mood range (60-160 covers both BP systolic and HR reasonably)
+    const leftMin = 60, leftMax = 160;
+    const yScaleLeft = d3.scaleLinear().domain([leftMin, leftMax]).range([iH, 0]);
+
+    // Right scale: Weight (actual min/max from data)
+    const weightMin = filteredData.weight.length > 0 ? Math.min(...filteredData.weight.map(p => p.value)) : 70;
+    const weightMax = filteredData.weight.length > 0 ? Math.max(...filteredData.weight.map(p => p.value)) : 100;
+    const yScaleRight = d3.scaleLinear().domain([weightMin, weightMax]).range([iH, 0]);
+
+    // Map mood (1-5) to left scale (normalized to 60-160 range)
+    const mapMoodToLeftScale = (mood: number) => {
+      return leftMin + ((mood - 1) / 4) * (leftMax - leftMin);
+    };
 
     const sysLine = d3.line<BpPoint>()
       .x(d => xScale(new Date(d.date)))
-      .y(d => yS(normalizeValue(d.systolic, bpSysMin, bpSysMax)))
+      .y(d => yScaleLeft(d.systolic))
       .defined((d, i, arr) => {
         if (i === 0) return true;
         return (new Date(d.date).getTime() - new Date(arr[i - 1].date).getTime()) < 48 * 3600 * 1000;
@@ -1179,7 +1220,7 @@ export default function VitalDashboard() {
 
     const hrLine = d3.line<HrPoint>()
       .x(d => xScale(new Date(d.date)))
-      .y(d => yS(normalizeValue(d.value, hrMin, hrMax)))
+      .y(d => yScaleLeft(d.value))
       .defined((d, i, arr) => {
         if (i === 0) return true;
         return (new Date(d.date).getTime() - new Date(arr[i - 1].date).getTime()) < 48 * 3600 * 1000;
@@ -1188,7 +1229,7 @@ export default function VitalDashboard() {
 
     const weightLine = d3.line<WeightPoint>()
       .x(d => xScale(new Date(d.date)))
-      .y(d => yS(normalizeValue(d.value, weightMin, weightMax)))
+      .y(d => yScaleRight(d.value))
       .defined((d, i, arr) => {
         if (i === 0) return true;
         return (new Date(d.date).getTime() - new Date(arr[i - 1].date).getTime()) < 48 * 3600 * 1000;
@@ -1197,50 +1238,123 @@ export default function VitalDashboard() {
 
     const moodLine = d3.line<MoodPoint>()
       .x(d => xScale(new Date(d.date)))
-      .y(d => yS(normalizeValue(d.value, moodMin, moodMax)))
+      .y(d => yScaleLeft(mapMoodToLeftScale(d.value)))
       .curve(d3.curveMonotoneX);
+
+    // Hover handler
+    const handleOverviewHover = (e: React.MouseEvent<SVGSVGElement>) => {
+      const svg = e.currentTarget;
+      const rect = svg.getBoundingClientRect();
+      const x = e.clientX - rect.left - margin.left;
+      if (x < 0 || x > innerW) {
+        setOverviewHover(null);
+        return;
+      }
+      const xValue = xScale.invert(x);
+      const data: Record<string, any> = {};
+
+      if (overviewVisible.sys && filteredData.bp.length > 0) {
+        const nearest = filteredData.bp.reduce((prev, curr) =>
+          Math.abs(new Date(curr.date).getTime() - xValue.getTime()) <
+          Math.abs(new Date(prev.date).getTime() - xValue.getTime()) ? curr : prev
+        );
+        data.sys = { value: nearest.systolic, date: nearest.date };
+      }
+      if (overviewVisible.hr && filteredData.hr.length > 0) {
+        const nearest = filteredData.hr.reduce((prev, curr) =>
+          Math.abs(new Date(curr.date).getTime() - xValue.getTime()) <
+          Math.abs(new Date(prev.date).getTime() - xValue.getTime()) ? curr : prev
+        );
+        data.hr = { value: nearest.value, date: nearest.date };
+      }
+      if (overviewVisible.weight && filteredData.weight.length > 0) {
+        const nearest = filteredData.weight.reduce((prev, curr) =>
+          Math.abs(new Date(curr.date).getTime() - xValue.getTime()) <
+          Math.abs(new Date(prev.date).getTime() - xValue.getTime()) ? curr : prev
+        );
+        data.weight = { value: nearest.value, date: nearest.date };
+      }
+      if (overviewVisible.mood && filteredData.mood.length > 0) {
+        const nearest = filteredData.mood.reduce((prev, curr) =>
+          Math.abs(new Date(curr.date).getTime() - xValue.getTime()) <
+          Math.abs(new Date(prev.date).getTime() - xValue.getTime()) ? curr : prev
+        );
+        data.mood = { value: nearest.value, date: nearest.date };
+      }
+
+      setOverviewHover({ xPos: x, data });
+    };
+
+    const handleOverviewLeave = () => {
+      setOverviewHover(null);
+    };
 
     return (
       <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
         <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: `1px solid ${P.border}` }}>
           <div className="flex items-center gap-3">
             <Activity size={18} color={P.text} />
-            <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>Übersicht</span>
+            <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>{tr.overview}</span>
             <div className="flex items-center gap-4 ml-4 text-xs" style={{ color: P.textMuted }}>
-              <span className="flex items-center gap-1.5">
+              <button
+                onClick={() => setOverviewVisible(v => ({ ...v, sys: !v.sys }))}
+                className="flex items-center gap-1.5 px-2 py-1 rounded transition-opacity hover:opacity-70"
+                style={{ opacity: overviewVisible.sys ? 1 : 0.4 }}
+              >
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.bpSystolic }} />
-                Sys
-              </span>
-              <span className="flex items-center gap-1.5">
+                {tr.sys}
+              </button>
+              <button
+                onClick={() => setOverviewVisible(v => ({ ...v, hr: !v.hr }))}
+                className="flex items-center gap-1.5 px-2 py-1 rounded transition-opacity hover:opacity-70"
+                style={{ opacity: overviewVisible.hr ? 1 : 0.4 }}
+              >
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.heartRate }} />
-                HR
-              </span>
-              <span className="flex items-center gap-1.5">
+                {tr.hr}
+              </button>
+              <button
+                onClick={() => setOverviewVisible(v => ({ ...v, weight: !v.weight }))}
+                className="flex items-center gap-1.5 px-2 py-1 rounded transition-opacity hover:opacity-70"
+                style={{ opacity: overviewVisible.weight ? 1 : 0.4 }}
+              >
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.weight }} />
-                Gewicht
-              </span>
-              <span className="flex items-center gap-1.5">
+                {tr.weight}
+              </button>
+              <button
+                onClick={() => setOverviewVisible(v => ({ ...v, mood: !v.mood }))}
+                className="flex items-center gap-1.5 px-2 py-1 rounded transition-opacity hover:opacity-70"
+                style={{ opacity: overviewVisible.mood ? 1 : 0.4 }}
+              >
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.mood }} />
-                Stimmung
-              </span>
+                {tr.mood}
+              </button>
             </div>
           </div>
         </div>
         <div>
-          <svg width="100%" height={h} viewBox={`0 0 ${chartW} ${h}`} preserveAspectRatio="xMidYMid meet">
+          <svg width="100%" height={h} viewBox={`0 0 ${chartW} ${h}`} preserveAspectRatio="xMidYMid meet"
+            onMouseMove={handleOverviewHover}
+            onMouseLeave={handleOverviewLeave}
+          >
             <defs>
               <clipPath id="clip-overview">
                 <rect x={0} y={0} width={innerW} height={iH} />
               </clipPath>
             </defs>
             <g transform={`translate(${margin.left},${margin.top})`}>
-              {/* Grid */}
-              {[0, 25, 50, 75, 100].map(t => (
-                <g key={t}>
-                  <line x1={0} x2={innerW} y1={yS(t)} y2={yS(t)} stroke={P.grid} strokeWidth={0.8} opacity={0.5} />
-                  <text x={-10} y={yS(t)} dy="0.35em" textAnchor="end" fill={P.gridLabel} fontSize={11} fontFamily="IBM Plex Sans">{t}%</text>
+              {/* Left grid lines and labels (60, 80, 100, 120, 140, 160) */}
+              {[60, 80, 100, 120, 140, 160].map(t => (
+                <g key={`left-${t}`}>
+                  <line x1={0} x2={innerW} y1={yScaleLeft(t)} y2={yScaleLeft(t)} stroke={P.grid} strokeWidth={0.8} opacity={0.5} />
+                  <text x={-10} y={yScaleLeft(t)} dy="0.35em" textAnchor="end" fill={P.gridLabel} fontSize={11} fontFamily="IBM Plex Sans">{t}</text>
                 </g>
               ))}
+              {/* Right scale labels (weight) */}
+              {[Math.ceil(weightMin), Math.floor(weightMax)].length > 1 &&
+                [Math.ceil(weightMin), Math.round((weightMin + weightMax) / 2), Math.floor(weightMax)].map(t => (
+                  <text key={`right-${t}`} x={innerW + 10} y={yScaleRight(t)} dy="0.35em" textAnchor="start" fill={P.gridLabel} fontSize={11} fontFamily="IBM Plex Sans">{t.toFixed(1)}</text>
+                ))
+              }
               {/* X ticks */}
               {xScale.ticks(detail.xTickCount).map(t => (
                 <text key={t.getTime()} x={xScale(t)} y={iH + 15} textAnchor="middle" fill={P.gridLabel} fontSize={11} fontFamily="IBM Plex Sans">
@@ -1249,14 +1363,39 @@ export default function VitalDashboard() {
               ))}
               {/* Clipped content */}
               <g clipPath="url(#clip-overview)">
-                {/* Area fills with low opacity */}
-                <path d={sysLine(filteredData.bp) || ""} fill="none" stroke={P.bpSystolic} strokeWidth={1.8} opacity={0.9} />
-                <path d={hrLine(filteredData.hr) || ""} fill="none" stroke={P.heartRate} strokeWidth={1.8} opacity={0.9} />
-                <path d={weightLine(filteredData.weight) || ""} fill="none" stroke={P.weight} strokeWidth={1.8} opacity={0.9} />
-                <path d={moodLine(filteredData.mood) || ""} fill="none" stroke={P.mood} strokeWidth={1.8} opacity={0.9} />
+                {overviewVisible.sys && <path d={sysLine(filteredData.bp) || ""} fill="none" stroke={P.bpSystolic} strokeWidth={1.8} opacity={0.9} />}
+                {overviewVisible.hr && <path d={hrLine(filteredData.hr) || ""} fill="none" stroke={P.heartRate} strokeWidth={1.8} opacity={0.9} />}
+                {overviewVisible.weight && <path d={weightLine(filteredData.weight) || ""} fill="none" stroke={P.weight} strokeWidth={1.8} opacity={0.9} />}
+                {overviewVisible.mood && <path d={moodLine(filteredData.mood) || ""} fill="none" stroke={P.mood} strokeWidth={1.8} opacity={0.9} />}
+                {/* Hover vertical line */}
+                {overviewHover && (
+                  <line x1={overviewHover.xPos} y1={0} x2={overviewHover.xPos} y2={iH} stroke={P.textMuted} strokeWidth={1} opacity={0.5} strokeDasharray="3,3" />
+                )}
               </g>
             </g>
           </svg>
+          {/* Hover tooltip */}
+          {overviewHover && (
+            <div
+              style={{
+                position: "absolute",
+                left: `calc(${(margin.left + overviewHover.xPos) / chartW * 100}% - 50px)`,
+                top: "0",
+                backgroundColor: P.bgPanel,
+                border: `1px solid ${P.border}`,
+                borderRadius: "6px",
+                padding: "8px 12px",
+                fontSize: "12px",
+                zIndex: 10,
+                pointerEvents: "none",
+              }}
+            >
+              {overviewHover.data.sys && <div style={{ color: P.bpSystolic }}>Sys: {overviewHover.data.sys.value} mmHg</div>}
+              {overviewHover.data.hr && <div style={{ color: P.heartRate }}>HR: {overviewHover.data.hr.value} bpm</div>}
+              {overviewHover.data.weight && <div style={{ color: P.weight }}>Gewicht: {overviewHover.data.weight.value.toFixed(1)} kg</div>}
+              {overviewHover.data.mood && <div style={{ color: P.mood }}>Stimmung: {overviewHover.data.mood.value}/5</div>}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -1314,7 +1453,7 @@ export default function VitalDashboard() {
           <ChevronRight size={16} />
         </span>
         <Calendar size={18} color={P.textMuted} />
-        <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>Ereignisse & EKG</span>
+        <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>{tr.events}</span>
         <div className="flex items-center gap-2 ml-2">
           {eventCounts.medCount > 0 && (
             <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${P.medication}22`, color: P.medication }}>
@@ -1354,7 +1493,7 @@ export default function VitalDashboard() {
               <div className="text-sm font-semibold mb-2" style={{ color: P.text }}>{monthName}</div>
               {/* Weekday headers */}
               <div className="grid grid-cols-7 gap-px text-center text-[10px] font-medium mb-1" style={{ color: P.textMuted }}>
-                {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map(d => <div key={d} className="w-9 py-0.5">{d}</div>)}
+                {tr.dayAbbrev.map(d => <div key={d} className="w-9 py-0.5">{d}</div>)}
               </div>
               {/* Day cells */}
               <div className="grid grid-cols-7 gap-px">
@@ -2500,7 +2639,7 @@ export default function VitalDashboard() {
         <div className="px-3 py-3 border-b" style={{ borderBottomColor: P.border }}>
           <input
             type="text"
-            placeholder="Search patient"
+            placeholder={tr.searchPlaceholder}
             className="w-full px-3 py-2 rounded-md text-sm"
             style={{
               backgroundColor: P.bgInput,
@@ -2548,7 +2687,7 @@ export default function VitalDashboard() {
           style={{ borderBottomColor: P.border }}
         >
           <div className="flex items-center gap-2">
-            <span style={{ color: P.textMuted }}>Patienten</span>
+            <span style={{ color: P.textMuted }}>{tr.patients}</span>
             <span style={{ color: P.textMuted }}>&gt;</span>
             <span style={{ color: P.text, fontWeight: 500 }}>{patient.name}</span>
           </div>
@@ -2643,7 +2782,7 @@ export default function VitalDashboard() {
                 color: "#16A34A",
               }}
             >
-              Monitoring
+              {tr.monitoring}
             </span>
           </div>
           <h1 className="text-2xl font-bold" style={{ color: P.text }}>
@@ -2654,22 +2793,30 @@ export default function VitalDashboard() {
         {/* Tab bar */}
         <div className="px-6 border-b" style={{ borderBottomColor: P.border }}>
           <div className="flex gap-0">
-            {["Dashboard", "Patient Info", "Telemonitoring", "Insurance", "Documents", "App", "Contact Persons"].map((tab) => (
+            {[
+              { key: "dashboard", label: tr.dashboard },
+              { key: "patient-info", label: tr.patientInfo },
+              { key: "telemonitoring", label: tr.telemonitoring },
+              { key: "insurance", label: tr.insurance },
+              { key: "documents", label: tr.documents },
+              { key: "app", label: tr.app },
+              { key: "contact-persons", label: tr.contactPersons },
+            ].map((tab) => (
               <button
-                key={tab}
-                onClick={() => setPatientTab(tab.toLowerCase().replace(" ", "-"))}
+                key={tab.key}
+                onClick={() => setPatientTab(tab.key as TabKey)}
                 className="px-4 py-2.5 text-sm transition-colors"
                 style={{
                   backgroundColor: "transparent",
-                  color: patientTab === tab.toLowerCase().replace(" ", "-") ? P.text : P.textMuted,
+                  color: patientTab === tab.key ? P.text : P.textMuted,
                   borderBottom:
-                    patientTab === tab.toLowerCase().replace(" ", "-")
+                    patientTab === tab.key
                       ? `2px solid ${P.text}`
                       : "2px solid transparent",
-                  fontWeight: patientTab === tab.toLowerCase().replace(" ", "-") ? 500 : 400,
+                  fontWeight: patientTab === tab.key ? 500 : 400,
                 }}
               >
-                {tab}
+                {tab.label}
               </button>
             ))}
           </div>
@@ -2691,27 +2838,14 @@ export default function VitalDashboard() {
                     onClick={() => setPage("thresholds")}
                     className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors"
                     style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
-                    title="Grenzwerte & Alarme"
+                    title={tr.thresholds + " & Alarme"}
                   >
                     <Settings size={14} />
-                    Grenzwerte
+                    {tr.thresholds}
                   </button>
                 </div>
               )}
 
-              {/* Back button when on thresholds page */}
-              {page === "thresholds" && (
-                <div className="flex items-center gap-2 pb-2">
-                  <button
-                    onClick={() => setPage("dashboard")}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors"
-                    style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
-                  >
-                    <ChevronLeft size={14} />
-                    Zurück zum Dashboard
-                  </button>
-                </div>
-              )}
 
               {/* Page content */}
               {page === "thresholds" && thresholdSettingsPage}
@@ -2732,17 +2866,17 @@ export default function VitalDashboard() {
                         className="text-sm font-semibold uppercase tracking-wider"
                         style={{ color: P.textMuted }}
                       >
-                        Patientendaten
+                        {tr.patientData.toUpperCase()}
                       </span>
                     </div>
                     <div className="p-4">
                       {/* Clinical info pills */}
                       <div className="flex flex-wrap gap-2 mb-4">
-                        <InfoPill label="Alter" value={`${patient.age} Jahre`} />
-                        <InfoPill label="Geschlecht" value={patient.gender} />
-                        <InfoPill label="NYHA" value={`Klasse ${patient.nyha}`} />
+                        <InfoPill label={tr.age.toUpperCase()} value={`${patient.age} ${tr.years}`} />
+                        <InfoPill label={tr.gender.toUpperCase()} value={patient.gender} />
+                        <InfoPill label={tr.nyha} value={`${tr.class} ${patient.nyha}`} />
                         <InfoPill
-                          label="LVEF"
+                          label={tr.lvef}
                           value={`${patient.lvef}%`}
                           color={
                             patient.lvef < 40
@@ -2753,7 +2887,7 @@ export default function VitalDashboard() {
                           }
                         />
                         <InfoPill
-                          label="Antikoagulation"
+                          label={tr.anticoagulation.toUpperCase()}
                           value={patient.anticoag ? "Ja" : "Nein"}
                           color={patient.anticoag ? P.good : P.textMuted}
                         />
@@ -2765,7 +2899,7 @@ export default function VitalDashboard() {
                           className="text-[11px] uppercase tracking-wider font-semibold block mb-2"
                           style={{ color: P.textMuted }}
                         >
-                          ICD-10 Diagnosen
+                          {tr.icd10Diagnoses.toUpperCase()}
                         </span>
                         <div className="flex flex-wrap gap-2">
                           {patient.icd10.map((d, i) => (
@@ -2795,13 +2929,19 @@ export default function VitalDashboard() {
                             <ChevronRight size={16} />
                           </span>
                           <Cpu size={18} color={P.textMuted} />
-                          <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>Geräte</span>
+                          <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>{tr.devices}</span>
                           <div className="flex items-center gap-2 ml-2">
                             <span className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${P.heartRate}22`, color: P.heartRate }}>
+                              <ImplantIcon size={12} color={P.heartRate} />
                               {patient.implant.type.split(" ")[0]}
                             </span>
                             {patient.externalDevices.map((dev, i) => (
                               <span key={i} className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${dev.type === "Waage" ? P.weight : P.bpSystolic}22`, color: dev.type === "Waage" ? P.weight : P.bpSystolic }}>
+                                {dev.type === "Waage" ? (
+                                  <Weight size={12} color={dev.type === "Waage" ? P.weight : P.bpSystolic} />
+                                ) : (
+                                  <Activity size={12} color={dev.type === "Waage" ? P.weight : P.bpSystolic} />
+                                )}
                                 {dev.type}
                               </span>
                             ))}
@@ -2816,9 +2956,9 @@ export default function VitalDashboard() {
                       >
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
-                            <Cpu size={16} style={{ color: P.heartRate }} />
+                            <ImplantIcon size={16} color={P.heartRate} />
                             <span className="text-sm font-semibold" style={{ color: P.text }}>
-                              Implantat
+                              {tr.implant}
                             </span>
                           </div>
                           <a
@@ -2832,7 +2972,7 @@ export default function VitalDashboard() {
                                   : "rgba(37,99,235,0.1)",
                             }}
                           >
-                            Details <ExternalLink size={11} />
+                            {tr.details} <ExternalLink size={11} />
                           </a>
                         </div>
                         <div className="space-y-1">
@@ -2888,9 +3028,9 @@ export default function VitalDashboard() {
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
                               {dev.type === "Waage" ? (
-                                <Weight size={16} style={{ color: P.weight }} />
+                                <Weight size={16} color={P.weight} />
                               ) : (
-                                <Activity size={16} style={{ color: P.bpSystolic }} />
+                                <Activity size={16} color={P.bpSystolic} />
                               )}
                               <span className="text-sm font-semibold" style={{ color: P.text }}>
                                 {dev.type}
@@ -3004,16 +3144,16 @@ export default function VitalDashboard() {
                       className="text-sm uppercase tracking-wider font-semibold mr-1"
                       style={{ color: P.textMuted }}
                     >
-                      Anzeige:
+                      {tr.display.toUpperCase()}:
                     </span>
                     <ToggleBtn
-                      label="Grenzwerte"
+                      label={tr.thresholds}
                       active={vis.thresholds}
                       onToggle={() => setVis(v => ({ ...v, thresholds: !v.thresholds }))}
                       shortcut="G"
                     />
                     <ToggleBtn
-                      label="Fehlende Werte"
+                      label={tr.missingValues}
                       active={vis.missed}
                       onToggle={() => setVis(v => ({ ...v, missed: !v.missed }))}
                       shortcut="M"
@@ -3025,7 +3165,7 @@ export default function VitalDashboard() {
                       style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
                     >
                       {viewMode === "chart" ? <Table2 size={14} /> : <LineChart size={14} />}
-                      {viewMode === "chart" ? "Tabelle" : "Graphen"}
+                      {viewMode === "chart" ? tr.table : tr.charts}
                     </button>
                   </div>
 
@@ -3036,35 +3176,35 @@ export default function VitalDashboard() {
                         className="inline-block w-0 h-0 border-l-[5px] border-r-[5px] border-b-[8px] border-transparent"
                         style={{ borderBottomColor: P.bpSystolic }}
                       />
-                      Sys
+                      {tr.sys}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <span
                         className="inline-block w-0 h-0 border-l-[5px] border-r-[5px] border-t-[8px] border-transparent"
                         style={{ borderTopColor: P.bpDiastolic }}
                       />
-                      Dia
+                      {tr.dia}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <span
                         className="inline-block w-3 h-3 rotate-45"
                         style={{ backgroundColor: P.heartRate }}
                       />
-                      HR
+                      {tr.hr}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <span
                         className="inline-block w-3 h-3 rounded-full"
                         style={{ backgroundColor: P.weight }}
                       />
-                      Gewicht
+                      {tr.weight}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <span
                         className="inline-block w-3 h-3 rounded-sm"
                         style={{ backgroundColor: P.mood }}
                       />
-                      Stimmung
+                      {tr.mood}
                     </span>
                     <span style={{ color: P.textDim }}>|</span>
                     <span className="flex items-center gap-1.5">
@@ -3072,7 +3212,7 @@ export default function VitalDashboard() {
                         className="w-4 h-4 rounded-full border-2 border-dashed"
                         style={{ borderColor: P.outlier }}
                       />
-                      Ausreißer
+                      {tr.outlier}
                     </span>
                   </div>
 
