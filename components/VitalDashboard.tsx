@@ -3467,6 +3467,12 @@ export default function VitalDashboard() {
                       {r}T
                     </button>
                   ))}
+                  <button onClick={() => handleChartNav("right")}
+                    className="p-1.5 rounded transition-colors"
+                    style={{ backgroundColor: P.bgInput, color: chartOffset === 0 ? P.border : P.textSecondary, cursor: chartOffset === 0 ? "default" : "pointer" }}
+                    disabled={chartOffset === 0}>
+                    <ChevronRight size={16} />
+                  </button>
                   <div className="relative">
                     <button
                       onClick={() => setDatePickerOpen(!datePickerOpen)}
