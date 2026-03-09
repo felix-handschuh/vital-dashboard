@@ -806,12 +806,42 @@ export default function VitalDashboard() {
   const [openThresholdParam, setOpenThresholdParam] = useState<string | null>(null);
   const [autoCorrectFlash, setAutoCorrectFlash] = useState<string | null>(null);
 
+  const [toasts, setToasts] = useState<Array<{
+    id: number;
+    message: string;
+    prevParams: ThresholdParam[];
+    timestamp: number;
+  }>>([]);
+  const toastIdRef = useRef(0);
+  const [chartOffset, setChartOffset] = useState(0);
+
   const activeTemplate = templates.find(t => t.id === activeTemplateId);
   const displayTemplateName = activeTemplate
     ? (thresholdModified ? `${activeTemplate.name}+` : activeTemplate.name)
     : "Benutzerdefiniert";
 
   const P = theme === "dark" ? darkPalette : lightPalette;
+  const pushToast = useCallback((message: string, prevParams: ThresholdParam[]) => {
+    const id = ++toastIdRef.current;
+    setToasts(prev => [...prev.slice(-4), { id, message, prevParams, timestamp: Date.now() }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 5000);
+  }, []);
+
+  const handleToastUndo = useCallback((toast: { id: number; prevParams: ThresholdParam[] }) => {
+    setThresholdParams(toast.prevParams);
+    setToasts(prev => prev.filter(t => t.id !== toast.id));
+  }, []);
+
+  const handleChartNav = (direction: "left" | "right") => {
+    setChartOffset(prev => {
+      const step = Math.max(1, Math.floor(range / 4));
+      if (direction === "left") return prev + step;
+      if (direction === "right") return Math.max(0, prev - step);
+      return prev;
+    });
+  };
   const ALARM_COLORS: Record<string, string> = { critical: P.alarmRed, warning: P.alarmYellow, change: P.alarmBlue, info: P.alarmGray };
 
   const tr = useMemo(() => translations[lang], [lang]);
@@ -819,9 +849,11 @@ export default function VitalDashboard() {
   const score = useMemo(() => complianceScore(allData, range), [allData, range]);
 
   const filteredData = useMemo(() => {
-    const cutoff = new Date(NOW);
-    cutoff.setDate(cutoff.getDate() - range);
-    const cs = cutoff.toISOString().split("T")[0];
+    const endDate = new Date(NOW);
+    endDate.setDate(endDate.getDate() - chartOffset);
+    const startDate = new Date(endDate);
+    startDate.setDate(startDate.getDate() - range);
+    const cs = startDate.toISOString().split("T")[0];
     return {
       bp: allData.bp.filter(p => p.date >= cs),
       hr: allData.hr.filter(p => p.date >= cs),
@@ -840,10 +872,10 @@ export default function VitalDashboard() {
       if (e.key === "Escape") { setSidePanel(null); setEcgDrawer(null); }
       if (e.key === "t" && !e.ctrlKey && !e.metaKey) setViewMode(v => v === "chart" ? "table" : "chart");
       if (e.key === "d" && !e.ctrlKey && !e.metaKey) setTheme(t => t === "dark" ? "light" : "dark");
-      if (e.key === "1" && !e.ctrlKey && !e.metaKey) setRange(14);
-      if (e.key === "2" && !e.ctrlKey && !e.metaKey) setRange(30);
-      if (e.key === "3" && !e.ctrlKey && !e.metaKey) setRange(60);
-      if (e.key === "4" && !e.ctrlKey && !e.metaKey) setRange(90);
+      if (e.key === "1" && !e.ctrlKey && !e.metaKey) { setRange(14); setChartOffset(0); }
+      if (e.key === "2" && !e.ctrlKey && !e.metaKey) { setRange(30); setChartOffset(0); }
+      if (e.key === "3" && !e.ctrlKey && !e.metaKey) { setRange(60); setChartOffset(0); }
+      if (e.key === "4" && !e.ctrlKey && !e.metaKey) { setRange(90); setChartOffset(0); }
       if (e.key === "g" && !e.ctrlKey && !e.metaKey) setVis(v => ({ ...v, thresholds: !v.thresholds }));
       if (e.key === "m" && !e.ctrlKey && !e.metaKey) setVis(v => ({ ...v, missed: !v.missed }));
       /* r key removed — trends always visible */
@@ -2272,6 +2304,15 @@ export default function VitalDashboard() {
   };
 
   const handleParamChange = (paramId: string, level: "yellow" | "red", field: string, value: any) => {
+    const prevParams = JSON.parse(JSON.stringify(thresholdParams));
+    const param = thresholdParams.find(p => p.id === paramId);
+    const levelLabel = level === "yellow" ? "Warnung" : "Kritisch";
+    let msg = "";
+    if (field === "enabled") {
+      msg = `${param?.label}: ${levelLabel} ${value ? "aktiviert" : "deaktiviert"}`;
+    } else if (field === "emailNotify") {
+      msg = `${param?.label}: E-Mail ${levelLabel} ${value ? "aktiviert" : "deaktiviert"}`;
+    }
     setThresholdParams(prev => prev.map(p => {
       if (p.id !== paramId) return p;
       const lvl = { ...p[level] };
@@ -2280,9 +2321,11 @@ export default function VitalDashboard() {
       return { ...p, [level]: lvl };
     }));
     setThresholdModified(true);
+    if (msg) pushToast(msg, prevParams);
   };
 
   const handleRuleValueChange = (paramId: string, level: "yellow" | "red", ruleId: string, field: "value" | "secondValue", newVal: number) => {
+    const prevParams = JSON.parse(JSON.stringify(thresholdParams));
     setThresholdParams(prev => prev.map(p => {
       if (p.id !== paramId) return p;
 
@@ -2352,6 +2395,10 @@ export default function VitalDashboard() {
       return { ...p, yellow: newYellow, red: newRed };
     }));
     setThresholdModified(true);
+    const param = thresholdParams.find(p => p.id === paramId);
+    const rule = param?.[level].rules.find(r => r.id === ruleId);
+    const levelLabel = level === "yellow" ? "Warnung" : "Kritisch";
+    if (param && rule) pushToast(`${param.label}: ${levelLabel} ${rule.operator} ${newVal} ${rule.suffix || ""}`, prevParams);
   };
 
   const handleSaveAsTemplate = () => {
@@ -2799,6 +2846,45 @@ export default function VitalDashboard() {
           Bei aktivierter E-Mail-Benachrichtigung wird der zuständige Arzt per Mail informiert.
         </div>
       </div>
+    
+
+      {/* Toast notifications */}
+      {toasts.length > 0 && (
+        <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 100, display: "flex", flexDirection: "column", gap: 8, maxWidth: 360 }}>
+          {toasts.map(toast => (
+            <div key={toast.id}
+              style={{
+                backgroundColor: P.bgPanel,
+                border: `1px solid ${P.border}`,
+                borderRadius: 8,
+                padding: "10px 16px",
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+                animation: "slideIn 0.2s ease-out",
+              }}>
+              <div style={{ flex: 1, fontSize: 13, color: P.text }}>{toast.message}</div>
+              <button
+                onClick={() => handleToastUndo(toast)}
+                style={{
+                  backgroundColor: "transparent",
+                  border: `1px solid ${P.border}`,
+                  color: P.bpSystolic,
+                  padding: "4px 10px",
+                  borderRadius: 6,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                  fontFamily: "inherit",
+                }}>
+                Undo
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 
@@ -3358,10 +3444,15 @@ export default function VitalDashboard() {
 
                 {/* ── Time range selector + view toggle ── */}
                 <div className="flex items-center gap-2 flex-wrap">
+                  <button onClick={() => handleChartNav("left")} 
+                    className="p-1.5 rounded transition-colors"
+                    style={{ backgroundColor: P.bgInput, color: P.textSecondary }}>
+                    <ChevronLeft size={16} />
+                  </button>
                   {RANGES.map((r) => (
                     <button
                       key={r}
-                      onClick={() => setRange(r)}
+                      onClick={() => { setRange(r); setChartOffset(0); }}
                       className="px-3 py-1.5 rounded text-sm font-semibold transition-all"
                       style={{
                         backgroundColor:
