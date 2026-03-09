@@ -2502,9 +2502,9 @@ export default function VitalDashboard() {
               {isOpen && (
                 <div className="px-5 py-4" style={{ borderTop: `1px solid ${P.border}`, backgroundColor: P.bgInput }}>
                   {/* Two-column layout */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }}>
                     {/* Yellow alarm column */}
-                    <div className="space-y-3">
+                    <div className="space-y-3" style={{ padding: "0 16px 0 0", borderRight: `1px solid ${P.border}` }}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: P.alarmYellow }} />
@@ -2579,11 +2579,8 @@ export default function VitalDashboard() {
                       )}
                     </div>
 
-                    {/* Vertical divider */}
-                    <div style={{ borderLeft: `1px solid ${P.border}` }}></div>
-
                     {/* Red alarm column */}
-                    <div className="space-y-3">
+                    <div className="space-y-3" style={{ padding: "0 0 0 16px" }}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: P.alarmRed }} />
