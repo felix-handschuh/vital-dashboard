@@ -58,6 +58,12 @@ const ArrowDownRight = hi(ArrowDownRight01Icon);
 const ShieldAlert = hi(ShieldBanIcon);
 const ChevronUp = hi(ArrowUp01Icon);
 const ChevronDown = hi(ArrowDown01Icon);
+const Globe = ({ size = 24, color, className }: { size?: number; color?: string; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color || "currentColor"} strokeWidth={1.5} className={className}>
+    <circle cx="12" cy="12" r="10" />
+    <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+  </svg>
+);
 const Clock = hi(Clock01Icon);
 const BarChart3 = hi(BarChartIcon);
 const ZoomIn = hi(ZoomInAreaIcon);
@@ -132,6 +138,146 @@ const lightPalette: typeof darkPalette = {
   outlier: "#9333EA",
   shortcutBg: "rgba(255,255,255,0.95)", shortcutKey: "#e4e4e7", shortcutKeyText: "#27272a",
   accent: "#ff5c00",
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   TRANSLATIONS (i18n)
+   ═══════════════════════════════════════════════════════════════════════════════ */
+const translations = {
+  de: {
+    // Tabs
+    dashboard: "Dashboard",
+    patientInfo: "Patient Info",
+    telemonitoring: "Telemonitoring",
+    insurance: "Insurance",
+    documents: "Dokumente",
+    app: "App",
+    contactPersons: "Kontaktpersonen",
+    // Patient data labels
+    patientData: "Patientendaten",
+    age: "Alter",
+    gender: "Geschlecht",
+    nyha: "NYHA",
+    lvef: "LVEF",
+    anticoagulation: "Antikoagulation",
+    birthDate: "Geburtsdatum",
+    icd10Diagnoses: "ICD-10 Diagnosen",
+    devices: "Geräte",
+    implant: "Implantat",
+    externalDevices: "Externe Geräte",
+    // Section headers
+    events: "Ereignisse & EKG",
+    overview: "Übersicht",
+    display: "Anzeige",
+    thresholds: "Grenzwerte",
+    missingValues: "Fehlende Werte",
+    // Chart titles and units
+    bloodPressure: "Blutdruck",
+    heartRate: "Herzfrequenz",
+    weight: "Gewicht",
+    mood: "Stimmung",
+    // Legend items
+    sys: "Sys",
+    dia: "Dia",
+    hr: "HR",
+    outlier: "Ausreißer",
+    examination: "Untersuchung",
+    // Time ranges
+    timeRanges: { 14: "14T", 30: "30T", 60: "60T", 90: "90T" },
+    // Buttons
+    table: "Tabelle",
+    charts: "Graphen",
+    backToDashboard: "Zurück zum Dashboard",
+    // Calendar
+    monthNames: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
+    dayAbbrev: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
+    patients: "Patienten",
+    searchPlaceholder: "Patient suchen",
+  },
+  en: {
+    dashboard: "Dashboard",
+    patientInfo: "Patient Info",
+    telemonitoring: "Telemonitoring",
+    insurance: "Insurance",
+    documents: "Documents",
+    app: "App",
+    contactPersons: "Contact Persons",
+    patientData: "Patient Data",
+    age: "Age",
+    gender: "Gender",
+    nyha: "NYHA",
+    lvef: "LVEF",
+    anticoagulation: "Anticoagulation",
+    birthDate: "Birth Date",
+    icd10Diagnoses: "ICD-10 Diagnoses",
+    devices: "Devices",
+    implant: "Implant",
+    externalDevices: "External Devices",
+    events: "Events & ECG",
+    overview: "Overview",
+    display: "Display",
+    thresholds: "Thresholds",
+    missingValues: "Missing Values",
+    bloodPressure: "Blood Pressure",
+    heartRate: "Heart Rate",
+    weight: "Weight",
+    mood: "Mood",
+    sys: "Sys",
+    dia: "Dia",
+    hr: "HR",
+    outlier: "Outlier",
+    examination: "Examination",
+    timeRanges: { 14: "14D", 30: "30D", 60: "60D", 90: "90D" },
+    table: "Table",
+    charts: "Charts",
+    backToDashboard: "Back to Dashboard",
+    monthNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    dayAbbrev: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    patients: "Patients",
+    searchPlaceholder: "Search patient",
+  },
+  hu: {
+    dashboard: "Irányítópult",
+    patientInfo: "Beteg információ",
+    telemonitoring: "Távolmonitorozás",
+    insurance: "Biztosítás",
+    documents: "Dokumentumok",
+    app: "Alkalmazás",
+    contactPersons: "Kapcsolattartók",
+    patientData: "Betegadatok",
+    age: "Kor",
+    gender: "Nem",
+    nyha: "NYHA",
+    lvef: "LVEF",
+    anticoagulation: "Antikoaguláció",
+    birthDate: "Születési dátum",
+    icd10Diagnoses: "ICD-10 diagnózisok",
+    devices: "Eszközök",
+    implant: "Implantátum",
+    externalDevices: "Külső eszközök",
+    events: "Események és EKG",
+    overview: "Áttekintés",
+    display: "Megjelenítés",
+    thresholds: "Küszöbértékek",
+    missingValues: "Hiányzó értékek",
+    bloodPressure: "Vérnyomás",
+    heartRate: "Pulzus",
+    weight: "Súly",
+    mood: "Hangulat",
+    sys: "Sys",
+    dia: "Dia",
+    hr: "HR",
+    outlier: "Kilógás",
+    examination: "Vizsgálat",
+    timeRanges: { 14: "14N", 30: "30N", 60: "60N", 90: "90N" },
+    table: "Táblázat",
+    charts: "Grafikonok",
+    backToDashboard: "Vissza az irányítópultra",
+    monthNames: ["Január", "Február", "Március", "Április", "Május", "Június", "Július", "Augusztus", "Szeptember", "Október", "November", "December"],
+    dayAbbrev: ["Hé", "Ke", "Sze", "Csü", "Pé", "Szo", "Va"],
+    patients: "Betegek",
+    searchPlaceholder: "Beteg keresése",
+  },
 };
 
 const ALARM_LABELS: Record<string, string> = {
@@ -555,6 +701,10 @@ export default function VitalDashboard() {
   const [calendarHoverDay, setCalendarHoverDay] = useState<{ dateStr: string; cx: number; cy: number } | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [devicesOpen, setDevicesOpen] = useState(false);
+  const [lang, setLang] = useState<"de" | "en" | "hu">("de");
+  const [langOpen, setLangOpen] = useState(false);
+  const [customDateRange, setCustomDateRange] = useState<[string, string] | null>(null);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   /* ── Threshold settings state ── */
   const [templates, setTemplates] = useState<ThresholdTemplate[]>(() => [createDefaultTemplate()]);
@@ -571,6 +721,8 @@ export default function VitalDashboard() {
 
   const P = theme === "dark" ? darkPalette : lightPalette;
   const ALARM_COLORS: Record<string, string> = { critical: P.alarmRed, warning: P.alarmYellow, change: P.alarmBlue, info: P.alarmGray };
+
+  const t = useMemo(() => translations[lang], [lang]);
 
   const score = useMemo(() => complianceScore(allData, range), [allData, range]);
 
@@ -997,6 +1149,118 @@ export default function VitalDashboard() {
     ),
     [0.5, 5.5], "", undefined
   );
+
+  /* ─── Overview Chart (normalized combined view) ─── */
+  const overviewChart = (() => {
+    // Normalize all parameters to 0-100 scale
+    const normalizeValue = (value: number, min: number, max: number) => {
+      if (max === min) return 50;
+      return ((value - min) / (max - min)) * 100;
+    };
+
+    const bpSysMin = 80, bpSysMax = 160;
+    const hrMin = 40, hrMax = 120;
+    const weightMin = Math.min(...filteredData.weight.map(p => p.value)), weightMax = Math.max(...filteredData.weight.map(p => p.value));
+    const moodMin = 1, moodMax = 5;
+
+    const overviewYDomain: [number, number] = [0, 100];
+    const h = 200;
+    const iH = h - margin.top - margin.bottom;
+    const yS = d3.scaleLinear().domain(overviewYDomain).range([iH, 0]);
+
+    const sysLine = d3.line<BpPoint>()
+      .x(d => xScale(new Date(d.date)))
+      .y(d => yS(normalizeValue(d.systolic, bpSysMin, bpSysMax)))
+      .defined((d, i, arr) => {
+        if (i === 0) return true;
+        return (new Date(d.date).getTime() - new Date(arr[i - 1].date).getTime()) < 48 * 3600 * 1000;
+      })
+      .curve(d3.curveMonotoneX);
+
+    const hrLine = d3.line<HrPoint>()
+      .x(d => xScale(new Date(d.date)))
+      .y(d => yS(normalizeValue(d.value, hrMin, hrMax)))
+      .defined((d, i, arr) => {
+        if (i === 0) return true;
+        return (new Date(d.date).getTime() - new Date(arr[i - 1].date).getTime()) < 48 * 3600 * 1000;
+      })
+      .curve(d3.curveMonotoneX);
+
+    const weightLine = d3.line<WeightPoint>()
+      .x(d => xScale(new Date(d.date)))
+      .y(d => yS(normalizeValue(d.value, weightMin, weightMax)))
+      .defined((d, i, arr) => {
+        if (i === 0) return true;
+        return (new Date(d.date).getTime() - new Date(arr[i - 1].date).getTime()) < 48 * 3600 * 1000;
+      })
+      .curve(d3.curveMonotoneX);
+
+    const moodLine = d3.line<MoodPoint>()
+      .x(d => xScale(new Date(d.date)))
+      .y(d => yS(normalizeValue(d.value, moodMin, moodMax)))
+      .curve(d3.curveMonotoneX);
+
+    return (
+      <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
+        <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: `1px solid ${P.border}` }}>
+          <div className="flex items-center gap-3">
+            <Activity size={18} color={P.text} />
+            <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>Übersicht</span>
+            <div className="flex items-center gap-4 ml-4 text-xs" style={{ color: P.textMuted }}>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.bpSystolic }} />
+                Sys
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.heartRate }} />
+                HR
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.weight }} />
+                Gewicht
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.mood }} />
+                Stimmung
+              </span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <svg width="100%" height={h} viewBox={`0 0 ${chartW} ${h}`} preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <clipPath id="clip-overview">
+                <rect x={0} y={0} width={innerW} height={iH} />
+              </clipPath>
+            </defs>
+            <g transform={`translate(${margin.left},${margin.top})`}>
+              {/* Grid */}
+              {[0, 25, 50, 75, 100].map(t => (
+                <g key={t}>
+                  <line x1={0} x2={innerW} y1={yS(t)} y2={yS(t)} stroke={P.grid} strokeWidth={0.8} opacity={0.5} />
+                  <text x={-10} y={yS(t)} dy="0.35em" textAnchor="end" fill={P.gridLabel} fontSize={11} fontFamily="IBM Plex Sans">{t}%</text>
+                </g>
+              ))}
+              {/* X ticks */}
+              {xScale.ticks(detail.xTickCount).map(t => (
+                <text key={t.getTime()} x={xScale(t)} y={iH + 15} textAnchor="middle" fill={P.gridLabel} fontSize={11} fontFamily="IBM Plex Sans">
+                  {detail.xTickFormat(t)}
+                </text>
+              ))}
+              {/* Clipped content */}
+              <g clipPath="url(#clip-overview)">
+                {/* Area fills with low opacity */}
+                <path d={sysLine(filteredData.bp) || ""} fill="none" stroke={P.bpSystolic} strokeWidth={1.8} opacity={0.9} />
+                <path d={hrLine(filteredData.hr) || ""} fill="none" stroke={P.heartRate} strokeWidth={1.8} opacity={0.9} />
+                <path d={weightLine(filteredData.weight) || ""} fill="none" stroke={P.weight} strokeWidth={1.8} opacity={0.9} />
+                <path d={moodLine(filteredData.mood) || ""} fill="none" stroke={P.mood} strokeWidth={1.8} opacity={0.9} />
+              </g>
+            </g>
+          </svg>
+        </div>
+      </div>
+    );
+  })();
 
   /* ─── Calendar View (Events + ECG) ─── */
   const nonEcgEvents = filteredData.events;
@@ -2316,6 +2580,42 @@ export default function VitalDashboard() {
             >
               Save
             </button>
+            {/* Language picker */}
+            <div className="relative">
+              <button
+                onClick={() => setLangOpen(!langOpen)}
+                className="p-1.5 rounded transition-colors flex items-center gap-1.5"
+                style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
+                title="Language"
+              >
+                <span style={{ fontSize: "14px" }}>🌐</span>
+                <span className="text-xs font-semibold uppercase" style={{ color: P.text }}>{lang}</span>
+                <ChevronDown size={14} />
+              </button>
+              {langOpen && (
+                <div className="absolute right-0 mt-2 rounded-md shadow-lg p-2 z-50" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}`, minWidth: "140px" }}>
+                  {["de", "en", "hu"].map((langCode) => (
+                    <button
+                      key={langCode}
+                      onClick={() => {
+                        setLang(langCode as "de" | "en" | "hu");
+                        setLangOpen(false);
+                      }}
+                      className="w-full text-left px-3 py-2 rounded text-sm transition-colors flex items-center gap-2"
+                      style={{
+                        backgroundColor: lang === langCode ? P.bgInput : "transparent",
+                        color: P.text,
+                      }}
+                    >
+                      {langCode === "de" && "Deutsch"}
+                      {langCode === "en" && "English"}
+                      {langCode === "hu" && "Magyar"}
+                      {lang === langCode && <span style={{ color: P.bpSystolic }}>✓</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <button
               onClick={() => setTheme(t => (t === "dark" ? "light" : "dark"))}
               className="p-1.5 rounded transition-colors"
@@ -2438,7 +2738,6 @@ export default function VitalDashboard() {
                     <div className="p-4">
                       {/* Clinical info pills */}
                       <div className="flex flex-wrap gap-2 mb-4">
-                        <InfoPill label="Geburtsdatum" value={patient.dob} />
                         <InfoPill label="Alter" value={`${patient.age} Jahre`} />
                         <InfoPill label="Geschlecht" value={patient.gender} />
                         <InfoPill label="NYHA" value={`Klasse ${patient.nyha}`} />
@@ -2640,23 +2939,60 @@ export default function VitalDashboard() {
                       className="px-3 py-1.5 rounded text-sm font-semibold transition-all"
                       style={{
                         backgroundColor:
-                          range === r
+                          range === r && !customDateRange
                             ? theme === "dark"
                               ? "rgba(63,63,70,0.8)"
                               : "rgba(228,228,231,0.8)"
                             : "transparent",
-                        color: range === r ? P.text : P.textMuted,
+                        color: range === r && !customDateRange ? P.text : P.textMuted,
                       }}
                     >
                       {r}T
                     </button>
                   ))}
-                  <button
-                    className="p-1.5 rounded transition-colors"
-                    style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
-                  >
-                    <Calendar size={16} />
-                  </button>
+                  <div className="relative">
+                    <button
+                      onClick={() => setDatePickerOpen(!datePickerOpen)}
+                      className="p-1.5 rounded transition-colors"
+                      style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
+                      title="Date range picker"
+                    >
+                      <Calendar size={16} />
+                    </button>
+                    {datePickerOpen && (
+                      <div className="absolute top-10 right-0 z-50 rounded-md shadow-lg p-4" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
+                        <div className="flex flex-col gap-3 min-w-[300px]">
+                          <div>
+                            <label className="block text-xs font-semibold mb-1" style={{ color: P.textMuted }}>Von</label>
+                            <input
+                              type="date"
+                              value={customDateRange?.[0] ?? ""}
+                              onChange={(e) => setCustomDateRange([e.target.value, customDateRange?.[1] ?? ""])}
+                              className="w-full px-2 py-1.5 rounded text-sm border"
+                              style={{ backgroundColor: P.bgInput, borderColor: P.border, color: P.text }}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold mb-1" style={{ color: P.textMuted }}>Bis</label>
+                            <input
+                              type="date"
+                              value={customDateRange?.[1] ?? ""}
+                              onChange={(e) => setCustomDateRange([customDateRange?.[0] ?? "", e.target.value])}
+                              className="w-full px-2 py-1.5 rounded text-sm border"
+                              style={{ backgroundColor: P.bgInput, borderColor: P.border, color: P.text }}
+                            />
+                          </div>
+                          <button
+                            onClick={() => setDatePickerOpen(false)}
+                            className="px-3 py-1.5 rounded text-sm font-medium"
+                            style={{ backgroundColor: P.bpSystolic, color: "white" }}
+                          >
+                            OK
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* ── Calendar View (Events + ECG) ── */}
@@ -2733,49 +3069,17 @@ export default function VitalDashboard() {
                     <span style={{ color: P.textDim }}>|</span>
                     <span className="flex items-center gap-1.5">
                       <span
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: P.alarmRed }}
-                      />
-                      Kritisch
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: P.alarmYellow }}
-                      />
-                      Warnung
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: P.alarmBlue }}
-                      />
-                      Änderung
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: P.alarmGray }}
-                      />
-                      Info
-                    </span>
-                    <span style={{ color: P.textDim }}>|</span>
-                    <span className="flex items-center gap-1.5">
-                      <span
                         className="w-4 h-4 rounded-full border-2 border-dashed"
                         style={{ borderColor: P.outlier }}
                       />
                       Ausreißer
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <Stethoscope size={14} style={{ color: P.examination }} />
-                      Untersuchung
                     </span>
                   </div>
 
                   {/* ── Charts / Table ── */}
                   {viewMode === "chart" ? (
                     <div ref={chartContainerRef} className="flex flex-col gap-3">
+                      {overviewChart}
                       {bpChart}
                       {hrChart}
                       {weightChart}
