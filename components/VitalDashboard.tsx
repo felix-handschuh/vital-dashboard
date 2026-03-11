@@ -1383,6 +1383,7 @@ export default function VitalDashboard() {
             const ySys = yS(p.systolic);
             const yDia = yS(p.diastolic);
             const s = detail.dotRadius;
+            const tickW = 6;
             return (
               <g key={i}
                 onMouseEnter={(e) => handleDataHover({ type: "bp", ...p }, e)}
@@ -1391,9 +1392,17 @@ export default function VitalDashboard() {
                 onClick={() => setSidePanel({ type: "bp", date: p.date, data: p })}
                 className="cursor-pointer">
                 <rect x={x - detail.hitRadius} y={Math.min(ySys, yDia) - detail.hitRadius} width={detail.hitRadius * 2} height={Math.abs(yDia - ySys) + detail.hitRadius * 2} fill="transparent" />
+                {/* Individual readings as light gray horizontal ticks */}
+                {p.readings.length > 1 && p.readings.map((r, ri) => (
+                  <g key={`rd-${ri}`}>
+                    <line x1={x - tickW} x2={x + tickW} y1={yS(r.systolic)} y2={yS(r.systolic)} stroke={P.gridLabel} strokeWidth={1.5} opacity={0.4} />
+                    <line x1={x - tickW} x2={x + tickW} y1={yS(r.diastolic)} y2={yS(r.diastolic)} stroke={P.gridLabel} strokeWidth={1.5} opacity={0.4} />
+                  </g>
+                ))}
+                {/* Median (average) point as main marker */}
                 <polygon points={`${x},${ySys - s - 1} ${x - s},${ySys + s - 1} ${x + s},${ySys + s - 1}`} fill={p.alarm || p.outlier ? P.bpSystolic : P.detailLine} />
                 <polygon points={`${x},${yDia + s + 1} ${x - s},${yDia - s + 1} ${x + s},${yDia - s + 1}`} fill={p.alarm || p.outlier ? P.bpDiastolic : P.detailLine} />
-                <line x1={x} y1={ySys + s - 1} x2={x} y2={yDia - s + 1} stroke={P.bpSystolic} strokeWidth={1} opacity={0.3} />
+                <line x1={x} y1={ySys + s - 1} x2={x} y2={yDia - s + 1} stroke={P.detailLine} strokeWidth={1} opacity={0.3} />
                 {detail.showValues && (
                   <>
                     <text x={x} y={ySys - s - 4} dy="0.35em" fontSize={10} fill={p.alarm || p.outlier ? P.bpSystolic : P.detailLine} fontFamily="IBM Plex Sans" textAnchor="middle">{p.systolic}</text>
@@ -1402,7 +1411,6 @@ export default function VitalDashboard() {
                 )}
                 {p.alarm && <AlarmDot x={x} y={ySys - s - 1} alarm={p.alarm} />}
                 {p.outlier && <OutlierRing x={x} y={ySys} validated={p.outlierValidated} />}
-                <CountBadge x={x} y={ySys - s - 1} count={p.readings.length} />
               </g>
             );
           })}
@@ -1455,6 +1463,7 @@ export default function VitalDashboard() {
             const x = xS(new Date(p.date));
             const y = yS(p.value);
             const s = detail.dotRadius;
+            const tickW = 6;
             return (
               <g key={i}
                 onMouseEnter={(e) => handleDataHover({ type: "hr", ...p }, e)}
@@ -1463,11 +1472,15 @@ export default function VitalDashboard() {
                 onClick={() => setSidePanel({ type: "hr", date: p.date, data: p })}
                 className="cursor-pointer">
                 <circle cx={x} cy={y} r={detail.hitRadius} fill="transparent" />
+                {/* Individual readings as light gray horizontal ticks */}
+                {p.readings.length > 1 && p.readings.map((r, ri) => (
+                  <line key={`rd-${ri}`} x1={x - tickW} x2={x + tickW} y1={yS(r.value)} y2={yS(r.value)} stroke={P.gridLabel} strokeWidth={1.5} opacity={0.4} />
+                ))}
+                {/* Median (average) point as main marker */}
                 <polygon points={`${x - s},${y} ${x},${y - s} ${x + s},${y} ${x},${y + s}`} fill={p.alarm || p.outlier ? P.heartRate : P.detailLine} />
                 {detail.showValues && <text x={x} y={y - s - 4} fontSize={10} fill={p.alarm || p.outlier ? P.heartRate : P.detailLine} fontFamily="IBM Plex Sans" textAnchor="middle">{p.value}</text>}
                 {p.alarm && <AlarmDot x={x} y={y - s} alarm={p.alarm} />}
                 {p.outlier && <OutlierRing x={x} y={y} validated={p.outlierValidated} />}
-                <CountBadge x={x} y={y - 5} count={p.readings.length} />
               </g>
             );
           })}
@@ -1503,6 +1516,7 @@ export default function VitalDashboard() {
           {chartData.weight.map((p, i) => {
             const x = xS(new Date(p.date));
             const y = yS(p.value);
+            const tickW = 6;
             return (
               <g key={i}
                 onMouseEnter={(e) => handleDataHover({ type: "weight", ...p }, e)}
@@ -1511,11 +1525,15 @@ export default function VitalDashboard() {
                 onClick={() => setSidePanel({ type: "weight", date: p.date, data: p })}
                 className="cursor-pointer">
                 <circle cx={x} cy={y} r={detail.hitRadius} fill="transparent" />
+                {/* Individual readings as light gray horizontal ticks */}
+                {p.readings.length > 1 && p.readings.map((r, ri) => (
+                  <line key={`rd-${ri}`} x1={x - tickW} x2={x + tickW} y1={yS(r.value)} y2={yS(r.value)} stroke={P.gridLabel} strokeWidth={1.5} opacity={0.4} />
+                ))}
+                {/* Median (average) point as main marker */}
                 <circle cx={x} cy={y} r={detail.dotRadius} fill={p.alarm || p.outlier ? P.weight : P.detailLine} />
                 {detail.showValues && <text x={x} y={y - detail.dotRadius - 4} fontSize={10} fill={p.alarm || p.outlier ? P.weight : P.detailLine} fontFamily="IBM Plex Sans" textAnchor="middle">{p.value.toFixed(1)}</text>}
                 {p.alarm && <AlarmDot x={x} y={y} alarm={p.alarm} />}
                 {p.outlier && <OutlierRing x={x} y={y} validated={p.outlierValidated} />}
-                <CountBadge x={x} y={y} count={p.readings.length} />
               </g>
             );
           })}
