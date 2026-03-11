@@ -45,8 +45,8 @@ const moodColor = (v: number) => {
   if (v <= 1) return "#ef4444"; // red
   if (v <= 2) return "#f97316"; // orange
   if (v <= 3) return "#eab308"; // yellow
-  if (v <= 4) return "#84cc16"; // lime
-  return "#22c55e"; // green
+  if (v <= 4) return "#60a5fa"; // blue-400
+  return "#3b82f6"; // blue-500
 };
 const moodLabels: Record<string, string[]> = {
   de: ["", "Sehr schlecht", "Schlecht", "Okay", "Gut", "Sehr gut"],
@@ -141,11 +141,11 @@ const darkPalette = {
   text: "#fafafa", textSecondary: "#a1a1aa", textMuted: "#71717a", textDim: "#52525b",
   grid: "#27272a", gridLabel: "#a1a1aa",
   bpSystolic: "#4A9EDE", bpDiastolic: "#7EC8F0", heartRate: "#F07040",
-  weight: "#2CC990", mood: "#F5B840",
+  weight: "#60A5FA", mood: "#F5B840",
   threshUpper: "#EF4444", threshLower: "#60A5FA",
-  medication: "#E879A8", call: "#F5B840", alert: "#EF4444", ecg: "#2CC990",
+  medication: "#E879A8", call: "#F5B840", alert: "#EF4444", ecg: "#818CF8",
   examination: "#818CF8",
-  median: "#A1A1AA", good: "#2CC990", warning: "#F5B840", danger: "#EF4444", missed: "#52525b",
+  median: "#A1A1AA", good: "#60A5FA", warning: "#F5B840", danger: "#EF4444", missed: "#52525b",
   alarmRed: "#EF4444", alarmYellow: "#F59E0B", alarmBlue: "#60A5FA", alarmGray: "#9CA3AF",
   atrialHigh: "#EF4444", atrialMod: "#F59E0B", atrialLow: "#60A5FA",
   outlier: "#C084FC",
@@ -160,11 +160,11 @@ const lightPalette: typeof darkPalette = {
   text: "#18181b", textSecondary: "#52525b", textMuted: "#71717a", textDim: "#a1a1aa",
   grid: "#e4e4e7", gridLabel: "#71717a",
   bpSystolic: "#2563EB", bpDiastolic: "#3B82F6", heartRate: "#DC2626",
-  weight: "#16A34A", mood: "#CA8A04",
+  weight: "#2563EB", mood: "#CA8A04",
   threshUpper: "#DC2626", threshLower: "#2563EB",
-  medication: "#DB2777", call: "#CA8A04", alert: "#DC2626", ecg: "#16A34A",
+  medication: "#DB2777", call: "#CA8A04", alert: "#DC2626", ecg: "#6366F1",
   examination: "#6366F1",
-  median: "#71717a", good: "#16A34A", warning: "#CA8A04", danger: "#DC2626", missed: "#d4d4d8",
+  median: "#71717a", good: "#2563EB", warning: "#CA8A04", danger: "#DC2626", missed: "#d4d4d8",
   alarmRed: "#DC2626", alarmYellow: "#CA8A04", alarmBlue: "#2563EB", alarmGray: "#71717a",
   atrialHigh: "#DC2626", atrialMod: "#CA8A04", atrialLow: "#2563EB",
   outlier: "#9333EA",
@@ -198,7 +198,7 @@ const translations = {
     implant: "Implantat",
     externalDevices: "Externe Geräte",
     // Section headers
-    events: "Ereignisse & EKG",
+    events: "Ereignisse & IEGM",
     overview: "Übersicht",
     display: "Anzeige",
     thresholds: "Grenzwerte",
@@ -635,17 +635,17 @@ const createDefaultParams = (): ThresholdParam[] => [
     red: { enabled: false, emailNotify: false, rules: [] },
   },
   {
-    id: "ecg_received", label: "EKG eingegangen", unit: "",
+    id: "ecg_received", label: "IEGM eingegangen", unit: "",
     yellow: { enabled: true, emailNotify: false, rules: [] },
     red: { enabled: false, emailNotify: false, rules: [] },
   },
   {
-    id: "ecg_findings", label: "EKG Befunde", unit: "",
+    id: "ecg_findings", label: "IEGM Befunde", unit: "",
     yellow: { enabled: false, emailNotify: false, rules: [] },
     red: { enabled: false, emailNotify: false, rules: [] },
   },
   {
-    id: "implant_template", label: "Template für Implantate", unit: "",
+    id: "implant_template", label: "Vorlage für Implantate", unit: "",
     yellow: { enabled: false, emailNotify: false, rules: [] },
     red: { enabled: false, emailNotify: false, rules: [] },
   },
@@ -653,7 +653,7 @@ const createDefaultParams = (): ThresholdParam[] => [
 
 const createDefaultTemplate = (): ThresholdTemplate => ({
   id: "standard",
-  name: "Standard-Template",
+  name: "Standard-Vorlage",
   isDefault: true,
   params: createDefaultParams(),
 });
@@ -668,7 +668,7 @@ interface HrPoint { date: string; readings: HrReading[]; value: number; alarm?: 
 interface WeightReading { time: string; value: number; }
 interface WeightPoint { date: string; readings: WeightReading[]; value: number; alarm?: string; outlier?: boolean; outlierValidated?: boolean; }
 interface MoodPoint { date: string; value: number; }
-interface EcgEvent { date: string; time: string; duration: number; atrialBurden?: number; atrialUncertain?: boolean; alarm?: string; acknowledgedBy?: string; acknowledgedAt?: string; waveform?: number[]; }
+interface EcgEvent { date: string; time: string; duration: number; atrialBurden?: number; atrialUncertain?: boolean; alarm?: string; acknowledgedBy?: string; acknowledgedAt?: string; waveform?: number[]; trigger?: string; }
 interface EventItem { date: string; type: string; label: string; alarm?: string; acknowledgedBy?: string; acknowledgedAt?: string; linkedId?: string; }
 interface AllData { bp: BpPoint[]; hr: HrPoint[]; weight: WeightPoint[]; mood: MoodPoint[]; events: EventItem[]; ecgs: EcgEvent[]; missed: string[]; }
 
@@ -821,6 +821,8 @@ const generateData = (): AllData => {
       const ab = Math.random();
       const atrialBurden = ab < 0.15 ? Math.round(Math.random() * 30 + 20) : ab < 0.3 ? Math.round(Math.random() * 10 + 2) : 0;
       const ecgAlarm = atrialBurden > 15 ? "critical" : atrialBurden > 5 ? "warning" : undefined;
+      const triggers = ["VT-Stimulation", "Vorhofflimmerdetektion", "Tachykardieepisode", "Manuelle Auslösung", "AT/AF-Episode"];
+      const trigger = triggers[Math.floor(Math.random() * triggers.length)];
       data.ecgs.push({
         date: ds, time: `${8 + Math.floor(Math.random() * 12)}:${String(Math.floor(Math.random() * 60)).padStart(2, "0")}`,
         duration: Math.round(30 + Math.random() * 90),
@@ -829,6 +831,7 @@ const generateData = (): AllData => {
         acknowledgedBy: Math.random() < 0.5 ? "Dr. Müller" : undefined,
         acknowledgedAt: Math.random() < 0.5 ? `${ds}T14:00:00` : undefined,
         waveform: generateEcgWaveform(10000),
+        trigger,
       });
     }
   }
@@ -953,11 +956,12 @@ export default function VitalDashboard() {
   const [ecgDrawer, setEcgDrawer] = useState<EcgEvent | null>(null);
   const [ecgZoom, setEcgZoom] = useState(1);
   const [ecgHover, setEcgHover] = useState<{ ecg: EcgEvent; cx: number; cy: number } | null>(null);
-  const [theme, setTheme] = useState<Theme>("dark");
+  const [theme, setTheme] = useState<Theme>("light");
   const [page, setPage] = useState<"dashboard" | "thresholds">("dashboard");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [patientTab, setPatientTab] = useState<TabKey>("dashboard");
   const [calendarSelectedDay, setCalendarSelectedDay] = useState<string | null>(null);
+  const [calendarDialog, setCalendarDialog] = useState<{ dateStr: string } | null>(null);
   const [calendarHoverDay, setCalendarHoverDay] = useState<{ dateStr: string; cx: number; cy: number } | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [devicesOpen, setDevicesOpen] = useState(false);
@@ -1832,7 +1836,7 @@ export default function VitalDashboard() {
                         opacity: inRange ? 1 : 0.35,
                         border: isToday ? `1px solid ${P.accent}` : isSelected ? `1px solid ${P.border}` : "1px solid transparent",
                       }}
-                      onClick={() => hasEvents && setCalendarSelectedDay(isSelected ? null : dateStr)}
+                      onClick={() => hasEvents && setCalendarDialog({ dateStr })}
                       onMouseEnter={(e) => {
                         if (hasEvents) {
                           setCalendarHoverDay({ dateStr, cx: e.clientX, cy: e.clientY });
@@ -1889,7 +1893,7 @@ export default function VitalDashboard() {
               <div key={`ecg-${i}`} className="text-xs">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: P.ecg }} />
-                  <span style={{ color: P.textSecondary }}>EKG {ecg.time} · {ecg.duration}s{ecg.atrialBurden ? ` · AB ${ecg.atrialBurden}%` : ""}</span>
+                  <span style={{ color: P.textSecondary }}>IEGM {ecg.time} · {ecg.duration}s{ecg.atrialBurden ? ` · AB ${ecg.atrialBurden}%` : ""}</span>
                 </div>
                 {ecg.waveform && (
                   <svg width={200} height={30} className="mt-1 ml-4">
@@ -1902,59 +1906,62 @@ export default function VitalDashboard() {
         </div>
       )}
 
-      {/* Selected day detail panel (inline below calendar) */}
-      {calendarSelectedDay && calendarData[calendarSelectedDay] && (
-        <div className="px-5 pb-4 pt-2 border-t" style={{ borderTopColor: P.border }}>
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-sm font-semibold" style={{ color: P.text }}>
-              {new Date(calendarSelectedDay).toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-            </div>
-            <button onClick={() => setCalendarSelectedDay(null)} className="p-1 rounded-md transition-colors" style={{ color: P.textMuted }}>
-              <X size={14} />
-            </button>
-          </div>
-          <div className="space-y-2">
-            {calendarData[calendarSelectedDay].events.map((ev, i) => (
-              <div key={i}
-                className="flex items-start gap-3 p-2.5 rounded-md cursor-pointer transition-colors"
-                style={{ backgroundColor: P.bgInput }}
-                onClick={() => setSidePanel({ type: "event", date: ev.date, data: ev })}>
-                <span className="w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0" style={{
-                  backgroundColor: ev.type === "medication" ? P.medication : ev.type === "examination" ? P.examination : ev.alarm ? ALARM_COLORS[ev.alarm] : P.alarmGray
-                }} />
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium" style={{ color: P.text }}>{ev.label}</div>
-                  <div className="flex items-center gap-2 text-xs mt-0.5" style={{ color: P.textMuted }}>
-                    <span>{ev.type === "medication" ? "Medikation" : ev.type === "examination" ? "Untersuchung" : ev.type === "atrialBurden" ? "Atrial Burden" : ev.type}</span>
-                    {ev.alarm && <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold" style={{ backgroundColor: `${ALARM_COLORS[ev.alarm]}22`, color: ALARM_COLORS[ev.alarm] }}>{ALARM_LABELS[ev.alarm]}</span>}
-                    {ev.acknowledgedBy && <span>✓ {ev.acknowledgedBy}</span>}
-                  </div>
-                </div>
+      {/* Calendar day dialog */}
+      {calendarDialog && calendarData[calendarDialog.dateStr] && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} onClick={() => setCalendarDialog(null)}>
+          <div className="rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto mx-4" style={{ backgroundColor: P.bgPanel, border: `1px solid ${P.borderStrong}` }} onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${P.border}` }}>
+              <div className="text-base font-semibold" style={{ color: P.text }}>
+                {new Date(calendarDialog.dateStr).toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
               </div>
-            ))}
-            {calendarData[calendarSelectedDay].ecgs.map((ecg, i) => (
-              <div key={`ecg-${i}`}
-                className="p-2.5 rounded-md cursor-pointer transition-colors"
-                style={{ backgroundColor: P.bgInput }}
-                onClick={() => setEcgDrawer(ecg)}>
-                <div className="flex items-center gap-3">
-                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: ecg.alarm ? ALARM_COLORS[ecg.alarm] : P.ecg }} />
-                  <div className="flex-1">
-                    <div className="text-sm font-medium" style={{ color: P.text }}>EKG-Aufzeichnung · {ecg.time}</div>
-                    <div className="text-xs mt-0.5" style={{ color: P.textMuted }}>
-                      {ecg.duration}s{ecg.atrialBurden ? ` · Atrial Burden: ${ecg.atrialBurden}%` : ""}
-                      {ecg.alarm && <span className="ml-2 px-1.5 py-0.5 rounded-full text-[10px] font-semibold" style={{ backgroundColor: `${ALARM_COLORS[ecg.alarm]}22`, color: ALARM_COLORS[ecg.alarm] }}>{ALARM_LABELS[ecg.alarm]}</span>}
-                      {ecg.acknowledgedBy && <span className="ml-2">✓ {ecg.acknowledgedBy}</span>}
+              <button onClick={() => setCalendarDialog(null)} className="p-1.5 rounded-md transition-colors" style={{ color: P.textMuted }}>
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-5 space-y-2">
+              {calendarData[calendarDialog.dateStr].events.map((ev, i) => (
+                <div key={i}
+                  className="flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors"
+                  style={{ backgroundColor: P.bgInput }}
+                  onClick={() => { setCalendarDialog(null); setSidePanel({ type: "event", date: ev.date, data: ev }); }}>
+                  <span className="w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0" style={{
+                    backgroundColor: ev.type === "medication" ? P.medication : ev.type === "examination" ? P.examination : ev.alarm ? ALARM_COLORS[ev.alarm] : P.alarmGray
+                  }} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium" style={{ color: P.text }}>{ev.label}</div>
+                    <div className="flex items-center gap-2 text-xs mt-0.5" style={{ color: P.textMuted }}>
+                      <span>{ev.type === "medication" ? "Medikation" : ev.type === "examination" ? "Untersuchung" : ev.type === "atrialBurden" ? "Atrial Burden" : ev.type}</span>
+                      {ev.alarm && <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold" style={{ backgroundColor: `${ALARM_COLORS[ev.alarm]}22`, color: ALARM_COLORS[ev.alarm] }}>{ALARM_LABELS[ev.alarm]}</span>}
+                      {ev.acknowledgedBy && <span>✓ {ev.acknowledgedBy}</span>}
                     </div>
                   </div>
                 </div>
-                {ecg.waveform && (
-                  <svg width="100%" height={40} viewBox="0 0 280 40" preserveAspectRatio="xMidYMid meet" className="mt-2">
-                    <path d={ecg.waveform.slice(0, 700).map((v, j) => `${j === 0 ? "M" : "L"}${j * 0.4},${20 - v * 15}`).join(" ")} fill="none" stroke={P.ecg} strokeWidth={1.2} />
-                  </svg>
-                )}
-              </div>
-            ))}
+              ))}
+              {calendarData[calendarDialog.dateStr].ecgs.map((ecg, i) => (
+                <div key={`ecg-${i}`}
+                  className="p-3 rounded-lg cursor-pointer transition-colors"
+                  style={{ backgroundColor: P.bgInput }}
+                  onClick={() => { setCalendarDialog(null); setEcgDrawer(ecg); }}>
+                  <div className="flex items-center gap-3">
+                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: ecg.alarm ? ALARM_COLORS[ecg.alarm] : P.ecg }} />
+                    <div className="flex-1">
+                      <div className="text-sm font-medium" style={{ color: P.text }}>IEGM-Aufzeichnung · {ecg.time}</div>
+                      <div className="text-xs mt-0.5" style={{ color: P.textMuted }}>
+                        {ecg.duration}s{ecg.atrialBurden ? ` · Atrial Burden: ${ecg.atrialBurden}%` : ""}
+                        {ecg.trigger && <span className="ml-2">Auslöser: {ecg.trigger}</span>}
+                        {ecg.alarm && <span className="ml-2 px-1.5 py-0.5 rounded-full text-[10px] font-semibold" style={{ backgroundColor: `${ALARM_COLORS[ecg.alarm]}22`, color: ALARM_COLORS[ecg.alarm] }}>{ALARM_LABELS[ecg.alarm]}</span>}
+                        {ecg.acknowledgedBy && <span className="ml-2">✓ {ecg.acknowledgedBy}</span>}
+                      </div>
+                    </div>
+                  </div>
+                  {ecg.waveform && (
+                    <svg width="100%" height={40} viewBox="0 0 280 40" preserveAspectRatio="xMidYMid meet" className="mt-2">
+                      <path d={ecg.waveform.slice(0, 700).map((v, j) => `${j === 0 ? "M" : "L"}${j * 0.4},${20 - v * 15}`).join(" ")} fill="none" stroke={P.ecg} strokeWidth={1.2} />
+                    </svg>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -1963,8 +1970,10 @@ export default function VitalDashboard() {
       <div className="px-5 pb-3 flex items-center gap-4 flex-wrap text-xs" style={{ color: P.textMuted }}>
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.medication }} /> Medikation</span>
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.examination }} /> Untersuchung</span>
-        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.alert }} /> Alarm</span>
-        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.ecg }} /> EKG</span>
+        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.alarmRed }} /> Kritischer Alarm</span>
+        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.alarmYellow }} /> Warnung</span>
+        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.alarmBlue }} /> Info</span>
+        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.ecg }} /> IEGM</span>
       </div>
       {/* end calendarOpen */}
       </>}
@@ -2081,7 +2090,7 @@ export default function VitalDashboard() {
                       <span className="text-sm" style={{ color: P.outlier }}>Ausreißer</span>
                       <button onClick={() => handleValidateOutlier("bp", sidePanel.date)}
                         className="text-sm px-3 py-1 rounded-lg transition-colors"
-                        style={{ backgroundColor: dayBp.outlierValidated ? "rgba(34,197,94,0.15)" : P.bgInput, color: dayBp.outlierValidated ? P.good : P.textSecondary }}>
+                        style={{ backgroundColor: dayBp.outlierValidated ? "rgba(59,130,246,0.15)" : P.bgInput, color: dayBp.outlierValidated ? P.good : P.textSecondary }}>
                         {dayBp.outlierValidated ? <><RotateCcw size={12} className="inline mr-1" />Revidieren</> : <><CheckCircle size={12} className="inline mr-1" />Messpunkt valide</>}
                       </button>
                     </div>
@@ -2108,7 +2117,7 @@ export default function VitalDashboard() {
                       <span className="text-sm" style={{ color: P.outlier }}>Ausreißer</span>
                       <button onClick={() => handleValidateOutlier("hr", sidePanel.date)}
                         className="text-sm px-3 py-1 rounded-lg transition-colors"
-                        style={{ backgroundColor: dayHr.outlierValidated ? "rgba(34,197,94,0.15)" : P.bgInput, color: dayHr.outlierValidated ? P.good : P.textSecondary }}>
+                        style={{ backgroundColor: dayHr.outlierValidated ? "rgba(59,130,246,0.15)" : P.bgInput, color: dayHr.outlierValidated ? P.good : P.textSecondary }}>
                         {dayHr.outlierValidated ? <><RotateCcw size={12} className="inline mr-1" />Revidieren</> : <><CheckCircle size={12} className="inline mr-1" />Messpunkt valide</>}
                       </button>
                     </div>
@@ -2135,7 +2144,7 @@ export default function VitalDashboard() {
                       <span className="text-sm" style={{ color: P.outlier }}>Ausreißer</span>
                       <button onClick={() => handleValidateOutlier("weight", sidePanel.date)}
                         className="text-sm px-3 py-1 rounded-lg transition-colors"
-                        style={{ backgroundColor: dayW.outlierValidated ? "rgba(34,197,94,0.15)" : P.bgInput, color: dayW.outlierValidated ? P.good : P.textSecondary }}>
+                        style={{ backgroundColor: dayW.outlierValidated ? "rgba(59,130,246,0.15)" : P.bgInput, color: dayW.outlierValidated ? P.good : P.textSecondary }}>
                         {dayW.outlierValidated ? <><RotateCcw size={12} className="inline mr-1" />Revidieren</> : <><CheckCircle size={12} className="inline mr-1" />Messpunkt valide</>}
                       </button>
                     </div>
@@ -2171,7 +2180,7 @@ export default function VitalDashboard() {
               )}
               {dayEcgs.length > 0 && (
                 <div className="space-y-2">
-                  <div className="text-sm font-medium uppercase tracking-wider" style={{ color: P.textMuted }}>EKG-Aufzeichnungen</div>
+                  <div className="text-sm font-medium uppercase tracking-wider" style={{ color: P.textMuted }}>IEGM-Aufzeichnungen</div>
                   {dayEcgs.map((ecg, i) => (
                     <div key={i} className="rounded-lg p-4 cursor-pointer transition-colors" style={{ backgroundColor: P.bgCardHover }} onClick={() => { setSidePanel(null); setEcgDrawer(ecg); }}>
                       <div className="flex items-center justify-between">
@@ -2230,8 +2239,8 @@ export default function VitalDashboard() {
     setTimeout(() => { setEcgDrawer(null); setEcgZoom(1); }, 300);
   };
 
-  const ecgGridColor = theme === "dark" ? "rgba(44,201,144,0.08)" : "rgba(22,163,74,0.08)";
-  const ecgGridStrongColor = theme === "dark" ? "rgba(44,201,144,0.18)" : "rgba(22,163,74,0.18)";
+  const ecgGridColor = theme === "dark" ? "rgba(129,140,248,0.08)" : "rgba(99,102,241,0.08)";
+  const ecgGridStrongColor = theme === "dark" ? "rgba(129,140,248,0.18)" : "rgba(99,102,241,0.18)";
   const ecgNoiseLevel = ecgDrawer ? (ecgDrawer.atrialBurden && ecgDrawer.atrialBurden > 15 ? "Hoch" : ecgDrawer.atrialBurden && ecgDrawer.atrialBurden > 5 ? "Mittel" : "Niedrig") : "—";
 
   // ECG drawer timeline position
@@ -2250,10 +2259,13 @@ export default function VitalDashboard() {
       <div className="flex flex-wrap items-center justify-between px-6 py-3 gap-3" style={{ borderBottom: `1px solid ${P.border}` }}>
         <div className="flex items-center gap-3 flex-wrap">
           <FileHeart size={20} color={P.ecg} />
-          <span className="text-lg font-semibold tracking-tight" style={{ color: P.text }}>EKG — {ecgDrawer.date} {ecgDrawer.time}</span>
+          <span className="text-lg font-semibold tracking-tight" style={{ color: P.text }}>IEGM — {ecgDrawer.date} {ecgDrawer.time}</span>
           {ecgDrawer.alarm && <span className="text-sm px-2.5 py-1 rounded-full font-medium" style={{ backgroundColor: ALARM_COLORS[ecgDrawer.alarm], color: "white" }}>{ALARM_LABELS[ecgDrawer.alarm]}</span>}
           {ecgDrawer.atrialBurden !== undefined && ecgDrawer.atrialBurden > 0 && (
             <span className="text-sm font-semibold" style={{ color: ecgDrawer.atrialBurden > 15 ? P.atrialHigh : P.atrialMod }}>AF: {ecgDrawer.atrialBurden}%</span>
+          )}
+          {ecgDrawer.trigger && (
+            <span className="text-sm px-2.5 py-1 rounded-full font-medium" style={{ backgroundColor: `${P.bpSystolic}22`, color: P.bpSystolic }}>Auslöser: {ecgDrawer.trigger}</span>
           )}
         </div>
         <div className="flex items-center gap-3">
@@ -2637,6 +2649,7 @@ export default function VitalDashboard() {
       implantDate: "2024-03-15",
       batteryVoltage: 3.12,
       batteryStatus: "OK" as const,
+      batteryMOS: "MOS 1" as string,
       lastTransmission: "2026-03-05T08:14:00",
       detailLink: "#implant-detail",
       transmissionListLink: "#transmission-list-implant",
@@ -2850,7 +2863,7 @@ export default function VitalDashboard() {
       <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
         <div className="px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-sm font-semibold uppercase tracking-wider" style={{ color: P.textMuted }}>Template:</span>
+            <span className="text-sm font-semibold uppercase tracking-wider" style={{ color: P.textMuted }}>Vorlage:</span>
             <select
               value={activeTemplateId}
               onChange={(e) => handleTemplateChange(e.target.value)}
@@ -2878,7 +2891,7 @@ export default function VitalDashboard() {
             <button onClick={() => { setSaveTemplateName(""); setShowSaveDialog(true); }}
               className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors"
               style={{ backgroundColor: P.bgInput, color: P.text }}>
-              <Copy size={15} /> Als neues Template speichern
+              <Copy size={15} /> Als neue Vorlage speichern
             </button>
             {activeTemplate && !activeTemplate.isDefault && (
               <button onClick={() => handleDeleteTemplate(activeTemplateId)}
@@ -2902,9 +2915,9 @@ export default function VitalDashboard() {
       {showSaveDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
           <div className="rounded-md p-6 shadow-2xl w-full max-w-md space-y-4" style={{ backgroundColor: P.bgPanel, border: `1px solid ${P.border}` }}>
-            <h3 className="text-lg font-semibold" style={{ color: P.text }}>Neues Template speichern</h3>
+            <h3 className="text-lg font-semibold" style={{ color: P.text }}>Neue Vorlage speichern</h3>
             <input
-              type="text" placeholder="Name des Templates..."
+              type="text" placeholder="Name der Vorlage..."
               value={saveTemplateName} onChange={(e) => setSaveTemplateName(e.target.value)}
               className="w-full px-4 py-2.5 rounded-lg text-sm outline-none border-0"
               style={{ backgroundColor: P.bgInput, color: P.text }}
@@ -3757,7 +3770,7 @@ export default function VitalDashboard() {
                                       : P.warning,
                                 }}
                               >
-                                {patient.implant.batteryVoltage} V
+                                {patient.implant.batteryVoltage} V ({patient.implant.batteryMOS})
                               </span>
                             </div>
                             <div
@@ -3773,7 +3786,7 @@ export default function VitalDashboard() {
                             className="inline-flex items-center gap-1 text-xs mt-1 transition-colors"
                             style={{ color: P.bpSystolic }}
                           >
-                            Transmissions-Verlauf <Link2 size={11} />
+                            Übertragungsverlauf <Radio size={11} />
                           </a>
                         </div>
                       </div>
@@ -3819,7 +3832,7 @@ export default function VitalDashboard() {
                               className="inline-flex items-center gap-1 text-xs mt-1 transition-colors"
                               style={{ color: P.bpSystolic }}
                             >
-                              Transmissions-Verlauf <Link2 size={11} />
+                              Übertragungsverlauf <Radio size={11} />
                             </a>
                           </div>
                         </div>
@@ -4036,7 +4049,7 @@ export default function VitalDashboard() {
               top: -20,
               width: `${6 + Math.random() * 8}px`,
               height: `${6 + Math.random() * 8}px`,
-              backgroundColor: ['#f59e0b', '#ef4444', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#f97316'][i % 7],
+              backgroundColor: ['#f59e0b', '#ef4444', '#3b82f6', '#818cf8', '#8b5cf6', '#ec4899', '#f97316'][i % 7],
               borderRadius: Math.random() > 0.5 ? '50%' : '2px',
               animation: `confetti-fall ${2 + Math.random() * 3}s ease-in ${Math.random() * 1}s forwards`,
               transform: `rotate(${Math.random() * 360}deg)`,
