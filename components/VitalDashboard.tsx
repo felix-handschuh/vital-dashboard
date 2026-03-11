@@ -141,7 +141,7 @@ const darkPalette = {
   text: "#fafafa", textSecondary: "#a1a1aa", textMuted: "#71717a", textDim: "#52525b",
   grid: "#27272a", gridLabel: "#a1a1aa",
   bpSystolic: "#4A9EDE", bpDiastolic: "#7EC8F0", heartRate: "#F07040",
-  weight: "#60A5FA", mood: "#F5B840",
+  weight: "#60A5FA", mood: "#F5B840", detailLine: "#52525b",
   threshUpper: "#EF4444", threshLower: "#60A5FA",
   medication: "#E879A8", call: "#F5B840", alert: "#EF4444", ecg: "#818CF8",
   examination: "#818CF8",
@@ -160,7 +160,7 @@ const lightPalette: typeof darkPalette = {
   text: "#18181b", textSecondary: "#52525b", textMuted: "#71717a", textDim: "#a1a1aa",
   grid: "#e4e4e7", gridLabel: "#71717a",
   bpSystolic: "#2563EB", bpDiastolic: "#3B82F6", heartRate: "#DC2626",
-  weight: "#2563EB", mood: "#CA8A04",
+  weight: "#2563EB", mood: "#CA8A04", detailLine: "#71717a",
   threshUpper: "#DC2626", threshLower: "#2563EB",
   medication: "#DB2777", call: "#CA8A04", alert: "#DC2626", ecg: "#6366F1",
   examination: "#6366F1",
@@ -207,7 +207,7 @@ const translations = {
     bloodPressure: "Blutdruck",
     heartRate: "Herzfrequenz",
     weight: "Gewicht",
-    mood: "Stimmung",
+    mood: "Befinden",
     // Legend items
     sys: "Sys",
     dia: "Dia",
@@ -215,7 +215,7 @@ const translations = {
     outlier: "Ausreißer",
     examination: "Untersuchung",
     // Time ranges
-    timeRanges: { 14: "14T", 30: "30T", 60: "60T", 90: "90T" },
+    timeRanges: { 7: "7T", 14: "14T", 30: "30T", 60: "60T", 90: "90T" },
     // Buttons
     table: "Tabelle",
     charts: "Graphen",
@@ -289,7 +289,7 @@ const translations = {
     hr: "HR",
     outlier: "Outlier",
     examination: "Examination",
-    timeRanges: { 14: "14D", 30: "30D", 60: "60D", 90: "90D" },
+    timeRanges: { 7: "7D", 14: "14D", 30: "30D", 60: "60D", 90: "90D" },
     table: "Table",
     charts: "Charts",
     backToDashboard: "Back to Dashboard",
@@ -361,7 +361,7 @@ const translations = {
     hr: "HR",
     outlier: "Kilógás",
     examination: "Vizsgálat",
-    timeRanges: { 14: "14N", 30: "30N", 60: "60N", 90: "90N" },
+    timeRanges: { 7: "7N", 14: "14N", 30: "30N", 60: "60N", 90: "90N" },
     table: "Táblázat",
     charts: "Grafikonok",
     backToDashboard: "Vissza az irányítópultra",
@@ -429,7 +429,7 @@ const translations = {
     outlier: "Отстапување",
     examination: "Преглед",
     // Time ranges
-    timeRanges: { 14: "14Д", 30: "30Д", 60: "60Д", 90: "90Д" },
+    timeRanges: { 7: "7Д", 14: "14Д", 30: "30Д", 60: "60Д", 90: "90Д" },
     // Buttons
     table: "Табела",
     charts: "Графикони",
@@ -499,7 +499,7 @@ const translations = {
     outlier: "Викид",
     examination: "Обстеження",
     // Time ranges
-    timeRanges: { 14: "14Д", 30: "30Д", 60: "60Д", 90: "90Д" },
+    timeRanges: { 7: "7Д", 14: "14Д", 30: "30Д", 60: "60Д", 90: "90Д" },
     // Buttons
     table: "Таблиця",
     charts: "Графіки",
@@ -728,7 +728,7 @@ const generateData = (): AllData => {
     const avgSys = Math.round(bpReadings.reduce((s, r) => s + r.systolic, 0) / bpReadings.length);
     const avgDia = Math.round(bpReadings.reduce((s, r) => s + r.diastolic, 0) / bpReadings.length);
     const bpAlarm = avgSys > 160 ? "critical" : avgSys > 140 ? "warning" : avgSys < 100 ? "change" : undefined;
-    data.bp.push({ date: ds, readings: bpReadings, systolic: avgSys, diastolic: avgDia, alarm: isOutlierBp ? "warning" : (isExtremeBp ? "critical" : bpAlarm), outlier: isOutlierBp || isExtremeBp });
+    data.bp.push({ date: ds, readings: bpReadings, systolic: avgSys, diastolic: avgDia, alarm: isOutlierBp ? "warning" : (isExtremeBp ? "critical" : bpAlarm), outlier: false });
 
     const hrCount = Math.random() < 0.08 ? Math.floor(Math.random() * 2) + 2 : 1; // ~8% chance of 2-3 readings, otherwise 1
     const hrReadings: HrReading[] = [];
@@ -742,7 +742,7 @@ const generateData = (): AllData => {
     hrReadings.sort((a, b) => a.time.localeCompare(b.time));
     const avgHr = Math.round(hrReadings.reduce((s, r) => s + r.value, 0) / hrReadings.length);
     const hrAlarm = avgHr > 150 ? "critical" : avgHr > 100 ? "warning" : avgHr < 50 ? "warning" : undefined;
-    data.hr.push({ date: ds, readings: hrReadings, value: avgHr, alarm: isOutlierHr ? "critical" : (isExtremeHr ? "critical" : hrAlarm), outlier: isOutlierHr || isExtremeHr });
+    data.hr.push({ date: ds, readings: hrReadings, value: avgHr, alarm: isOutlierHr ? "critical" : (isExtremeHr ? "critical" : hrAlarm), outlier: false });
 
     bW += (Math.random() - 0.52) * 0.15;
     const w = Math.round(bW * 10) / 10;
@@ -753,7 +753,7 @@ const generateData = (): AllData => {
       wReadings.push({ time: randTime(6, 10), value: Math.round((w + (Math.random() - 0.5) * 0.3 + (isOutlierW && r === 0 ? 4 : 0)) * 10) / 10 });
     }
     const avgW = Math.round(wReadings.reduce((s, r) => s + r.value, 0) / wReadings.length * 10) / 10;
-    data.weight.push({ date: ds, readings: wReadings, value: avgW, alarm: isOutlierW ? "warning" : undefined, outlier: isOutlierW });
+    data.weight.push({ date: ds, readings: wReadings, value: avgW, alarm: isOutlierW ? "warning" : undefined, outlier: false });
 
     if (Math.random() < 0.7) {
       data.mood.push({ date: ds, value: Math.min(5, Math.max(1, Math.round(3 + Math.sin(i / 8) + (Math.random() - 0.5) * 2))) });
@@ -816,10 +816,54 @@ const generateData = (): AllData => {
   return data;
 };
 
+const detectOutliers = (data: AllData, stdDevMultiplier = 2.5): AllData => {
+  // Compute rolling stats for BP systolic
+  const bpWindow = 21; // 3 weeks rolling window
+  data.bp.forEach((point, idx) => {
+    const windowStart = Math.max(0, idx - bpWindow);
+    const windowSlice = data.bp.slice(windowStart, idx).map(p => p.systolic);
+    if (windowSlice.length >= 5) {
+      const mean = windowSlice.reduce((a, b) => a + b, 0) / windowSlice.length;
+      const stdDev = Math.sqrt(windowSlice.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / windowSlice.length);
+      if (stdDev > 0 && Math.abs(point.systolic - mean) > stdDevMultiplier * stdDev) {
+        point.outlier = true;
+        point.alarm = point.alarm || "warning";
+      }
+    }
+  });
+  // HR
+  data.hr.forEach((point, idx) => {
+    const windowStart = Math.max(0, idx - bpWindow);
+    const windowSlice = data.hr.slice(windowStart, idx).map(p => p.value);
+    if (windowSlice.length >= 5) {
+      const mean = windowSlice.reduce((a, b) => a + b, 0) / windowSlice.length;
+      const stdDev = Math.sqrt(windowSlice.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / windowSlice.length);
+      if (stdDev > 0 && Math.abs(point.value - mean) > stdDevMultiplier * stdDev) {
+        point.outlier = true;
+        point.alarm = point.alarm || "warning";
+      }
+    }
+  });
+  // Weight
+  data.weight.forEach((point, idx) => {
+    const windowStart = Math.max(0, idx - bpWindow);
+    const windowSlice = data.weight.slice(windowStart, idx).map(p => p.value);
+    if (windowSlice.length >= 5) {
+      const mean = windowSlice.reduce((a, b) => a + b, 0) / windowSlice.length;
+      const stdDev = Math.sqrt(windowSlice.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / windowSlice.length);
+      if (stdDev > 0 && Math.abs(point.value - mean) > stdDevMultiplier * stdDev) {
+        point.outlier = true;
+        point.alarm = point.alarm || "warning";
+      }
+    }
+  });
+  return data;
+};
+
 /* ═══════════════════════════════════════════════════════════════════════════════
    UTILITIES
    ═══════════════════════════════════════════════════════════════════════════════ */
-const RANGES = [14, 30, 60, 90] as const;
+const RANGES = [7, 14, 30, 60, 90] as const;
 type Range = typeof RANGES[number];
 
 const rollingMedian = (vals: { date: string; v: number }[], window = 7) => {
@@ -829,6 +873,16 @@ const rollingMedian = (vals: { date: string; v: number }[], window = 7) => {
     const slice = vals.slice(start, end).map(p => p.v).sort((a, b) => a - b);
     return { date: pt.date, v: slice[Math.floor(slice.length / 2)] };
   });
+};
+
+const percentile = (values: number[], p: number): number => {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const idx = (p / 100) * (sorted.length - 1);
+  const lo = Math.floor(idx);
+  const hi = Math.ceil(idx);
+  if (lo === hi) return sorted[lo];
+  return Math.round(sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo));
 };
 
 const detectTrend = (values: number[]): "up" | "down" | "stable" => {
@@ -922,7 +976,7 @@ const SvgExamIcon = ({ x, y, color, size = 1 }: { x: number; y: number; color: s
    MAIN COMPONENT
    ═══════════════════════════════════════════════════════════════════════════════ */
 export default function VitalDashboard() {
-  const [allData, setAllData] = useState<AllData>(() => generateData());
+  const [allData, setAllData] = useState<AllData>(() => detectOutliers(generateData()));
   const [range, setRange] = useState<Range>(30);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [hoverInfo, setHoverInfo] = useState<any>(null);
@@ -950,7 +1004,7 @@ export default function VitalDashboard() {
   const [langOpen, setLangOpen] = useState(false);
   const [customDateRange, setCustomDateRange] = useState<[string, string] | null>(null);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
-  const [overviewVisible, setOverviewVisible] = useState({ sys: true, hr: true, weight: true, mood: true });
+  const [overviewVisible, setOverviewVisible] = useState({ sys: true, dia: true, hr: true, weight: true, mood: true });
   const [overviewHover, setOverviewHover] = useState<{ xPos: number; yPos: number; data: Record<string, any> } | null>(null);
 
   /* ── Threshold settings state ── */
@@ -1150,7 +1204,8 @@ export default function VitalDashboard() {
     type: string, label: string, icon: React.ReactNode, color: string,
     renderContent: (xS: any, yS: any, iH: number) => React.ReactNode,
     yDomain: [number, number], unit: string,
-    thresholds?: { upper?: number; lower?: number }
+    thresholds?: { upper?: number; lower?: number },
+    stats?: { p10: number; median: number; p90: number }
   ) => {
     const isExpanded = expanded === type;
     const h = chartH(type);
@@ -1165,7 +1220,13 @@ export default function VitalDashboard() {
           <div className="flex items-center gap-3">
             {icon}
             <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>{label}</span>
-            <span className="text-sm font-normal" style={{ color: P.textMuted }}>{yDomain[0]}–{yDomain[1]} {unit}</span>
+            {stats ? (
+              <span className="text-sm font-normal" style={{ color: P.textMuted }}>
+                P10: {stats.p10} · Median: {stats.median} · P90: {stats.p90} {unit}
+              </span>
+            ) : (
+              <span className="text-sm font-normal" style={{ color: P.textMuted }}>{yDomain[0]}–{yDomain[1]} {unit}</span>
+            )}
           </div>
           <button onClick={() => setExpanded(isExpanded ? null : type)} className="p-1.5 rounded-lg transition-colors" style={{ color: P.textMuted }}>
             {isExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
@@ -1277,6 +1338,15 @@ export default function VitalDashboard() {
   /* ─── BP Chart ─── */
   const bpAllVals = useMemo(() => [...allData.bp.map(p => p.systolic), ...allData.bp.map(p => p.diastolic)], [allData.bp]);
   const bpYDomain = useMemo(() => niceYDomain(bpAllVals, 0.08), [bpAllVals]);
+  const bpStats = useMemo(() => {
+    const sysVals = chartData.bp.map(p => p.systolic);
+    const diaVals = chartData.bp.map(p => p.diastolic);
+    return {
+      p10: percentile(sysVals, 10),
+      median: percentile(sysVals, 50),
+      p90: percentile(sysVals, 90),
+    };
+  }, [chartData.bp]);
   const bpChart = renderChart("bp", tr.bloodPressure, <Activity size={18} color={P.bpSystolic} />, P.bpSystolic,
     (xS, yS, iH) => {
       const sysLine = d3.line<BpPoint>().x(d => xS(new Date(d.date))).y(d => yS(d.systolic)).defined((d, i, arr) => {
@@ -1292,8 +1362,8 @@ export default function VitalDashboard() {
 
       return (
         <g>
-          <path d={sysLine(chartData.bp) || ""} fill="none" stroke={P.bpSystolic} strokeWidth={detail.lineWidth} />
-          <path d={diaLine(chartData.bp) || ""} fill="none" stroke={P.bpDiastolic} strokeWidth={detail.lineWidth} />
+          <path d={sysLine(chartData.bp) || ""} fill="none" stroke={P.detailLine} strokeWidth={detail.lineWidth} />
+          <path d={diaLine(chartData.bp) || ""} fill="none" stroke={P.detailLine} strokeWidth={detail.lineWidth} />
           <path d={medLine(medVals) || ""} fill="none" stroke={P.median} strokeWidth={detail.medianWidth} strokeDasharray="4,4" opacity={0.5} />
           {/* Median hover points */}
           {medVals.map((mv, i) => {
@@ -1321,13 +1391,13 @@ export default function VitalDashboard() {
                 onClick={() => setSidePanel({ type: "bp", date: p.date, data: p })}
                 className="cursor-pointer">
                 <rect x={x - detail.hitRadius} y={Math.min(ySys, yDia) - detail.hitRadius} width={detail.hitRadius * 2} height={Math.abs(yDia - ySys) + detail.hitRadius * 2} fill="transparent" />
-                <polygon points={`${x},${ySys - s - 1} ${x - s},${ySys + s - 1} ${x + s},${ySys + s - 1}`} fill={P.bpSystolic} />
-                <polygon points={`${x},${yDia + s + 1} ${x - s},${yDia - s + 1} ${x + s},${yDia - s + 1}`} fill={P.bpDiastolic} />
+                <polygon points={`${x},${ySys - s - 1} ${x - s},${ySys + s - 1} ${x + s},${ySys + s - 1}`} fill={p.alarm || p.outlier ? P.bpSystolic : P.detailLine} />
+                <polygon points={`${x},${yDia + s + 1} ${x - s},${yDia - s + 1} ${x + s},${yDia - s + 1}`} fill={p.alarm || p.outlier ? P.bpDiastolic : P.detailLine} />
                 <line x1={x} y1={ySys + s - 1} x2={x} y2={yDia - s + 1} stroke={P.bpSystolic} strokeWidth={1} opacity={0.3} />
                 {detail.showValues && (
                   <>
-                    <text x={x} y={ySys - s - 4} dy="0.35em" fontSize={10} fill={P.bpSystolic} fontFamily="IBM Plex Sans" textAnchor="middle">{p.systolic}</text>
-                    <text x={x} y={yDia + s + 4} dy="0.35em" fontSize={10} fill={P.bpDiastolic} fontFamily="IBM Plex Sans" textAnchor="middle">{p.diastolic}</text>
+                    <text x={x} y={ySys - s - 4} dy="0.35em" fontSize={10} fill={p.alarm || p.outlier ? P.bpSystolic : P.detailLine} fontFamily="IBM Plex Sans" textAnchor="middle">{p.systolic}</text>
+                    <text x={x} y={yDia + s + 4} dy="0.35em" fontSize={10} fill={p.alarm || p.outlier ? P.bpDiastolic : P.detailLine} fontFamily="IBM Plex Sans" textAnchor="middle">{p.diastolic}</text>
                   </>
                 )}
                 {p.alarm && <AlarmDot x={x} y={ySys - s - 1} alarm={p.alarm} />}
@@ -1345,11 +1415,16 @@ export default function VitalDashboard() {
         </g>
       );
     },
-    bpYDomain, "mmHg", { upper: 140, lower: 90 }
+    bpYDomain, "mmHg", { upper: 140, lower: 90 },
+    bpStats
   );
 
   /* ─── HR Chart ─── */
   const hrYDomain = useMemo(() => niceYDomain(allData.hr.map(p => p.value), 0.1), [allData.hr]);
+  const hrStats = useMemo(() => {
+    const vals = chartData.hr.map(p => p.value);
+    return { p10: percentile(vals, 10), median: percentile(vals, 50), p90: percentile(vals, 90) };
+  }, [chartData.hr]);
   const hrChart = renderChart("hr", tr.heartRate, <Heart size={18} color={P.heartRate} />, P.heartRate,
     (xS, yS, iH) => {
       const line = d3.line<HrPoint>().x(d => xS(new Date(d.date))).y(d => yS(d.value)).defined((d, i, arr) => {
@@ -1361,7 +1436,7 @@ export default function VitalDashboard() {
 
       return (
         <g>
-          <path d={line(chartData.hr) || ""} fill="none" stroke={P.heartRate} strokeWidth={detail.lineWidth} />
+          <path d={line(chartData.hr) || ""} fill="none" stroke={P.detailLine} strokeWidth={detail.lineWidth} />
           <path d={medLine(medVals) || ""} fill="none" stroke={P.median} strokeWidth={detail.medianWidth} strokeDasharray="4,4" opacity={0.5} />
           {/* Median hover points */}
           {medVals.map((mv, i) => {
@@ -1388,8 +1463,8 @@ export default function VitalDashboard() {
                 onClick={() => setSidePanel({ type: "hr", date: p.date, data: p })}
                 className="cursor-pointer">
                 <circle cx={x} cy={y} r={detail.hitRadius} fill="transparent" />
-                <polygon points={`${x - s},${y} ${x},${y - s} ${x + s},${y} ${x},${y + s}`} fill={P.heartRate} />
-                {detail.showValues && <text x={x} y={y - s - 4} fontSize={10} fill={P.heartRate} fontFamily="IBM Plex Sans" textAnchor="middle">{p.value}</text>}
+                <polygon points={`${x - s},${y} ${x},${y - s} ${x + s},${y} ${x},${y + s}`} fill={p.alarm || p.outlier ? P.heartRate : P.detailLine} />
+                {detail.showValues && <text x={x} y={y - s - 4} fontSize={10} fill={p.alarm || p.outlier ? P.heartRate : P.detailLine} fontFamily="IBM Plex Sans" textAnchor="middle">{p.value}</text>}
                 {p.alarm && <AlarmDot x={x} y={y - s} alarm={p.alarm} />}
                 {p.outlier && <OutlierRing x={x} y={y} validated={p.outlierValidated} />}
                 <CountBadge x={x} y={y - 5} count={p.readings.length} />
@@ -1405,11 +1480,16 @@ export default function VitalDashboard() {
         </g>
       );
     },
-    hrYDomain, "bpm", { upper: 100, lower: 60 }
+    hrYDomain, "bpm", { upper: 100, lower: 60 },
+    hrStats
   );
 
   /* ─── Weight Chart ─── */
   const wYDomain = useMemo(() => niceYDomain(allData.weight.map(p => p.value), 0.12), [allData.weight]);
+  const wStats = useMemo(() => {
+    const vals = chartData.weight.map(p => p.value);
+    return { p10: Math.round(percentile(vals, 10) * 10) / 10, median: Math.round(percentile(vals, 50) * 10) / 10, p90: Math.round(percentile(vals, 90) * 10) / 10 };
+  }, [chartData.weight]);
   const weightChart = renderChart("weight", tr.weight, <Weight size={18} color={P.weight} />, P.weight,
     (xS, yS, iH) => {
       const line = d3.line<WeightPoint>().x(d => xS(new Date(d.date))).y(d => yS(d.value)).defined((d, i, arr) => {
@@ -1419,7 +1499,7 @@ export default function VitalDashboard() {
 
       return (
         <g>
-          <path d={line(chartData.weight) || ""} fill="none" stroke={P.weight} strokeWidth={detail.lineWidth} />
+          <path d={line(chartData.weight) || ""} fill="none" stroke={P.detailLine} strokeWidth={detail.lineWidth} />
           {chartData.weight.map((p, i) => {
             const x = xS(new Date(p.date));
             const y = yS(p.value);
@@ -1431,8 +1511,8 @@ export default function VitalDashboard() {
                 onClick={() => setSidePanel({ type: "weight", date: p.date, data: p })}
                 className="cursor-pointer">
                 <circle cx={x} cy={y} r={detail.hitRadius} fill="transparent" />
-                <circle cx={x} cy={y} r={detail.dotRadius} fill={P.weight} />
-                {detail.showValues && <text x={x} y={y - detail.dotRadius - 4} fontSize={10} fill={P.weight} fontFamily="IBM Plex Sans" textAnchor="middle">{p.value.toFixed(1)}</text>}
+                <circle cx={x} cy={y} r={detail.dotRadius} fill={p.alarm || p.outlier ? P.weight : P.detailLine} />
+                {detail.showValues && <text x={x} y={y - detail.dotRadius - 4} fontSize={10} fill={p.alarm || p.outlier ? P.weight : P.detailLine} fontFamily="IBM Plex Sans" textAnchor="middle">{p.value.toFixed(1)}</text>}
                 {p.alarm && <AlarmDot x={x} y={y} alarm={p.alarm} />}
                 {p.outlier && <OutlierRing x={x} y={y} validated={p.outlierValidated} />}
                 <CountBadge x={x} y={y} count={p.readings.length} />
@@ -1442,7 +1522,8 @@ export default function VitalDashboard() {
         </g>
       );
     },
-    wYDomain, "kg", { upper: wYDomain[1] - 2, lower: wYDomain[0] + 2 }
+    wYDomain, "kg", { upper: wYDomain[1] - 2, lower: wYDomain[0] + 2 },
+    wStats
   );
 
   /* ─── Mood Chart ─── */
@@ -1484,7 +1565,8 @@ export default function VitalDashboard() {
 
   /* ─── Overview Chart (dual Y-axis: left for BP/HR/Mood, right for Weight) ─── */
   const overviewChart = (() => {
-    const h = 200;
+    const isOvExpanded = expanded === "overview";
+    const h = isOvExpanded ? 300 : 200;
     const iH = h - margin.top - margin.bottom;
 
     // Left scale: BP/HR/Mood range (60-160 covers both BP systolic and HR reasonably)
@@ -1504,6 +1586,15 @@ export default function VitalDashboard() {
     const sysLine = d3.line<BpPoint>()
       .x(d => xScale(new Date(d.date)))
       .y(d => yScaleLeft(d.systolic))
+      .defined((d, i, arr) => {
+        if (i === 0) return true;
+        return (new Date(d.date).getTime() - new Date(arr[i - 1].date).getTime()) < 48 * 3600 * 1000;
+      })
+      .curve(d3.curveMonotoneX);
+
+    const diaLine = d3.line<BpPoint>()
+      .x(d => xScale(new Date(d.date)))
+      .y(d => yScaleLeft(d.diastolic))
       .defined((d, i, arr) => {
         if (i === 0) return true;
         return (new Date(d.date).getTime() - new Date(arr[i - 1].date).getTime()) < 48 * 3600 * 1000;
@@ -1554,6 +1645,14 @@ export default function VitalDashboard() {
         data.sys = { value: nearest.systolic, date: nearest.date };
         yPos = Math.min(yPos, yScaleLeft(nearest.systolic));
       }
+      if (overviewVisible.dia && filteredData.bp.length > 0) {
+        const nearest = filteredData.bp.reduce((prev, curr) =>
+          Math.abs(new Date(curr.date).getTime() - xValue.getTime()) <
+          Math.abs(new Date(prev.date).getTime() - xValue.getTime()) ? curr : prev
+        );
+        data.dia = { value: nearest.diastolic, date: nearest.date };
+        yPos = Math.min(yPos, yScaleLeft(nearest.diastolic));
+      }
       if (overviewVisible.hr && filteredData.hr.length > 0) {
         const nearest = filteredData.hr.reduce((prev, curr) =>
           Math.abs(new Date(curr.date).getTime() - xValue.getTime()) <
@@ -1593,40 +1692,31 @@ export default function VitalDashboard() {
             <Activity size={18} color={P.text} />
             <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>{tr.overview}</span>
             <div className="flex items-center gap-4 ml-4 text-xs" style={{ color: P.textMuted }}>
-              <button
-                onClick={() => setOverviewVisible(v => ({ ...v, sys: !v.sys }))}
-                className="flex items-center gap-1.5 px-2 py-1 rounded transition-opacity hover:opacity-70"
-                style={{ opacity: overviewVisible.sys ? 1 : 0.4 }}
-              >
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.bpSystolic }} />
+              <button onClick={() => setOverviewVisible(v => ({ ...v, sys: !v.sys }))} className="flex items-center gap-1.5 px-2 py-1 rounded transition-opacity hover:opacity-70" style={{ opacity: overviewVisible.sys ? 1 : 0.4 }}>
+                <svg width="10" height="10" viewBox="0 0 10 10"><polygon points="5,0 0,8 10,8" fill={P.bpSystolic} /></svg>
                 {tr.sys}
               </button>
-              <button
-                onClick={() => setOverviewVisible(v => ({ ...v, hr: !v.hr }))}
-                className="flex items-center gap-1.5 px-2 py-1 rounded transition-opacity hover:opacity-70"
-                style={{ opacity: overviewVisible.hr ? 1 : 0.4 }}
-              >
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.heartRate }} />
+              <button onClick={() => setOverviewVisible(v => ({ ...v, dia: !v.dia }))} className="flex items-center gap-1.5 px-2 py-1 rounded transition-opacity hover:opacity-70" style={{ opacity: overviewVisible.dia ? 1 : 0.4 }}>
+                <svg width="10" height="10" viewBox="0 0 10 10"><polygon points="5,10 0,2 10,2" fill={P.bpDiastolic} /></svg>
+                {tr.dia}
+              </button>
+              <button onClick={() => setOverviewVisible(v => ({ ...v, hr: !v.hr }))} className="flex items-center gap-1.5 px-2 py-1 rounded transition-opacity hover:opacity-70" style={{ opacity: overviewVisible.hr ? 1 : 0.4 }}>
+                <svg width="10" height="10" viewBox="0 0 10 10"><polygon points="5,0 10,5 5,10 0,5" fill={P.heartRate} /></svg>
                 {tr.hr}
               </button>
-              <button
-                onClick={() => setOverviewVisible(v => ({ ...v, weight: !v.weight }))}
-                className="flex items-center gap-1.5 px-2 py-1 rounded transition-opacity hover:opacity-70"
-                style={{ opacity: overviewVisible.weight ? 1 : 0.4 }}
-              >
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.weight }} />
+              <button onClick={() => setOverviewVisible(v => ({ ...v, weight: !v.weight }))} className="flex items-center gap-1.5 px-2 py-1 rounded transition-opacity hover:opacity-70" style={{ opacity: overviewVisible.weight ? 1 : 0.4 }}>
+                <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill={P.weight} /></svg>
                 {tr.weight}
               </button>
-              <button
-                onClick={() => setOverviewVisible(v => ({ ...v, mood: !v.mood }))}
-                className="flex items-center gap-1.5 px-2 py-1 rounded transition-opacity hover:opacity-70"
-                style={{ opacity: overviewVisible.mood ? 1 : 0.4 }}
-              >
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.mood }} />
+              <button onClick={() => setOverviewVisible(v => ({ ...v, mood: !v.mood }))} className="flex items-center gap-1.5 px-2 py-1 rounded transition-opacity hover:opacity-70" style={{ opacity: overviewVisible.mood ? 1 : 0.4 }}>
+                <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill={P.mood} /></svg>
                 {tr.mood}
               </button>
             </div>
           </div>
+          <button onClick={() => setExpanded(expanded === "overview" ? null : "overview")} className="p-1.5 rounded-lg transition-colors" style={{ color: P.textMuted }}>
+            {expanded === "overview" ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+          </button>
         </div>
         <div style={{ position: "relative" }}>
           <svg width="100%" height={h} viewBox={`0 0 ${chartW} ${h}`} preserveAspectRatio="xMidYMid meet"
@@ -1662,11 +1752,30 @@ export default function VitalDashboard() {
               <g clipPath="url(#clip-overview)">
                 {overviewVisible.sys && <>
                   <path d={sysLine(chartData.bp) || ""} fill="none" stroke={P.bpSystolic} strokeWidth={1.2} opacity={0.5} />
-                  {chartData.bp.map((p, i) => <circle key={`sys-${i}`} cx={xScale(new Date(p.date))} cy={yScaleLeft(p.systolic)} r={2.5} fill={P.bpSystolic} />)}
+                  {chartData.bp.map((p, i) => {
+                    const x = xScale(new Date(p.date));
+                    const y = yScaleLeft(p.systolic);
+                    const s = 3;
+                    return <polygon key={`sys-${i}`} points={`${x},${y - s - 1} ${x - s},${y + s - 1} ${x + s},${y + s - 1}`} fill={P.bpSystolic} />;
+                  })}
+                </>}
+                {overviewVisible.dia && <>
+                  <path d={diaLine(chartData.bp) || ""} fill="none" stroke={P.bpDiastolic} strokeWidth={1.2} opacity={0.5} />
+                  {chartData.bp.map((p, i) => {
+                    const x = xScale(new Date(p.date));
+                    const y = yScaleLeft(p.diastolic);
+                    const s = 3;
+                    return <polygon key={`dia-${i}`} points={`${x},${y + s + 1} ${x - s},${y - s + 1} ${x + s},${y - s + 1}`} fill={P.bpDiastolic} />;
+                  })}
                 </>}
                 {overviewVisible.hr && <>
                   <path d={hrLine(chartData.hr) || ""} fill="none" stroke={P.heartRate} strokeWidth={1.2} opacity={0.5} />
-                  {chartData.hr.map((p, i) => <circle key={`hr-${i}`} cx={xScale(new Date(p.date))} cy={yScaleLeft(p.value)} r={2.5} fill={P.heartRate} />)}
+                  {chartData.hr.map((p, i) => {
+                    const x = xScale(new Date(p.date));
+                    const y = yScaleLeft(p.value);
+                    const s = 3;
+                    return <polygon key={`hr-${i}`} points={`${x - s},${y} ${x},${y - s} ${x + s},${y} ${x},${y + s}`} fill={P.heartRate} />;
+                  })}
                 </>}
                 {overviewVisible.weight && <>
                   <path d={weightLine(chartData.weight) || ""} fill="none" stroke={P.weight} strokeWidth={1.2} opacity={0.5} />
@@ -1700,6 +1809,7 @@ export default function VitalDashboard() {
               }}
             >
               {overviewHover.data.sys && <div style={{ color: P.bpSystolic }}>Sys: {overviewHover.data.sys.value} mmHg</div>}
+              {overviewHover.data.dia && <div style={{ color: P.bpDiastolic }}>Dia: {overviewHover.data.dia.value} mmHg</div>}
               {overviewHover.data.hr && <div style={{ color: P.heartRate }}>HR: {overviewHover.data.hr.value} bpm</div>}
               {overviewHover.data.weight && <div style={{ color: P.weight }}>{tr.weight}: {overviewHover.data.weight.value.toFixed(1)} kg</div>}
               {overviewHover.data.mood && <div style={{ color: P.mood }}>{tr.mood}: {overviewHover.data.mood.value}/5</div>}
@@ -2260,7 +2370,7 @@ export default function VitalDashboard() {
               )}
               {dayM && (
                 <div className="rounded-lg p-4" style={{ backgroundColor: P.bgCardHover }}>
-                  <div className="flex items-center gap-2"><Smile size={16} color={P.mood} /><span className="text-base font-medium" style={{ color: P.text }}>Stimmung</span></div>
+                  <div className="flex items-center gap-2"><Smile size={16} color={P.mood} /><span className="text-base font-medium" style={{ color: P.text }}>Befinden</span></div>
                   <div className="text-2xl font-bold mt-2" style={{ color: P.mood }}>{dayM.value}/5</div>
                 </div>
               )}
@@ -2467,7 +2577,7 @@ export default function VitalDashboard() {
         <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>Tabellenansicht</span>
         <div className="flex gap-2">
           <button onClick={() => {
-            const rows = [["Datum", "Sys (mmHg)", "Dia (mmHg)", "HR (bpm)", "Gewicht (kg)", "Stimmung", "Messungen", "Alarm"]];
+            const rows = [["Datum", "Sys (mmHg)", "Dia (mmHg)", "HR (bpm)", "Gewicht (kg)", "Befinden", "Messungen", "Alarm"]];
             filteredData.bp.forEach(bp => {
               const hr = filteredData.hr.find(h => h.date === bp.date);
               const w = filteredData.weight.find(wt => wt.date === bp.date);
@@ -2498,7 +2608,7 @@ export default function VitalDashboard() {
               <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>Dia</th>
               <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>HR</th>
               <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>Gewicht</th>
-              <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>Stimmung</th>
+              <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>Befinden</th>
               <th className="text-center px-4 py-3 font-medium" style={{ color: P.textMuted }}>Mess.</th>
               <th className="text-center px-4 py-3 font-medium" style={{ color: P.textMuted }}>Alarm</th>
               <th className="text-center px-4 py-3 font-medium" style={{ color: P.textMuted }}>Outlier</th>
