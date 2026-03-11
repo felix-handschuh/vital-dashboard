@@ -199,7 +199,7 @@ const translations = {
     externalDevices: "Externe Geräte",
     // Section headers
     events: "Ereignisse & IEGM",
-    overview: "Übersicht",
+    overview: "Vitaldaten-Übersicht",
     display: "Anzeige",
     thresholds: "Grenzwerte",
     missingValues: "Fehlende Werte",
@@ -276,7 +276,7 @@ const translations = {
     implant: "Implant",
     externalDevices: "External Devices",
     events: "Events & ECG",
-    overview: "Overview",
+    overview: "Vital Data Overview",
     display: "Display",
     thresholds: "Thresholds",
     missingValues: "Missing Values",
@@ -348,7 +348,7 @@ const translations = {
     implant: "Implantátum",
     externalDevices: "Külső eszközök",
     events: "Események és EKG",
-    overview: "Áttekintés",
+    overview: "Vitális adatok áttekintése",
     display: "Megjelenítés",
     thresholds: "Küszöbértékek",
     missingValues: "Hiányzó értékek",
@@ -413,7 +413,7 @@ const translations = {
     externalDevices: "Надворешни уреди",
     // Section headers
     events: "События и EКГ",
-    overview: "Преглед",
+    overview: "Преглед на витални податоци",
     display: "Приказ",
     thresholds: "Граници на вредност",
     missingValues: "Недостасувачки вредности",
@@ -483,7 +483,7 @@ const translations = {
     externalDevices: "Зовнішні пристрої",
     // Section headers
     events: "Події та ЕКГ",
-    overview: "Огляд",
+    overview: "Огляд вітальних даних",
     display: "Дисплей",
     thresholds: "Пороги",
     missingValues: "Відсутні значення",
@@ -714,10 +714,8 @@ const generateData = (): AllData => {
     const drift = Math.sin(i / 15) * 5;
     const isOutlierBp = outlierDays.has(i);
 
-    // Multiple measurements per day: most days 2-3, some up to 10
-    const bpCount = i % 7 === 0 ? Math.floor(Math.random() * 6) + 5 : // weekly: 5-10
-      i % 2 === 0 ? Math.floor(Math.random() * 3) + 2 : // every other day: 2-4
-      Math.random() < 0.6 ? Math.floor(Math.random() * 2) + 2 : 1; // rest: 60% get 2-3, 40% get 1
+    // Multiple measurements per day: mostly 1, ~8% chance of 2-3
+    const bpCount = Math.random() < 0.08 ? Math.floor(Math.random() * 2) + 2 : 1; // ~8% chance of 2-3 readings, otherwise 1
     const bpReadings: BpReading[] = [];
     const isExtremeBp = extremeBpDays.has(i);
     for (let r = 0; r < bpCount; r++) {
@@ -732,7 +730,7 @@ const generateData = (): AllData => {
     const bpAlarm = avgSys > 160 ? "critical" : avgSys > 140 ? "warning" : avgSys < 100 ? "change" : undefined;
     data.bp.push({ date: ds, readings: bpReadings, systolic: avgSys, diastolic: avgDia, alarm: isOutlierBp ? "warning" : (isExtremeBp ? "critical" : bpAlarm), outlier: isOutlierBp || isExtremeBp });
 
-    const hrCount = i % 5 === 0 ? Math.floor(Math.random() * 5) + 3 : i % 2 === 0 ? Math.floor(Math.random() * 2) + 2 : Math.random() < 0.5 ? 2 : 1;
+    const hrCount = Math.random() < 0.08 ? Math.floor(Math.random() * 2) + 2 : 1; // ~8% chance of 2-3 readings, otherwise 1
     const hrReadings: HrReading[] = [];
     const isOutlierHr = i === 12 || i === 35;
     const isExtremeHr = extremeHrDays.has(i);
@@ -749,7 +747,7 @@ const generateData = (): AllData => {
     bW += (Math.random() - 0.52) * 0.15;
     const w = Math.round(bW * 10) / 10;
     const isOutlierW = i === 20 || i === 65;
-    const wCount = Math.random() < 0.35 ? 2 : 1;
+    const wCount = Math.random() < 0.05 ? 2 : 1; // rarely 2 readings
     const wReadings: WeightReading[] = [];
     for (let r = 0; r < wCount; r++) {
       wReadings.push({ time: randTime(6, 10), value: Math.round((w + (Math.random() - 0.5) * 0.3 + (isOutlierW && r === 0 ? 4 : 0)) * 10) / 10 });
@@ -779,26 +777,6 @@ const generateData = (): AllData => {
         alarm: "info",
         acknowledgedBy: Math.random() < 0.8 ? (Math.random() < 0.5 ? "Sr. Weber" : "Dr. Schmidt") : undefined,
         acknowledgedAt: Math.random() < 0.8 ? `${ds}T14:20:00` : undefined, linkedId: `evt-call-${i}`,
-      });
-    }
-    // Medication changes (~10%)
-    if (Math.random() < 0.10) {
-      const meds = ["Ramipril angepasst (5mg→10mg)", "Metoprolol neu verordnet", "Amlodipin abgesetzt", "Diuretikum erhöht"];
-      data.events.push({
-        date: ds, type: "medication", label: meds[Math.floor(Math.random() * meds.length)],
-        alarm: "change",
-        acknowledgedBy: Math.random() < 0.9 ? "Dr. Müller" : undefined,
-        acknowledgedAt: Math.random() < 0.9 ? `${ds}T09:00:00` : undefined, linkedId: `evt-med-${i}`,
-      });
-    }
-    // On-site examinations (~8%)
-    if (Math.random() < 0.08) {
-      const exams = ["Vor-Ort Untersuchung", "Routinekontrolle", "Nachsorge-Termin", "Notfall-Visite"];
-      data.events.push({
-        date: ds, type: "examination", label: exams[Math.floor(Math.random() * exams.length)],
-        alarm: Math.random() < 0.2 ? "warning" : "info",
-        acknowledgedBy: "Dr. Schmidt",
-        acknowledgedAt: `${ds}T11:00:00`, linkedId: `evt-exam-${i}`,
       });
     }
 
@@ -952,7 +930,7 @@ export default function VitalDashboard() {
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [sidePanel, setSidePanel] = useState<any>(null);
   const [viewMode, setViewMode] = useState<"chart" | "table">("chart");
-  const [vis, setVis] = useState({ thresholds: true, missed: true });
+  const [vis, setVis] = useState({ thresholds: true, missed: true, values: false });
   const [ecgDrawer, setEcgDrawer] = useState<EcgEvent | null>(null);
   const [ecgZoom, setEcgZoom] = useState(1);
   const [ecgHover, setEcgHover] = useState<{ ecg: EcgEvent; cx: number; cy: number } | null>(null);
@@ -965,6 +943,9 @@ export default function VitalDashboard() {
   const [calendarHoverDay, setCalendarHoverDay] = useState<{ dateStr: string; cx: number; cy: number } | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [devicesOpen, setDevicesOpen] = useState(false);
+  const [implantDetailOpen, setImplantDetailOpen] = useState(false);
+  const [calendarViewMode, setCalendarViewMode] = useState<"calendar" | "timeline">("calendar");
+  const [episodeSidebar, setEpisodeSidebar] = useState<{ date: string; episodes: any[] } | null>(null);
   const [lang, setLang] = useState<"de" | "en" | "hu" | "mk" | "uk">("de");
   const [langOpen, setLangOpen] = useState(false);
   const [customDateRange, setCustomDateRange] = useState<[string, string] | null>(null);
@@ -1091,6 +1072,7 @@ export default function VitalDashboard() {
       if (e.key === "4" && !e.ctrlKey && !e.metaKey) { setRange(90); setChartOffset(0); }
       if (e.key === "g" && !e.ctrlKey && !e.metaKey) setVis(v => ({ ...v, thresholds: !v.thresholds }));
       if (e.key === "m" && !e.ctrlKey && !e.metaKey) setVis(v => ({ ...v, missed: !v.missed }));
+      if (e.key === "w" && !e.ctrlKey && !e.metaKey) setVis(v => ({ ...v, values: !v.values }));
       /* r key removed — trends always visible */
     };
     window.addEventListener("keydown", handler);
@@ -1141,7 +1123,7 @@ export default function VitalDashboard() {
     dotRadius: range <= 14 ? 5 : range <= 30 ? 4 : 3,
     hitRadius: range <= 14 ? 12 : range <= 30 ? 10 : 8,
     showDots: range <= 30,
-    showValues: range <= 14,
+    showValues: vis.values,
     xTickCount: range <= 14 ? 14 : range <= 30 ? 15 : range <= 60 ? 10 : 13,
     xTickFormat: d3.timeFormat("%d.%m."),
     medianWidth: range <= 14 ? 1.5 : 1,
@@ -1344,8 +1326,8 @@ export default function VitalDashboard() {
                 <line x1={x} y1={ySys + s - 1} x2={x} y2={yDia - s + 1} stroke={P.bpSystolic} strokeWidth={1} opacity={0.3} />
                 {detail.showValues && (
                   <>
-                    <text x={x + s + 4} y={ySys} dy="0.35em" fontSize={10} fill={P.bpSystolic} fontFamily="IBM Plex Sans">{p.systolic}</text>
-                    <text x={x + s + 4} y={yDia} dy="0.35em" fontSize={10} fill={P.bpDiastolic} fontFamily="IBM Plex Sans">{p.diastolic}</text>
+                    <text x={x} y={ySys - s - 4} dy="0.35em" fontSize={10} fill={P.bpSystolic} fontFamily="IBM Plex Sans" textAnchor="middle">{p.systolic}</text>
+                    <text x={x} y={yDia + s + 4} dy="0.35em" fontSize={10} fill={P.bpDiastolic} fontFamily="IBM Plex Sans" textAnchor="middle">{p.diastolic}</text>
                   </>
                 )}
                 {p.alarm && <AlarmDot x={x} y={ySys - s - 1} alarm={p.alarm} />}
@@ -1407,7 +1389,7 @@ export default function VitalDashboard() {
                 className="cursor-pointer">
                 <circle cx={x} cy={y} r={detail.hitRadius} fill="transparent" />
                 <polygon points={`${x - s},${y} ${x},${y - s} ${x + s},${y} ${x},${y + s}`} fill={P.heartRate} />
-                {detail.showValues && <text x={x + s + 4} y={y} dy="0.35em" fontSize={10} fill={P.heartRate} fontFamily="IBM Plex Sans">{p.value}</text>}
+                {detail.showValues && <text x={x} y={y - s - 4} fontSize={10} fill={P.heartRate} fontFamily="IBM Plex Sans" textAnchor="middle">{p.value}</text>}
                 {p.alarm && <AlarmDot x={x} y={y - s} alarm={p.alarm} />}
                 {p.outlier && <OutlierRing x={x} y={y} validated={p.outlierValidated} />}
                 <CountBadge x={x} y={y - 5} count={p.readings.length} />
@@ -1450,7 +1432,7 @@ export default function VitalDashboard() {
                 className="cursor-pointer">
                 <circle cx={x} cy={y} r={detail.hitRadius} fill="transparent" />
                 <circle cx={x} cy={y} r={detail.dotRadius} fill={P.weight} />
-                {detail.showValues && <text x={x + detail.dotRadius + 4} y={y} dy="0.35em" fontSize={10} fill={P.weight} fontFamily="IBM Plex Sans">{p.value.toFixed(1)}</text>}
+                {detail.showValues && <text x={x} y={y - detail.dotRadius - 4} fontSize={10} fill={P.weight} fontFamily="IBM Plex Sans" textAnchor="middle">{p.value.toFixed(1)}</text>}
                 {p.alarm && <AlarmDot x={x} y={y} alarm={p.alarm} />}
                 {p.outlier && <OutlierRing x={x} y={y} validated={p.outlierValidated} />}
                 <CountBadge x={x} y={y} count={p.readings.length} />
@@ -1488,7 +1470,7 @@ export default function VitalDashboard() {
                 </div>
               </foreignObject>
               {detail.showValues && (
-                <text x={x + 12} y={y} dy="0.35em" fontSize={9} fill={moodColor(Math.round(p.value))} fontFamily="IBM Plex Sans">
+                <text x={x} y={y - 12 - 4} fontSize={9} fill={moodColor(Math.round(p.value))} fontFamily="IBM Plex Sans" textAnchor="middle">
                   {(moodLabels[lang] || moodLabels.de)[Math.round(p.value)]}
                 </text>
               )}
@@ -1678,10 +1660,22 @@ export default function VitalDashboard() {
               ))}
               {/* Clipped content */}
               <g clipPath="url(#clip-overview)">
-                {overviewVisible.sys && <path d={sysLine(chartData.bp) || ""} fill="none" stroke={P.bpSystolic} strokeWidth={1.8} opacity={0.9} />}
-                {overviewVisible.hr && <path d={hrLine(chartData.hr) || ""} fill="none" stroke={P.heartRate} strokeWidth={1.8} opacity={0.9} />}
-                {overviewVisible.weight && <path d={weightLine(chartData.weight) || ""} fill="none" stroke={P.weight} strokeWidth={1.8} opacity={0.9} />}
-                {overviewVisible.mood && <path d={moodLine(chartData.mood) || ""} fill="none" stroke={P.mood} strokeWidth={1.8} opacity={0.9} />}
+                {overviewVisible.sys && <>
+                  <path d={sysLine(chartData.bp) || ""} fill="none" stroke={P.bpSystolic} strokeWidth={1.2} opacity={0.5} />
+                  {chartData.bp.map((p, i) => <circle key={`sys-${i}`} cx={xScale(new Date(p.date))} cy={yScaleLeft(p.systolic)} r={2.5} fill={P.bpSystolic} />)}
+                </>}
+                {overviewVisible.hr && <>
+                  <path d={hrLine(chartData.hr) || ""} fill="none" stroke={P.heartRate} strokeWidth={1.2} opacity={0.5} />
+                  {chartData.hr.map((p, i) => <circle key={`hr-${i}`} cx={xScale(new Date(p.date))} cy={yScaleLeft(p.value)} r={2.5} fill={P.heartRate} />)}
+                </>}
+                {overviewVisible.weight && <>
+                  <path d={weightLine(chartData.weight) || ""} fill="none" stroke={P.weight} strokeWidth={1.2} opacity={0.5} />
+                  {chartData.weight.map((p, i) => <circle key={`w-${i}`} cx={xScale(new Date(p.date))} cy={yScaleRight(p.value)} r={2.5} fill={P.weight} />)}
+                </>}
+                {overviewVisible.mood && <>
+                  <path d={moodLine(chartData.mood) || ""} fill="none" stroke={P.mood} strokeWidth={1.2} opacity={0.5} />
+                  {chartData.mood.map((p, i) => <circle key={`m-${i}`} cx={xScale(new Date(p.date))} cy={yScaleLeft(mapMoodToLeftScale(p.value))} r={2.5} fill={P.mood} />)}
+                </>}
                 {/* Hover vertical line */}
                 {overviewHover && (
                   <line x1={overviewHover.xPos} y1={0} x2={overviewHover.xPos} y2={iH} stroke={P.textMuted} strokeWidth={1} opacity={0.5} strokeDasharray="3,3" />
@@ -1721,11 +1715,9 @@ export default function VitalDashboard() {
   const alarmEcgAsEvents = filteredData.ecgs.filter(e => e.alarm);
 
   const eventCounts = useMemo(() => {
-    const medCount = filteredData.events.filter(e => e.type === "medication").length;
-    const examCount = filteredData.events.filter(e => e.type === "examination").length;
     const abCount = filteredData.events.filter(e => e.type === "atrialBurden").length;
     const ecgCount = filteredData.ecgs.length;
-    return { medCount, examCount, abCount, ecgCount };
+    return { abCount, ecgCount };
   }, [filteredData.events, filteredData.ecgs]);
 
   const calendarData = useMemo(() => {
@@ -1756,6 +1748,135 @@ export default function VitalDashboard() {
     return months;
   }, [xDomain]);
 
+  const episodeTimelineData = useMemo(() => {
+    const episodeTypes = ["VT1", "VT2", "VF", "ATR", "NST", "AT/AF", "Periodic IEGM"];
+    const weeks: { weekStart: string; weekEnd: string; episodes: any[]; counts: Record<string, number> }[] = [];
+
+    const start = new Date(DATA_START);
+    const end = new Date(NOW);
+    const current = new Date(start);
+    current.setDate(current.getDate() - current.getDay() + 1);
+
+    while (current < end) {
+      const weekStart = new Date(current);
+      const weekEnd = new Date(current);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+
+      const ws = weekStart.toISOString().split("T")[0];
+      const we = weekEnd.toISOString().split("T")[0];
+
+      const weekEcgs = allData.ecgs.filter(e => e.date >= ws && e.date <= we);
+      const weekABEvents = allData.events.filter(e => e.type === "atrialBurden" && e.date >= ws && e.date <= we);
+
+      const episodes: any[] = [];
+      const counts: Record<string, number> = {};
+
+      weekEcgs.forEach(ecg => {
+        const type = ecg.trigger === "VT-Stimulation" ? "VT1" :
+                     ecg.trigger === "Tachykardieepisode" ? "VT2" :
+                     ecg.trigger === "Vorhofflimmerdetektion" ? "ATR" :
+                     ecg.trigger === "AT/AF-Episode" ? "AT/AF" :
+                     ecg.trigger === "Manuelle Auslösung" ? "NST" : "Periodic IEGM";
+        episodes.push({ ...ecg, episodeType: type, therapy: type === "VT1" ? "No therapies" : type === "VT2" ? "2 ATP, Shock" : type === "ATR" ? "10 ATP" : "Monitoring only", result: type === "ATR" ? "Successful" : type === "VT2" ? "Unsuccessful" : "-" });
+        counts[type] = (counts[type] || 0) + 1;
+      });
+
+      weekABEvents.forEach(ev => {
+        episodes.push({ date: ev.date, time: "—", episodeType: "AT/AF", label: ev.label, duration: 0 });
+        counts["AT/AF"] = (counts["AT/AF"] || 0) + 1;
+      });
+
+      weeks.push({ weekStart: ws, weekEnd: we, episodes, counts });
+      current.setDate(current.getDate() + 7);
+    }
+
+    return weeks;
+  }, [allData]);
+
+  const EPISODE_COLORS: Record<string, string> = {
+    "VT1": "#ef4444", "VT2": "#dc2626", "VF": "#991b1b",
+    "ATR": "#f59e0b", "AT/AF": "#f97316", "NST": "#60a5fa", "Periodic IEGM": "#a1a1aa",
+  };
+
+  const episodeTimelineChart = (() => {
+    const h = 280;
+    const m = { top: 30, right: 20, bottom: 40, left: 50 };
+    const iW = chartW - m.left - m.right;
+    const iH = h - m.top - m.bottom;
+
+    const visibleWeeks = episodeTimelineData.filter(w => {
+      const ws = new Date(w.weekStart);
+      const we = new Date(w.weekEnd);
+      return we >= xDomain[0] && ws <= xDomain[1];
+    });
+
+    const maxCount = Math.max(1, ...visibleWeeks.map(w => w.episodes.length));
+    const yScale = d3.scaleSqrt().domain([0, maxCount]).range([iH, 0]);
+    const barW = Math.max(4, Math.min(20, iW / Math.max(1, visibleWeeks.length) - 2));
+
+    const yTicks = [0, 1, 2, 5, 10, 20, 50].filter(t => t <= maxCount);
+    if (maxCount > 50) yTicks.push(maxCount);
+
+    return (
+      <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
+        <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: `1px solid ${P.border}` }}>
+          <div className="flex items-center gap-3">
+            <BarChart3 size={18} color={P.text} />
+            <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>Episoden-Zeitleiste</span>
+          </div>
+          <div className="flex items-center gap-3 text-xs" style={{ color: P.textMuted }}>
+            {Object.entries(EPISODE_COLORS).map(([type, color]) => (
+              <span key={type} className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: color }} />
+                {type}
+              </span>
+            ))}
+          </div>
+        </div>
+        <svg width="100%" height={h} viewBox={`0 0 ${chartW} ${h}`} preserveAspectRatio="xMidYMid meet">
+          <g transform={`translate(${m.left},${m.top})`}>
+            {yTicks.map(t => (
+              <g key={t}>
+                <line x1={0} x2={iW} y1={yScale(t)} y2={yScale(t)} stroke={P.grid} strokeWidth={0.8} opacity={0.5} />
+                <text x={-8} y={yScale(t)} dy="0.35em" textAnchor="end" fill={P.gridLabel} fontSize={10} fontFamily="IBM Plex Sans">{t}</text>
+              </g>
+            ))}
+            {visibleWeeks.map((week, i) => {
+              const midDate = new Date(week.weekStart);
+              midDate.setDate(midDate.getDate() + 3);
+              const x = xScale(midDate) - barW / 2;
+              const total = week.episodes.length;
+              if (total === 0) return null;
+
+              let yOffset = iH;
+              const types = Object.keys(week.counts);
+              return (
+                <g key={i} className="cursor-pointer" onClick={() => setEpisodeSidebar({ date: week.weekStart, episodes: week.episodes })}>
+                  {types.map(type => {
+                    const count = week.counts[type];
+                    const barH = iH - yScale(count);
+                    yOffset -= barH;
+                    return (
+                      <rect key={type} x={x} y={yOffset} width={barW} height={barH}
+                        fill={EPISODE_COLORS[type] || P.alarmGray} rx={1} opacity={0.85}
+                      />
+                    );
+                  })}
+                  <text x={x + barW / 2} y={yScale(total) - 4} textAnchor="middle" fill={P.text} fontSize={9} fontFamily="IBM Plex Sans">{total}</text>
+                </g>
+              );
+            })}
+            {xScale.ticks(detail.xTickCount).map(t => (
+              <text key={t.getTime()} x={xScale(t)} y={iH + 18} textAnchor="middle" fill={P.gridLabel} fontSize={10} fontFamily="IBM Plex Sans">
+                {detail.xTickFormat(t)}
+              </text>
+            ))}
+          </g>
+        </svg>
+      </div>
+    );
+  })();
+
   const calendarView = (
     <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
       {/* Header — clickable toggle */}
@@ -1770,16 +1891,6 @@ export default function VitalDashboard() {
         <Calendar size={18} color={P.textMuted} />
         <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>{tr.events}</span>
         <div className="flex items-center gap-2 ml-2">
-          {eventCounts.medCount > 0 && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${P.medication}22`, color: P.medication }}>
-              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: P.medication }} />{eventCounts.medCount}
-            </span>
-          )}
-          {eventCounts.examCount > 0 && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${P.examination}22`, color: P.examination }}>
-              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: P.examination }} />{eventCounts.examCount}
-            </span>
-          )}
           {eventCounts.abCount > 0 && (
             <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${P.alert}22`, color: P.alert }}>
               <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: P.alert }} />{eventCounts.abCount}
@@ -1851,8 +1962,6 @@ export default function VitalDashboard() {
                       {/* Event dots */}
                       {hasEvents && (
                         <div className="flex gap-px mt-0.5">
-                          {dayData.events.some(e => e.type === "medication") && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: P.medication }} />}
-                          {dayData.events.some(e => e.type === "examination") && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: P.examination }} />}
                           {dayData.events.some(e => e.type === "atrialBurden") && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: P.alert }} />}
                           {dayData.events.some(e => e.alarm === "critical") && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: P.alarmRed }} />}
                           {dayData.ecgs.length > 0 && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: P.ecg }} />}
@@ -1884,7 +1993,7 @@ export default function VitalDashboard() {
             {calendarData[calendarHoverDay.dateStr].events.map((ev, i) => (
               <div key={i} className="flex items-center gap-2 text-xs">
                 <span className="w-2 h-2 rounded-full flex-shrink-0" style={{
-                  backgroundColor: ev.type === "medication" ? P.medication : ev.type === "examination" ? P.examination : ev.alarm ? ALARM_COLORS[ev.alarm] : P.alarmGray
+                  backgroundColor: ev.alarm ? ALARM_COLORS[ev.alarm] : P.alarmGray
                 }} />
                 <span style={{ color: P.textSecondary }}>{ev.label}</span>
               </div>
@@ -1925,12 +2034,12 @@ export default function VitalDashboard() {
                   style={{ backgroundColor: P.bgInput }}
                   onClick={() => { setCalendarDialog(null); setSidePanel({ type: "event", date: ev.date, data: ev }); }}>
                   <span className="w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0" style={{
-                    backgroundColor: ev.type === "medication" ? P.medication : ev.type === "examination" ? P.examination : ev.alarm ? ALARM_COLORS[ev.alarm] : P.alarmGray
+                    backgroundColor: ev.alarm ? ALARM_COLORS[ev.alarm] : P.alarmGray
                   }} />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium" style={{ color: P.text }}>{ev.label}</div>
                     <div className="flex items-center gap-2 text-xs mt-0.5" style={{ color: P.textMuted }}>
-                      <span>{ev.type === "medication" ? "Medikation" : ev.type === "examination" ? "Untersuchung" : ev.type === "atrialBurden" ? "Atrial Burden" : ev.type}</span>
+                      <span>{ev.type === "atrialBurden" ? "Atrial Burden" : ev.type}</span>
                       {ev.alarm && <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold" style={{ backgroundColor: `${ALARM_COLORS[ev.alarm]}22`, color: ALARM_COLORS[ev.alarm] }}>{ALARM_LABELS[ev.alarm]}</span>}
                       {ev.acknowledgedBy && <span>✓ {ev.acknowledgedBy}</span>}
                     </div>
@@ -1968,8 +2077,6 @@ export default function VitalDashboard() {
 
       {/* Legend */}
       <div className="px-5 pb-3 flex items-center gap-4 flex-wrap text-xs" style={{ color: P.textMuted }}>
-        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.medication }} /> Medikation</span>
-        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.examination }} /> Untersuchung</span>
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.alarmRed }} /> Kritischer Alarm</span>
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.alarmYellow }} /> Warnung</span>
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: P.alarmBlue }} /> Info</span>
@@ -2441,7 +2548,6 @@ export default function VitalDashboard() {
     { key: "D", label: "Dark/Light" },
     { key: "1-4", label: "Zeitraum" },
     { key: "G", label: "Grenzwerte" },
-    { key: "M", label: "Fehlende" },
     { key: "Esc", label: "Schließen" },
   ];
 
@@ -2653,6 +2759,44 @@ export default function VitalDashboard() {
       lastTransmission: "2026-03-05T08:14:00",
       detailLink: "#implant-detail",
       transmissionListLink: "#transmission-list-implant",
+      // Pacemaker programming data (from Patientenausweis)
+      indication: "AV-Block II ohne Angaben",
+      electrodes: [
+        { type: "RA", manufacturer: "Guidant", serial: "21206NK", implantDate: "1997-01-01" },
+      ],
+      programming: {
+        mode: "VDD",
+        lowerRate: null as number | null,
+        upperRate: null as number | null,
+        maxSensorRate: null as number | null,
+        hysteresisRate: null as number | null,
+        modeSwitchMode: "VDI",
+        modeSwitchDetRate: null as number | null,
+        stimAVTime: 180,
+        sensedAVTime: 180,
+        raAmplitude: null as number | null,
+        rvAmplitude: 2.5,
+        raPulseDuration: null as number | null,
+        rvPulseDuration: 0.4,
+        raSensitivity: "0.15Fixe" as string,
+        rvSensitivity: "2.5Fixed" as string,
+      },
+      lastMeasurement: {
+        date: "2026-01-15",
+        electrodeImpedance: { ra: 3000, rv: 414 },
+        batteryCapacity: null as number | null,
+        remainingLifetime: null as number | null,
+        batteryVoltageDetail: null as number | null,
+        batteryStatusDetail: "BOS",
+      },
+      stimulationStats: {
+        stimRA: null as number | null,
+        stimRV: null as number | null,
+        asVS: null as number | null,
+        asVP: null as number | null,
+        apVS: null as number | null,
+        apVP: null as number | null,
+      },
     },
     externalDevices: [
       {
@@ -3302,6 +3446,48 @@ export default function VitalDashboard() {
     { id: "AB98765432", name: "Schmidt, Lukas", gender: "♂", dob: "22.06.85", active: false },
   ];
 
+  const episodeSidebarEl = episodeSidebar && (
+    <div className="fixed top-0 right-0 bottom-10 w-96 z-[60] shadow-2xl overflow-y-auto"
+      style={{ backgroundColor: P.bgPanel, borderLeft: `1px solid ${P.borderStrong}` }}>
+      <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${P.border}` }}>
+        <div>
+          <div className="text-base font-semibold" style={{ color: P.text }}>Episoden</div>
+          <div className="text-xs" style={{ color: P.textMuted }}>KW ab {new Date(episodeSidebar.date).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}</div>
+        </div>
+        <button onClick={() => setEpisodeSidebar(null)} className="p-1.5 rounded-md" style={{ color: P.textMuted }}><X size={16} /></button>
+      </div>
+      <div className="divide-y" style={{ borderColor: P.border }}>
+        {episodeSidebar.episodes.map((ep: any, i: number) => (
+          <div key={i}
+            className="px-5 py-3 cursor-pointer transition-colors hover:opacity-80"
+            style={{ backgroundColor: i % 2 === 0 ? "transparent" : P.bgInput }}
+            onClick={() => { if (ep.waveform) { setEcgDrawer(ep); setEpisodeSidebar(null); } }}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: `${EPISODE_COLORS[ep.episodeType] || P.alarmGray}22`, color: EPISODE_COLORS[ep.episodeType] || P.alarmGray }}>{ep.episodeType}</span>
+                <span className="text-sm font-semibold" style={{ color: P.text }}>{ep.date} {ep.time}</span>
+              </div>
+              <span className="text-xs" style={{ color: P.textMuted }}>{ep.duration ? `${Math.floor(ep.duration / 60)}:${String(ep.duration % 60).padStart(2, "0")}` : "—"}</span>
+            </div>
+            <div className="flex items-center gap-3 text-xs" style={{ color: P.textMuted }}>
+              <span>{ep.therapy || "Monitoring only"}</span>
+              {ep.result && ep.result !== "-" && (
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
+                  style={{ backgroundColor: ep.result === "Successful" ? `${P.good}22` : `${P.danger}22`, color: ep.result === "Successful" ? P.good : P.danger }}>
+                  {ep.result}
+                </span>
+              )}
+            </div>
+            {ep.atrialBurden > 0 && (
+              <div className="text-xs mt-1" style={{ color: ep.atrialBurden > 15 ? P.danger : P.warning }}>AF: {ep.atrialBurden}%</div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   /* ═══════════════════════════════════════════════════════════════════════════════
      RENDER
      ═══════════════════════════════════════════════════════════════════════════════ */
@@ -3598,6 +3784,7 @@ export default function VitalDashboard() {
           {tooltip}
           {sidePanelEl}
           {ecgDrawerEl}
+          {episodeSidebarEl}
 
           {patientTab === "dashboard" && (
             <div className="space-y-5">
@@ -3671,25 +3858,41 @@ export default function VitalDashboard() {
                         >
                           {tr.icd10Diagnoses.toUpperCase()}
                         </span>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-1.5">
                           {patient.icd10.map((d, i) => {
                               const icdText = (tr as any).icd10Texts?.[d.code] || d.text;
                               return (
                             <span
                               key={i}
-                              className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg"
-                              style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
+                              className="text-xs font-mono font-semibold px-2 py-1 rounded-md cursor-default"
+                              style={{ backgroundColor: P.bgInput, color: P.text }}
+                              title={icdText}
                             >
-                              <span className="font-mono font-semibold" style={{ color: P.text }}>
-                                {d.code}
-                              </span>
-                              <span style={{ color: P.textMuted }}>—</span>
-                              <span>{icdText}</span>
+                              {d.code}
                             </span>
                               );
                             })}
                       </div>
                     </div>
+
+                      {/* Comments / Post-it */}
+                      <div className="mb-4">
+                        <span className="text-[11px] uppercase tracking-wider font-semibold block mb-2" style={{ color: P.textMuted }}>
+                          KOMMENTARE
+                        </span>
+                        <textarea
+                          className="w-full rounded-lg p-3 text-sm resize-none"
+                          style={{
+                            backgroundColor: "#fef9c3",
+                            color: "#713f12",
+                            border: "1px solid #fde68a",
+                            minHeight: 80,
+                            fontFamily: "'IBM Plex Sans', sans-serif",
+                          }}
+                          placeholder="Notizen zum Patienten..."
+                          defaultValue="Telefonat am 04.03. — Patient berichtet über Schwindel bei Lagewechsel. Medikation prüfen."
+                        />
+                      </div>
 
                       {/* Devices — collapsible */}
                       <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
@@ -3755,6 +3958,9 @@ export default function VitalDashboard() {
                           <div className="text-xs" style={{ color: P.textMuted }}>
                             {patient.implant.type}
                           </div>
+                          <div className="text-xs" style={{ color: P.textMuted }}>
+                            Implantiert: {new Date(patient.implant.implantDate).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                          </div>
                           <div className="flex items-center gap-3 mt-2">
                             <div
                               className="flex items-center gap-1.5 text-xs"
@@ -3786,8 +3992,60 @@ export default function VitalDashboard() {
                             className="inline-flex items-center gap-1 text-xs mt-1 transition-colors"
                             style={{ color: P.bpSystolic }}
                           >
-                            Übertragungsverlauf <Radio size={11} />
+                            <span title="Übertragungsverlauf"><Radio size={14} /></span>
                           </a>
+                          <button
+                            onClick={() => setImplantDetailOpen(!implantDetailOpen)}
+                            className="text-xs mt-2 flex items-center gap-1 transition-colors"
+                            style={{ color: P.bpSystolic }}
+                          >
+                            <span style={{ transform: implantDetailOpen ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
+                              <ChevronRight size={12} />
+                            </span>
+                            Programmierung & Messwerte
+                          </button>
+                          {implantDetailOpen && (
+                            <div className="mt-3 space-y-3 text-xs" style={{ color: P.textSecondary }}>
+                              <div>
+                                <div className="font-semibold mb-1" style={{ color: P.text }}>Indikation</div>
+                                <div>{patient.implant.indication}</div>
+                              </div>
+                              <div>
+                                <div className="font-semibold mb-1" style={{ color: P.text }}>Elektroden</div>
+                                {patient.implant.electrodes.map((el: any, i: number) => (
+                                  <div key={i} className="flex items-center gap-2">
+                                    <span className="font-mono font-semibold" style={{ color: P.text }}>{el.type}</span>
+                                    <span>{el.manufacturer}</span>
+                                    <span className="font-mono">{el.serial}</span>
+                                  </div>
+                                ))}
+                              </div>
+                              <div>
+                                <div className="font-semibold mb-1" style={{ color: P.text }}>Aktuelle Programmierung</div>
+                                <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+                                  <span>Betriebsart:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.mode}</span>
+                                  <span>Mode Switch Modus:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.modeSwitchMode}</span>
+                                  <span>Stim. AV-Zeit:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.stimAVTime} ms</span>
+                                  <span>Wahrg. AV-Zeit:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.sensedAVTime} ms</span>
+                                </div>
+                              </div>
+                              <div>
+                                <div className="font-semibold mb-1" style={{ color: P.text }}>Programmierte Werte (RA / RV)</div>
+                                <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+                                  <span>Amplitude [V]:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.raAmplitude ?? "—"} / {patient.implant.programming.rvAmplitude}</span>
+                                  <span>Impulsdauer [ms]:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.raPulseDuration ?? "—"} / {patient.implant.programming.rvPulseDuration}</span>
+                                  <span>Empfindlichkeit:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.raSensitivity} / {patient.implant.programming.rvSensitivity}</span>
+                                </div>
+                              </div>
+                              <div>
+                                <div className="font-semibold mb-1" style={{ color: P.text }}>Letzte Messung ({patient.implant.lastMeasurement.date})</div>
+                                <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+                                  <span>Impedanz RA/RV [Ohm]:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.lastMeasurement.electrodeImpedance.ra} / {patient.implant.lastMeasurement.electrodeImpedance.rv}</span>
+                                  <span>Batteriestatus:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.lastMeasurement.batteryStatusDetail}</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -3832,7 +4090,7 @@ export default function VitalDashboard() {
                               className="inline-flex items-center gap-1 text-xs mt-1 transition-colors"
                               style={{ color: P.bpSystolic }}
                             >
-                              Übertragungsverlauf <Radio size={11} />
+                              <span title="Übertragungsverlauf"><Radio size={14} /></span>
                             </a>
                           </div>
                         </div>
@@ -3909,7 +4167,30 @@ export default function VitalDashboard() {
                 </div>
 
                 {/* ── Calendar View (Events + ECG) ── */}
-                  {calendarView}
+                {/* Calendar/Timeline toggle */}
+                <div className="flex items-center gap-2 mb-3">
+                  <button
+                    onClick={() => setCalendarViewMode("calendar")}
+                    className="px-3 py-1.5 rounded text-sm font-medium transition-all"
+                    style={{
+                      backgroundColor: calendarViewMode === "calendar" ? P.text : P.bgInput,
+                      color: calendarViewMode === "calendar" ? P.bg : P.textMuted,
+                    }}
+                  >
+                    <Calendar size={14} className="inline mr-1.5" style={{ verticalAlign: "-2px" }} /> Kalender
+                  </button>
+                  <button
+                    onClick={() => setCalendarViewMode("timeline")}
+                    className="px-3 py-1.5 rounded text-sm font-medium transition-all"
+                    style={{
+                      backgroundColor: calendarViewMode === "timeline" ? P.text : P.bgInput,
+                      color: calendarViewMode === "timeline" ? P.bg : P.textMuted,
+                    }}
+                  >
+                    <BarChart3 size={14} className="inline mr-1.5" style={{ verticalAlign: "-2px" }} /> Episoden-Zeitleiste
+                  </button>
+                </div>
+                {calendarViewMode === "calendar" ? calendarView : episodeTimelineChart}
 
                   {/* ── Toggles + View mode ── */}
                   <div className="flex items-center gap-2 flex-wrap">
@@ -3926,10 +4207,10 @@ export default function VitalDashboard() {
                       shortcut="G"
                     />
                     <ToggleBtn
-                      label={tr.missingValues}
-                      active={vis.missed}
-                      onToggle={() => setVis(v => ({ ...v, missed: !v.missed }))}
-                      shortcut="M"
+                      label="Werte"
+                      active={vis.values}
+                      onToggle={() => setVis(v => ({ ...v, values: !v.values }))}
+                      shortcut="W"
                     />
                     <div className="w-px h-6 mx-1" style={{ backgroundColor: P.borderStrong }} />
                     <button
