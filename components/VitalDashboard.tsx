@@ -1909,7 +1909,7 @@ export default function VitalDashboard() {
   };
 
   const episodeTimelineChart = (() => {
-    const h = 280;
+    const h = 180;
     const m = { top: 30, right: 20, bottom: 40, left: 50 };
     const iW = chartW - m.left - m.right;
     const iH = h - m.top - m.bottom;
@@ -1921,7 +1921,7 @@ export default function VitalDashboard() {
     });
 
     const maxCount = Math.max(1, ...visibleWeeks.map(w => w.episodes.length));
-    const yScale = d3.scaleSqrt().domain([0, maxCount]).range([iH, 0]);
+    const yScale = d3.scalePow().exponent(0.7).domain([0, maxCount]).range([iH, 0]);
     const barW = Math.max(4, Math.min(20, iW / Math.max(1, visibleWeeks.length) - 2));
 
     const yTicks = [0, 1, 2, 5, 10, 20, 50].filter(t => t <= maxCount);
@@ -1954,25 +1954,57 @@ export default function VitalDashboard() {
             {visibleWeeks.map((week, i) => {
               const midDate = new Date(week.weekStart);
               midDate.setDate(midDate.getDate() + 3);
-              const x = xScale(midDate) - barW / 2;
+              const centerX = xScale(midDate);
               const total = week.episodes.length;
               if (total === 0) return null;
 
-              let yOffset = iH;
-              const types = Object.keys(week.counts);
+              // Group: VT1+VT2 stacked, others separate
+              const vtStack = ["VT1", "VT2"];
+              const otherTypes = Object.keys(week.counts).filter(t => !vtStack.includes(t) && week.counts[t] > 0);
+              const hasVt = vtStack.some(t => (week.counts[t] || 0) > 0);
+              const slotCount = (hasVt ? 1 : 0) + otherTypes.length;
+              if (slotCount === 0) return null;
+              const totalBarW = barW * 1.5;
+              const slotW = Math.max(3, totalBarW / slotCount);
+              const startX = centerX - (slotCount * slotW) / 2;
+              let slotIdx = 0;
+
+              const bars: React.ReactNode[] = [];
+
+              // VT stack
+              if (hasVt) {
+                const sx = startX + slotIdx * slotW;
+                let yOff = iH;
+                vtStack.forEach(type => {
+                  const count = week.counts[type] || 0;
+                  if (count > 0) {
+                    const barH = iH - yScale(count);
+                    yOff -= barH;
+                    bars.push(
+                      <rect key={`${i}-${type}`} x={sx} y={yOff} width={slotW - 1} height={barH}
+                        fill={EPISODE_COLORS[type] || P.alarmGray} rx={1} opacity={0.85} />
+                    );
+                  }
+                });
+                slotIdx++;
+              }
+
+              // Other types side by side
+              otherTypes.forEach(type => {
+                const count = week.counts[type] || 0;
+                const sx = startX + slotIdx * slotW;
+                const barH = iH - yScale(count);
+                bars.push(
+                  <rect key={`${i}-${type}`} x={sx} y={iH - barH} width={slotW - 1} height={barH}
+                    fill={EPISODE_COLORS[type] || P.alarmGray} rx={1} opacity={0.85} />
+                );
+                slotIdx++;
+              });
+
               return (
                 <g key={i} className="cursor-pointer" onClick={() => setEpisodeSidebar({ date: week.weekStart, episodes: week.episodes })}>
-                  {types.map(type => {
-                    const count = week.counts[type];
-                    const barH = iH - yScale(count);
-                    yOffset -= barH;
-                    return (
-                      <rect key={type} x={x} y={yOffset} width={barW} height={barH}
-                        fill={EPISODE_COLORS[type] || P.alarmGray} rx={1} opacity={0.85}
-                      />
-                    );
-                  })}
-                  <text x={x + barW / 2} y={yScale(total) - 4} textAnchor="middle" fill={P.text} fontSize={9} fontFamily="IBM Plex Sans">{total}</text>
+                  {bars}
+                  <text x={centerX} y={yScale(total) - 4} textAnchor="middle" fill={P.text} fontSize={9} fontFamily="IBM Plex Sans">{total}</text>
                 </g>
               );
             })}
@@ -3855,6 +3887,42 @@ export default function VitalDashboard() {
           <h1 className="text-2xl font-bold" style={{ color: P.text }}>
             {patient.name}
           </h1>
+          {/* Clinical info pills and ICD-10 chips below patient name */}
+          <div className="flex flex-wrap items-center gap-2 mt-3">
+            <InfoPill label={tr.age.toUpperCase()} value={`${patient.age} ${tr.years}`} />
+            <InfoPill label={tr.gender.toUpperCase()} value={patient.gender === "Männlich" ? tr.male : tr.female} />
+            <InfoPill label={tr.nyha} value={`${tr.class} ${patient.nyha}`} />
+            <InfoPill
+              label={tr.lvef}
+              value={`${patient.lvef}%`}
+              color={
+                patient.lvef < 40
+                  ? P.danger
+                  : patient.lvef < 50
+                    ? P.warning
+                    : P.good
+              }
+            />
+            <InfoPill
+              label={tr.anticoagulation.toUpperCase()}
+              value={patient.anticoag ? tr.yes : tr.no}
+              color={patient.anticoag ? P.good : P.textMuted}
+            />
+            <span className="mx-1 text-sm" style={{ color: P.border }}>|</span>
+            {patient.icd10.map((d, i) => {
+              const icdText = (tr as any).icd10Texts?.[d.code] || d.text;
+              return (
+                <span
+                  key={i}
+                  className="text-xs font-mono font-semibold px-2 py-1 rounded-md cursor-default"
+                  style={{ backgroundColor: P.bgInput, color: P.text }}
+                  title={icdText}
+                >
+                  {d.code}
+                </span>
+              );
+            })}
+          </div>
         </div>
 
         {/* Tab bar */}
@@ -3919,122 +3987,71 @@ export default function VitalDashboard() {
 
               {page === "dashboard" && (
                 <>
-                  {/* ── Patient Info Bar ── */}
-                  <div
-                    className="rounded-md overflow-hidden shadow-sm"
-                    style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}
-                  >
-                    <div
-                      className="px-5 py-3 flex items-center gap-3"
-                      style={{ borderBottom: `1px solid ${P.border}` }}
+                  {/* Comments / Post-it */}
+                  <div className="mb-4" style={{ transform: "rotate(-1deg)", transformOrigin: "top left" }}>
+                    <div style={{
+                      backgroundColor: "#fef08a",
+                      borderRadius: "2px",
+                      padding: "0",
+                      boxShadow: "2px 3px 8px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.08)",
+                      position: "relative",
+                    }}>
+                      <div style={{
+                        width: "20px", height: "20px", borderRadius: "50%",
+                        background: "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)",
+                        position: "absolute", top: "-6px", left: "50%", transform: "translateX(-50%)",
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
+                        zIndex: 1,
+                      }} />
+                      <textarea
+                        className="w-full text-sm resize-none"
+                        style={{
+                          backgroundColor: "transparent",
+                          color: "#713f12",
+                          border: "none",
+                          outline: "none",
+                          minHeight: 80,
+                          padding: "16px 12px 12px",
+                          fontFamily: "'IBM Plex Sans', sans-serif",
+                          lineHeight: 1.5,
+                        }}
+                        placeholder="Notizen zum Patienten..."
+                        defaultValue="Telefonat am 04.03. — Patient berichtet über Schwindel bei Lagewechsel. Medikation prüfen."
+                      />
+                    </div>
+                  </div>
+
+                  {/* Devices — collapsible */}
+                  <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
+                    <button
+                      className="w-full flex items-center gap-3 px-5 py-3 text-left transition-colors"
+                      style={{ borderBottom: devicesOpen ? `1px solid ${P.border}` : "none" }}
+                      onClick={() => setDevicesOpen(!devicesOpen)}
                     >
-                      <Info size={16} style={{ color: P.textMuted }} />
-                      <span
-                        className="text-sm font-semibold uppercase tracking-wider"
-                        style={{ color: P.textMuted }}
-                      >
-                        {tr.patientData.toUpperCase()}
+                      <span className="transition-transform" style={{ transform: devicesOpen ? "rotate(90deg)" : "rotate(0deg)", color: P.textMuted }}>
+                        <ChevronRight size={16} />
                       </span>
-                    </div>
-                    <div className="p-4">
-                      {/* Clinical info pills */}
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        <InfoPill label={tr.age.toUpperCase()} value={`${patient.age} ${tr.years}`} />
-                        <InfoPill label={tr.gender.toUpperCase()} value={patient.gender === "Männlich" ? tr.male : tr.female} />
-                        <InfoPill label={tr.nyha} value={`${tr.class} ${patient.nyha}`} />
-                        <InfoPill
-                          label={tr.lvef}
-                          value={`${patient.lvef}%`}
-                          color={
-                            patient.lvef < 40
-                              ? P.danger
-                              : patient.lvef < 50
-                                ? P.warning
-                                : P.good
-                          }
-                        />
-                        <InfoPill
-                          label={tr.anticoagulation.toUpperCase()}
-                          value={patient.anticoag ? tr.yes : tr.no}
-                          color={patient.anticoag ? P.good : P.textMuted}
-                        />
-                      </div>
-
-                      {/* ICD-10 Codes */}
-                      <div className="mb-4">
-                        <span
-                          className="text-[11px] uppercase tracking-wider font-semibold block mb-2"
-                          style={{ color: P.textMuted }}
-                        >
-                          {tr.icd10Diagnoses.toUpperCase()}
+                      <Cpu size={18} color={P.textMuted} />
+                      <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>{tr.devices}</span>
+                      <div className="flex items-center gap-2 ml-2">
+                        <span className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: P.bgInput, color: P.textSecondary }}>
+                          <ImplantIcon size={12} color={P.textSecondary} />
+                          {patient.implant.type.split(" ")[0]}
                         </span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {patient.icd10.map((d, i) => {
-                              const icdText = (tr as any).icd10Texts?.[d.code] || d.text;
-                              return (
-                            <span
-                              key={i}
-                              className="text-xs font-mono font-semibold px-2 py-1 rounded-md cursor-default"
-                              style={{ backgroundColor: P.bgInput, color: P.text }}
-                              title={icdText}
-                            >
-                              {d.code}
-                            </span>
-                              );
-                            })}
-                      </div>
-                    </div>
-
-                      {/* Comments / Post-it */}
-                      <div className="mb-4">
-                        <span className="text-[11px] uppercase tracking-wider font-semibold block mb-2" style={{ color: P.textMuted }}>
-                          KOMMENTARE
-                        </span>
-                        <textarea
-                          className="w-full rounded-lg p-3 text-sm resize-none"
-                          style={{
-                            backgroundColor: "#fef9c3",
-                            color: "#713f12",
-                            border: "1px solid #fde68a",
-                            minHeight: 80,
-                            fontFamily: "'IBM Plex Sans', sans-serif",
-                          }}
-                          placeholder="Notizen zum Patienten..."
-                          defaultValue="Telefonat am 04.03. — Patient berichtet über Schwindel bei Lagewechsel. Medikation prüfen."
-                        />
-                      </div>
-
-                      {/* Devices — collapsible */}
-                      <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
-                        <button
-                          className="w-full flex items-center gap-3 px-5 py-3 text-left transition-colors"
-                          style={{ borderBottom: devicesOpen ? `1px solid ${P.border}` : "none" }}
-                          onClick={() => setDevicesOpen(!devicesOpen)}
-                        >
-                          <span className="transition-transform" style={{ transform: devicesOpen ? "rotate(90deg)" : "rotate(0deg)", color: P.textMuted }}>
-                            <ChevronRight size={16} />
+                        {patient.externalDevices.map((dev, i) => (
+                          <span key={i} className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: P.bgInput, color: P.textSecondary }}>
+                            {dev.type === "Waage" ? (
+                              <Weight size={12} color={P.textSecondary} />
+                            ) : (
+                              <Activity size={12} color={P.textSecondary} />
+                            )}
+                            {dev.type}
                           </span>
-                          <Cpu size={18} color={P.textMuted} />
-                          <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>{tr.devices}</span>
-                          <div className="flex items-center gap-2 ml-2">
-                            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${P.heartRate}22`, color: P.heartRate }}>
-                              <ImplantIcon size={12} color={P.heartRate} />
-                              {patient.implant.type.split(" ")[0]}
-                            </span>
-                            {patient.externalDevices.map((dev, i) => (
-                              <span key={i} className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${dev.type === "Waage" ? P.weight : P.bpSystolic}22`, color: dev.type === "Waage" ? P.weight : P.bpSystolic }}>
-                                {dev.type === "Waage" ? (
-                                  <Weight size={12} color={dev.type === "Waage" ? P.weight : P.bpSystolic} />
-                                ) : (
-                                  <Activity size={12} color={dev.type === "Waage" ? P.weight : P.bpSystolic} />
-                                )}
-                                {dev.type}
-                              </span>
-                            ))}
-                          </div>
-                        </button>
-                      {devicesOpen && (
-                      <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                        ))}
+                      </div>
+                    </button>
+                    {devicesOpen && (
+                    <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                       {/* Implant */}
                       <div
                         className="rounded-lg p-4"
@@ -4208,8 +4225,6 @@ export default function VitalDashboard() {
                     </div>
                     )}
                   </div>
-                  </div>
-                </div>
 
                 {/* ── Time range selector + view toggle ── */}
                 <div className="sticky top-0 z-20 flex items-center gap-2 flex-wrap py-2 -mx-6 px-6" style={{ backgroundColor: theme === "dark" ? "rgba(24,24,27,0.75)" : "rgba(255,255,255,0.75)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
