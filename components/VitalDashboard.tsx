@@ -3905,37 +3905,18 @@ export default function VitalDashboard() {
           <h1 className="text-2xl font-bold" style={{ color: P.text }}>
             {patient.name}
           </h1>
-          {/* Clinical info pills and ICD-10 chips below patient name */}
-          <div className="flex flex-wrap items-center gap-2 mt-3">
-            <InfoPill label={tr.age.toUpperCase()} value={`${patient.age} ${tr.years}`} />
-            <InfoPill label={tr.gender.toUpperCase()} value={patient.gender === "Männlich" ? tr.male : tr.female} />
-            <InfoPill label={tr.nyha} value={`${tr.class} ${patient.nyha}`} />
-            <InfoPill
-              label={tr.lvef}
-              value={`${patient.lvef}%`}
-              color={
-                patient.lvef < 40
-                  ? P.danger
-                  : patient.lvef < 50
-                    ? P.warning
-                    : P.good
-              }
-            />
-            <InfoPill
-              label={tr.anticoagulation.toUpperCase()}
-              value={patient.anticoag ? tr.yes : tr.no}
-              color={patient.anticoag ? P.good : P.textMuted}
-            />
-            <span className="mx-1 text-sm" style={{ color: P.border }}>|</span>
+          {/* Compact patient chips + ICD-10 */}
+          <div className="flex flex-wrap items-center gap-1.5 mt-2">
+            <span className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: P.bgInput, color: P.text }}>{patient.age} {tr.years}</span>
+            <span className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: P.bgInput, color: P.text }}>{patient.gender === "Männlich" ? tr.male : tr.female}</span>
+            <span className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: P.bgInput, color: P.text }}>NYHA {patient.nyha}</span>
+            <span className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: P.bgInput, color: patient.lvef < 40 ? P.danger : patient.lvef < 50 ? P.warning : P.text }}>LVEF {patient.lvef}%</span>
+            <span className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: P.bgInput, color: patient.anticoag ? P.text : P.textMuted }}>{tr.anticoagulation}: {patient.anticoag ? tr.yes : tr.no}</span>
+            <span className="mx-0.5 text-sm" style={{ color: P.border }}>|</span>
             {patient.icd10.map((d, i) => {
               const icdText = (tr as any).icd10Texts?.[d.code] || d.text;
               return (
-                <span
-                  key={i}
-                  className="text-xs font-mono font-semibold px-2 py-1 rounded-md cursor-default"
-                  style={{ backgroundColor: P.bgInput, color: P.text }}
-                  title={icdText}
-                >
+                <span key={i} className="text-xs font-mono font-semibold px-2 py-1 rounded-md cursor-default" style={{ backgroundColor: P.bgInput, color: P.text }} title={icdText}>
                   {d.code}
                 </span>
               );
@@ -4005,38 +3986,20 @@ export default function VitalDashboard() {
 
               {page === "dashboard" && (
                 <>
-                  {/* Comments / Post-it */}
-                  <div className="mb-4" style={{ transform: "rotate(-1deg)", transformOrigin: "top left" }}>
-                    <div style={{
-                      backgroundColor: "#fef08a",
-                      borderRadius: "2px",
-                      padding: "0",
-                      boxShadow: "2px 3px 8px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.08)",
-                      position: "relative",
-                    }}>
-                      <div style={{
-                        width: "20px", height: "20px", borderRadius: "50%",
-                        background: "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)",
-                        position: "absolute", top: "-6px", left: "50%", transform: "translateX(-50%)",
-                        boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
-                        zIndex: 1,
-                      }} />
+                  {/* Comments */}
+                  <div className="mb-4">
                       <textarea
-                        className="w-full text-sm resize-none"
+                        className="w-full rounded-lg p-3 text-sm resize-none"
                         style={{
-                          backgroundColor: "transparent",
+                          backgroundColor: "#fef9c3",
                           color: "#713f12",
-                          border: "none",
-                          outline: "none",
+                          border: "1px solid #fde68a",
                           minHeight: 80,
-                          padding: "16px 12px 12px",
                           fontFamily: "'IBM Plex Sans', sans-serif",
-                          lineHeight: 1.5,
                         }}
                         placeholder="Notizen zum Patienten..."
                         defaultValue="Telefonat am 04.03. — Patient berichtet über Schwindel bei Lagewechsel. Medikation prüfen."
                       />
-                    </div>
                   </div>
 
                   {/* Devices — collapsible */}
