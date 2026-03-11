@@ -1221,9 +1221,19 @@ export default function VitalDashboard() {
             {icon}
             <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>{label}</span>
             {stats ? (
-              <span className="text-sm font-normal" style={{ color: P.textMuted }}>
-                P10: {stats.p10} · Median: {stats.median} · P90: {stats.p90} {unit}
-              </span>
+              <div className="flex items-center gap-0" style={{ color: P.textMuted }}>
+                <span className="text-sm font-normal tabular-nums" style={{ color: P.textSecondary }}>{stats.p10}</span>
+                <svg width={80} height={22} viewBox="0 0 80 22" style={{ margin: "0 4px" }}>
+                  {/* Range bar P10–P90 */}
+                  <line x1={0} y1={13} x2={80} y2={13} stroke={P.gridLabel} strokeWidth={3} strokeLinecap="round" />
+                  {/* Median dot */}
+                  <circle cx={stats.median <= stats.p10 ? 4 : stats.median >= stats.p90 ? 76 : 4 + ((stats.median - stats.p10) / (stats.p90 - stats.p10)) * 72} cy={13} r={4} fill={P.text} />
+                  {/* Tilde above median */}
+                  <text x={stats.median <= stats.p10 ? 4 : stats.median >= stats.p90 ? 76 : 4 + ((stats.median - stats.p10) / (stats.p90 - stats.p10)) * 72} y={6} textAnchor="middle" fill={P.text} fontSize={11} fontFamily="IBM Plex Sans" fontWeight={600}>~{stats.median}</text>
+                </svg>
+                <span className="text-sm font-normal tabular-nums" style={{ color: P.textSecondary }}>{stats.p90}</span>
+                <span className="text-sm font-normal ml-1.5" style={{ color: P.textMuted }}>{unit}</span>
+              </div>
             ) : (
               <span className="text-sm font-normal" style={{ color: P.textMuted }}>{yDomain[0]}–{yDomain[1]} {unit}</span>
             )}
