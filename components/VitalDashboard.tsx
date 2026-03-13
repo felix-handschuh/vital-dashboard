@@ -215,7 +215,7 @@ const translations = {
     outlier: "Ausreißer",
     examination: "Untersuchung",
     // Time ranges
-    timeRanges: { 7: "7T", 14: "14T", 30: "30T", 60: "60T", 90: "90T" },
+    timeRanges: { 7: "7", 14: "14", 30: "30", 60: "60", 90: "90" }, daysLabel: "Tage",
     // Buttons
     table: "Tabelle",
     charts: "Graphen",
@@ -289,7 +289,7 @@ const translations = {
     hr: "HR",
     outlier: "Outlier",
     examination: "Examination",
-    timeRanges: { 7: "7D", 14: "14D", 30: "30D", 60: "60D", 90: "90D" },
+    timeRanges: { 7: "7", 14: "14", 30: "30", 60: "60", 90: "90" }, daysLabel: "Days",
     table: "Table",
     charts: "Charts",
     backToDashboard: "Back to Dashboard",
@@ -361,7 +361,7 @@ const translations = {
     hr: "HR",
     outlier: "Kilógás",
     examination: "Vizsgálat",
-    timeRanges: { 7: "7N", 14: "14N", 30: "30N", 60: "60N", 90: "90N" },
+    timeRanges: { 7: "7", 14: "14", 30: "30", 60: "60", 90: "90" }, daysLabel: "Nap",
     table: "Táblázat",
     charts: "Grafikonok",
     backToDashboard: "Vissza az irányítópultra",
@@ -429,7 +429,7 @@ const translations = {
     outlier: "Отстапување",
     examination: "Преглед",
     // Time ranges
-    timeRanges: { 7: "7Д", 14: "14Д", 30: "30Д", 60: "60Д", 90: "90Д" },
+    timeRanges: { 7: "7", 14: "14", 30: "30", 60: "60", 90: "90" }, daysLabel: "Дні",
     // Buttons
     table: "Табела",
     charts: "Графикони",
@@ -499,7 +499,7 @@ const translations = {
     outlier: "Викид",
     examination: "Обстеження",
     // Time ranges
-    timeRanges: { 7: "7Д", 14: "14Д", 30: "30Д", 60: "60Д", 90: "90Д" },
+    timeRanges: { 7: "7", 14: "14", 30: "30", 60: "60", 90: "90" }, daysLabel: "Дні",
     // Buttons
     table: "Таблиця",
     charts: "Графіки",
@@ -1007,6 +1007,16 @@ export default function VitalDashboard() {
   const [overviewVisible, setOverviewVisible] = useState({ sys: true, dia: true, hr: true, weight: true, mood: true });
   const [overviewHover, setOverviewHover] = useState<{ xPos: number; yPos: number; data: Record<string, any> } | null>(null);
   const [notesText, setNotesText] = useState("Telefonat am 04.03. — Patient berichtet über Schwindel bei Lagewechsel. Medikation prüfen.");
+  const [notesOpen, setNotesOpen] = useState(false);
+  const notesRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!notesOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (notesRef.current && !notesRef.current.contains(e.target as Node)) setNotesOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [notesOpen]);
   const [crossHairDate, setCrossHairDate] = useState<Date | null>(null);
 
   /* ── Threshold settings state ── */
@@ -1166,7 +1176,7 @@ export default function VitalDashboard() {
     ro.observe(el);
     setChartContainerW(el.clientWidth || 900);
     return () => ro.disconnect();
-  }, []);
+  }, [patientTab, viewMode]);
   const chartW = chartContainerW;
   const chartH = (type: string) => expanded === type ? 300 : range <= 14 ? 200 : range <= 30 ? 180 : 160;
   const margin = { top: 28, right: 48, bottom: 8, left: 64 };
@@ -1294,11 +1304,13 @@ export default function VitalDashboard() {
               {crossHairDate && (() => {
                 const cx = xScale(crossHairDate);
                 if (cx < 0 || cx > innerW) return null;
+                const dateStr = d3.timeFormat("%d.%m.%Y")(crossHairDate);
                 return (
                   <g>
                     <line x1={cx} y1={0} x2={cx} y2={iH} stroke={P.textMuted} strokeWidth={1} strokeDasharray="3,3" opacity={0.6} />
-                    <text x={cx} y={iH + 4} textAnchor="middle" fill={P.text} fontSize={11} fontFamily="IBM Plex Sans" fontWeight={500}>
-                      {d3.timeFormat("%d.%m.%Y")(crossHairDate)}
+                    <rect x={cx - 36} y={iH - 18} width={72} height={16} rx={3} fill={P.bgCard} opacity={0.85} />
+                    <text x={cx} y={iH - 6} textAnchor="middle" fill={P.text} fontSize={11} fontFamily="IBM Plex Sans" fontWeight={500}>
+                      {dateStr}
                     </text>
                   </g>
                 );
@@ -1814,11 +1826,13 @@ export default function VitalDashboard() {
                 {crossHairDate && (() => {
                   const cx = xScale(crossHairDate);
                   if (cx < 0 || cx > innerW) return null;
+                  const dateStr = d3.timeFormat("%d.%m.%Y")(crossHairDate);
                   return (
                     <g>
                       <line x1={cx} y1={0} x2={cx} y2={iH} stroke={P.textMuted} strokeWidth={1} strokeDasharray="3,3" opacity={0.6} />
-                      <text x={cx} y={iH + 4} textAnchor="middle" fill={P.text} fontSize={11} fontFamily="IBM Plex Sans" fontWeight={500}>
-                        {d3.timeFormat("%d.%m.%Y")(crossHairDate)}
+                      <rect x={cx - 36} y={iH - 18} width={72} height={16} rx={3} fill={P.bgCard} opacity={0.85} />
+                      <text x={cx} y={iH - 6} textAnchor="middle" fill={P.text} fontSize={11} fontFamily="IBM Plex Sans" fontWeight={500}>
+                        {dateStr}
                       </text>
                     </g>
                   );
@@ -3916,24 +3930,28 @@ export default function VitalDashboard() {
               </div>
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-bold" style={{ color: P.text }}>{patient.name}</h1>
-                <div className="relative group">
-                  <span
-                    className="px-2 py-1 rounded text-xs cursor-default truncate max-w-[200px] inline-block align-middle"
+                <div className="relative" ref={notesRef}>
+                  <button
+                    onClick={() => setNotesOpen(!notesOpen)}
+                    className="px-2 py-1 rounded text-xs cursor-pointer truncate max-w-[200px] inline-block align-middle text-left"
                     style={{ backgroundColor: "#fef9c3", color: "#713f12", border: "1px solid #fde68a" }}
                   >
                     📝 {notesText.slice(0, 30)}{notesText.length > 30 ? "…" : ""}
-                  </span>
-                  <div className="absolute left-0 top-full mt-1 z-50 hidden group-hover:block">
-                    <div className="rounded-lg shadow-lg p-3 w-[320px]" style={{ backgroundColor: "#fef9c3", color: "#713f12", border: "1px solid #fde68a" }}>
-                      <textarea
-                        className="w-full text-sm resize-none bg-transparent border-none outline-none"
-                        style={{ color: "#713f12", minHeight: 80, fontFamily: "'IBM Plex Sans', sans-serif" }}
-                        value={notesText}
-                        onChange={(e) => setNotesText(e.target.value)}
-                        placeholder="Notizen zum Patienten..."
-                      />
+                  </button>
+                  {notesOpen && (
+                    <div className="absolute left-0 top-full mt-1 z-50">
+                      <div className="rounded-lg shadow-lg p-3 w-[320px]" style={{ backgroundColor: "#fef9c3", color: "#713f12", border: "1px solid #fde68a" }}>
+                        <textarea
+                          className="w-full text-sm resize-none bg-transparent border-none outline-none"
+                          style={{ color: "#713f12", minHeight: 80, fontFamily: "'IBM Plex Sans', sans-serif" }}
+                          value={notesText}
+                          onChange={(e) => setNotesText(e.target.value)}
+                          placeholder="Notizen zum Patienten..."
+                          autoFocus
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-1.5 mt-2">
@@ -4202,26 +4220,30 @@ export default function VitalDashboard() {
           {patientTab === "dashboard" && (
             <div className="space-y-5 pt-4">
 
-                {/* ── Time range selector + view toggle ── */}
-                <div className="sticky top-0 z-20 flex items-center gap-2 flex-wrap py-2 -mx-6 px-6" style={{ backgroundColor: theme === "dark" ? "rgba(24,24,27,0.75)" : "rgba(255,255,255,0.75)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
-                  {RANGES.map((r) => (
-                    <button
-                      key={r}
-                      onClick={() => { setRange(r); setChartOffset(0); }}
-                      className="px-3 py-1.5 rounded text-sm font-semibold transition-all"
-                      style={{
-                        backgroundColor:
-                          range === r && !customDateRange
-                            ? theme === "dark"
-                              ? "rgba(63,63,70,0.8)"
-                              : "rgba(228,228,231,0.8)"
-                            : "transparent",
-                        color: range === r && !customDateRange ? P.text : P.textMuted,
-                      }}
-                    >
-                      {r}T
-                    </button>
-                  ))}
+                {/* ── Time range selector (segmented control) ── */}
+                <div className="sticky top-0 z-20 flex items-center gap-3 py-2 -mx-6 px-6" style={{ backgroundColor: theme === "dark" ? "rgba(24,24,27,0.75)" : "rgba(255,255,255,0.75)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+                  <div className="inline-flex items-center rounded-lg p-1" style={{ backgroundColor: theme === "dark" ? "rgba(39,39,42,0.6)" : "rgba(244,244,245,0.8)" }}>
+                    {RANGES.map((r) => {
+                      const isActive = range === r && !customDateRange;
+                      return (
+                        <button
+                          key={r}
+                          onClick={() => { setRange(r); setChartOffset(0); }}
+                          className="relative px-3.5 py-1.5 rounded-md text-sm font-semibold transition-all"
+                          style={{
+                            backgroundColor: isActive
+                              ? theme === "dark" ? "rgba(63,63,70,1)" : "#fff"
+                              : "transparent",
+                            color: isActive ? P.text : P.textMuted,
+                            boxShadow: isActive ? (theme === "dark" ? "0 1px 3px rgba(0,0,0,0.3)" : "0 1px 3px rgba(0,0,0,0.1)") : "none",
+                          }}
+                        >
+                          {r}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <span className="text-xs font-medium" style={{ color: P.textMuted }}>{tr.daysLabel}</span>
                 </div>
 
                 {/* ── Episoden-Zeitleiste (always shown) ── */}
