@@ -135,41 +135,41 @@ type Theme = "dark" | "light";
 type TabKey = "dashboard" | "patient-info" | "telemonitoring" | "insurance" | "documents" | "app" | "contact-persons" | "settings";
 
 const darkPalette = {
-  bg: "#09090b", bgCard: "rgba(24,24,27,0.8)", bgCardHover: "rgba(39,39,42,0.6)",
-  bgPanel: "rgba(24,24,27,0.98)", bgInput: "rgba(39,39,42,0.6)",
-  border: "rgba(39,39,42,0.6)", borderStrong: "rgba(63,63,70,0.5)",
-  text: "#fafafa", textSecondary: "#a1a1aa", textMuted: "#71717a", textDim: "#52525b",
-  grid: "#27272a", gridLabel: "#a1a1aa",
-  bpSystolic: "#4A9EDE", bpDiastolic: "#7EC8F0", heartRate: "#F07040",
-  weight: "#60A5FA", mood: "#F5B840", detailLine: "#52525b",
-  threshUpper: "#EF4444", threshLower: "#60A5FA",
-  medication: "#E879A8", call: "#F5B840", alert: "#EF4444", ecg: "#818CF8",
+  bg: "#09090b", bgCard: "#18181b", bgCardHover: "rgba(39,39,42,0.6)",
+  bgPanel: "#18181b", bgInput: "#27272a",
+  border: "rgba(255,255,255,0.10)", borderStrong: "rgba(255,255,255,0.15)",
+  text: "#fafafa", textSecondary: "#e5e5e5", textMuted: "#a3a3a3", textDim: "#71717a",
+  grid: "rgba(255,255,255,0.06)", gridLabel: "#71717a",
+  bpSystolic: "#FF5C00", bpDiastolic: "#fb923c", heartRate: "#818cf8",
+  weight: "#38bdf8", mood: "#a78bfa", detailLine: "#52525b",
+  threshUpper: "#ef4444", threshLower: "#38bdf8",
+  medication: "#E879A8", call: "#fbbf24", alert: "#f87171", ecg: "#818CF8",
   examination: "#818CF8",
-  median: "#A1A1AA", good: "#60A5FA", warning: "#F5B840", danger: "#EF4444", missed: "#52525b",
-  alarmRed: "#EF4444", alarmYellow: "#F59E0B", alarmBlue: "#60A5FA", alarmGray: "#9CA3AF",
-  atrialHigh: "#EF4444", atrialMod: "#F59E0B", atrialLow: "#60A5FA",
-  outlier: "#C084FC",
-  shortcutBg: "rgba(24,24,27,0.95)", shortcutKey: "#3f3f46", shortcutKeyText: "#e4e4e7",
-  accent: "#ff5c00",
+  median: "#71717a", good: "#4ade80", warning: "#fbbf24", danger: "#f87171", missed: "#52525b",
+  alarmRed: "#f87171", alarmYellow: "#fbbf24", alarmBlue: "#38bdf8", alarmGray: "#71717a",
+  atrialHigh: "#f87171", atrialMod: "#fbbf24", atrialLow: "#38bdf8",
+  outlier: "#FF5C00",
+  shortcutBg: "rgba(9,9,11,0.95)", shortcutKey: "#27272a", shortcutKeyText: "#e5e5e5",
+  accent: "#FF5C00",
 };
 
 const lightPalette: typeof darkPalette = {
-  bg: "#f5f5f5", bgCard: "rgba(255,255,255,0.9)", bgCardHover: "rgba(244,244,245,0.8)",
-  bgPanel: "rgba(255,255,255,0.98)", bgInput: "rgba(244,244,245,0.8)",
-  border: "rgba(228,228,231,0.8)", borderStrong: "rgba(212,212,216,0.6)",
-  text: "#18181b", textSecondary: "#52525b", textMuted: "#71717a", textDim: "#a1a1aa",
-  grid: "#e4e4e7", gridLabel: "#71717a",
-  bpSystolic: "#2563EB", bpDiastolic: "#3B82F6", heartRate: "#DC2626",
-  weight: "#2563EB", mood: "#CA8A04", detailLine: "#71717a",
-  threshUpper: "#DC2626", threshLower: "#2563EB",
-  medication: "#DB2777", call: "#CA8A04", alert: "#DC2626", ecg: "#6366F1",
+  bg: "#ffffff", bgCard: "#ffffff", bgCardHover: "rgba(244,244,245,0.8)",
+  bgPanel: "#fafafa", bgInput: "#f5f5f5",
+  border: "#e5e5e5", borderStrong: "#d4d4d4",
+  text: "#0a0a0a", textSecondary: "#171717", textMuted: "#737373", textDim: "#a3a3a3",
+  grid: "#e5e5e5", gridLabel: "#a3a3a3",
+  bpSystolic: "#FF5C00", bpDiastolic: "#ea580c", heartRate: "#6366f1",
+  weight: "#0ea5e9", mood: "#8b5cf6", detailLine: "#71717a",
+  threshUpper: "#ef4444", threshLower: "#0ea5e9",
+  medication: "#ec4899", call: "#f59e0b", alert: "#ef4444", ecg: "#6366F1",
   examination: "#6366F1",
-  median: "#71717a", good: "#2563EB", warning: "#CA8A04", danger: "#DC2626", missed: "#d4d4d8",
-  alarmRed: "#DC2626", alarmYellow: "#CA8A04", alarmBlue: "#2563EB", alarmGray: "#71717a",
-  atrialHigh: "#DC2626", atrialMod: "#CA8A04", atrialLow: "#2563EB",
-  outlier: "#9333EA",
-  shortcutBg: "rgba(255,255,255,0.95)", shortcutKey: "#e4e4e7", shortcutKeyText: "#27272a",
-  accent: "#ff5c00",
+  median: "#a3a3a3", good: "#22c55e", warning: "#f59e0b", danger: "#ef4444", missed: "#d4d4d8",
+  alarmRed: "#ef4444", alarmYellow: "#f59e0b", alarmBlue: "#0ea5e9", alarmGray: "#a3a3a3",
+  atrialHigh: "#ef4444", atrialMod: "#f59e0b", atrialLow: "#0ea5e9",
+  outlier: "#FF5C00",
+  shortcutBg: "rgba(255,255,255,0.95)", shortcutKey: "#f5f5f5", shortcutKeyText: "#171717",
+  accent: "#FF5C00",
 };
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -2964,9 +2964,9 @@ export default function VitalDashboard() {
               }}
               onMouseDown={(e) => startDrag(e, "pan")}
             >
-              <div className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-indigo-400/20 rounded-l-md"
+              <div className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-orange-400/20 rounded-l-md"
                 onMouseDown={(e) => startDrag(e, "left")} />
-              <div className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-indigo-400/20 rounded-r-md"
+              <div className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-orange-400/20 rounded-r-md"
                 onMouseDown={(e) => startDrag(e, "right")} />
               <div className="flex items-center justify-center h-full text-[10px] font-mono select-none pointer-events-none"
                 style={{ color: theme === "dark" ? "rgba(165,180,252,0.9)" : "rgba(79,70,229,0.8)" }}>
@@ -3780,6 +3780,20 @@ export default function VitalDashboard() {
           borderRightColor: P.border,
         }}
       >
+        {/* Logo header */}
+        <div className="px-4 py-3 flex items-center justify-center" style={{ borderBottomColor: P.border, borderBottomWidth: "1px" }}>
+          <svg width="120" height="30" viewBox="0 0 142 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7.6054 27.2632C6.18055 27.2632 4.90373 27.0314 3.77495 26.5678C2.64616 26.1042 1.73944 25.418 1.05476 24.5094C0.388597 23.6007 0.0370093 22.5066 0 21.227H5.05176C5.12578 21.9502 5.3756 22.5066 5.8012 22.896C6.22681 23.2669 6.78195 23.4523 7.46662 23.4523C8.1698 23.4523 8.72493 23.2947 9.13204 22.9795C9.53914 22.6457 9.74269 22.1913 9.74269 21.6165C9.74269 21.1343 9.57615 20.7356 9.24306 20.4203C8.92849 20.1051 8.53064 19.8455 8.04952 19.6415C7.5869 19.4375 6.92073 19.2057 6.05102 18.9461C4.7927 18.5566 3.76569 18.1672 2.96999 17.7778C2.17429 17.3884 1.48962 16.8135 0.915979 16.0532C0.342336 15.2929 0.0555139 14.3007 0.0555139 13.0768C0.0555139 11.2595 0.712428 9.84084 2.02626 8.8209C3.34009 7.78242 5.05177 7.26318 7.16129 7.26318C9.30783 7.26318 11.038 7.78242 12.3518 8.8209C13.6657 9.84084 14.3688 11.2687 14.4614 13.1046H9.32634C9.28933 12.4741 9.05802 11.9827 8.63241 11.6304C8.2068 11.2595 7.66092 11.074 6.99475 11.074C6.42111 11.074 5.95849 11.2317 5.6069 11.5469C5.25532 11.8436 5.07952 12.2794 5.07952 12.8543C5.07952 13.4848 5.3756 13.9762 5.96774 14.3286C6.55989 14.6809 7.48512 15.0611 8.74344 15.469C10.0018 15.8955 11.0195 16.3035 11.7967 16.6929C12.5924 17.0824 13.2771 17.648 13.8507 18.3897C14.4244 19.1315 14.7112 20.0865 14.7112 21.2548C14.7112 22.3675 14.4244 23.3782 13.8507 24.2868C13.2956 25.1955 12.4814 25.9187 11.4081 26.4565C10.3348 26.9943 9.06727 27.2632 7.6054 27.2632Z" fill="currentColor"/>
+            <path d="M21.8235 11.3522V15.3021H28.1798V18.9739H21.8235V23.2576H29.0125V27.0685H17.077V7.54135H29.0125V11.3522H21.8235Z" fill="currentColor"/>
+            <path d="M53.6056 7.54135V27.0685H48.8592V15.3578L44.5013 27.0685H40.6709L36.2853 15.3299V27.0685H31.5388V7.54135H37.1457L42.6139 21.0601L48.0265 7.54135H53.6056Z" fill="currentColor"/>
+            <path d="M63.7638 7.54135C65.8178 7.54135 67.6128 7.94932 69.1486 8.76527C70.6845 9.58122 71.8688 10.731 72.7015 12.2145C73.5527 13.6795 73.9783 15.3763 73.9783 17.3049C73.9783 19.215 73.5527 20.9118 72.7015 22.3953C71.8688 23.8789 70.6753 25.0286 69.1209 25.8445C67.585 26.6605 65.7993 27.0685 63.7638 27.0685H56.4637V7.54135H63.7638ZM63.4585 22.9516C65.2534 22.9516 66.6505 22.4602 67.6498 21.4774C68.649 20.4945 69.1486 19.1037 69.1486 17.3049C69.1486 15.5061 68.649 14.106 67.6498 13.1046C66.6505 12.1032 65.2534 11.6025 63.4585 11.6025H61.2101V22.9516H63.4585Z" fill="currentColor"/>
+            <path d="M88.2055 23.6192H80.9332L79.7674 27.0685H74.7989L81.8492 7.54135H87.345L94.3953 27.0685H89.3713L88.2055 23.6192ZM86.9842 19.9475L84.5694 12.7986L82.1823 19.9475H86.9842Z" fill="currentColor"/>
+            <path d="M108.252 7.54135V11.3522H103.089V27.0685H98.3429V11.3522H93.1801V7.54135H108.252Z" fill="#FF5C00"/>
+            <path d="M114.826 11.3522V15.3021H121.182V18.9739H114.826V23.2576H122.015V27.0685H110.079V7.54135H122.015V11.3522H114.826Z" fill="#FF5C00"/>
+            <path d="M136.476 27.0685L132.507 21.0879L129.01 27.0685H123.625L129.87 17.138L123.486 7.54135H129.01L132.923 13.4384L136.365 7.54135H141.75L135.56 17.3884L142 27.0685H136.476Z" fill="#FF5C00"/>
+          </svg>
+        </div>
+
         {/* Search header */}
         <div className="px-3 py-3 border-b" style={{ borderBottomColor: P.border }}>
           <input
@@ -4020,7 +4034,7 @@ export default function VitalDashboard() {
                   color: patientTab === tab.key ? P.text : P.textMuted,
                   borderBottom:
                     patientTab === tab.key
-                      ? `2px solid ${P.text}`
+                      ? `2px solid #FF5C00`
                       : "2px solid transparent",
                   fontWeight: patientTab === tab.key ? 500 : 400,
                 }}
@@ -4239,11 +4253,9 @@ export default function VitalDashboard() {
                           onClick={() => { setRange(r); setChartOffset(0); }}
                           className="relative px-3.5 py-1.5 rounded-md text-sm font-semibold transition-all"
                           style={{
-                            backgroundColor: isActive
-                              ? theme === "dark" ? "rgba(63,63,70,1)" : "#fff"
-                              : "transparent",
-                            color: isActive ? P.text : P.textMuted,
-                            boxShadow: isActive ? (theme === "dark" ? "0 1px 3px rgba(0,0,0,0.3)" : "0 1px 3px rgba(0,0,0,0.1)") : "none",
+                            backgroundColor: isActive ? "#FF5C00" : "transparent",
+                            color: isActive ? "#ffffff" : P.textMuted,
+                            boxShadow: isActive ? "0 1px 3px rgba(0,0,0,0.2)" : "none",
                           }}
                         >
                           {r}
