@@ -132,7 +132,7 @@ type Theme = "dark" | "light";
 /* ═══════════════════════════════════════════════════════════════════════════════
    TAB KEYS
    ═══════════════════════════════════════════════════════════════════════════════ */
-type TabKey = "dashboard" | "patient-info" | "telemonitoring" | "insurance" | "documents" | "app" | "contact-persons";
+type TabKey = "dashboard" | "patient-info" | "telemonitoring" | "insurance" | "documents" | "app" | "contact-persons" | "settings";
 
 const darkPalette = {
   bg: "#09090b", bgCard: "rgba(24,24,27,0.8)", bgCardHover: "rgba(39,39,42,0.6)",
@@ -1006,6 +1006,8 @@ export default function VitalDashboard() {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [overviewVisible, setOverviewVisible] = useState({ sys: true, dia: true, hr: true, weight: true, mood: true });
   const [overviewHover, setOverviewHover] = useState<{ xPos: number; yPos: number; data: Record<string, any> } | null>(null);
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [crossHairDate, setCrossHairDate] = useState<Date | null>(null);
 
   /* ── Threshold settings state ── */
   const [templates, setTemplates] = useState<ThresholdTemplate[]>(() => [createDefaultTemplate()]);
@@ -1167,7 +1169,7 @@ export default function VitalDashboard() {
   }, []);
   const chartW = chartContainerW;
   const chartH = (type: string) => expanded === type ? 300 : range <= 14 ? 200 : range <= 30 ? 180 : 160;
-  const margin = { top: 28, right: 48, bottom: 28, left: 64 };
+  const margin = { top: 28, right: 48, bottom: 8, left: 64 };
   const innerW = chartW - margin.left - margin.right;
   const innerH = (type: string) => chartH(type) - margin.top - margin.bottom;
 
@@ -1222,17 +1224,14 @@ export default function VitalDashboard() {
             <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>{label}</span>
             {stats ? (
               <div className="flex items-center gap-0" style={{ color: P.textMuted }}>
-                <span className="text-sm font-normal tabular-nums" style={{ color: P.textSecondary }}>{stats.p10}</span>
-                <svg width={80} height={22} viewBox="0 0 80 22" style={{ margin: "0 4px" }}>
-                  {/* Range bar P10–P90 */}
-                  <line x1={0} y1={13} x2={80} y2={13} stroke={P.gridLabel} strokeWidth={3} strokeLinecap="round" />
-                  {/* Median dot */}
-                  <circle cx={stats.median <= stats.p10 ? 4 : stats.median >= stats.p90 ? 76 : 4 + ((stats.median - stats.p10) / (stats.p90 - stats.p10)) * 72} cy={13} r={4} fill={P.text} />
-                  {/* Tilde above median */}
-                  <text x={stats.median <= stats.p10 ? 4 : stats.median >= stats.p90 ? 76 : 4 + ((stats.median - stats.p10) / (stats.p90 - stats.p10)) * 72} y={6} textAnchor="middle" fill={P.text} fontSize={11} fontFamily="IBM Plex Sans" fontWeight={600}>~{stats.median}</text>
+                <span className="text-[11px] font-normal tabular-nums" style={{ color: P.textDim }}>{stats.p10}</span>
+                <svg width={80} height={26} viewBox="0 0 80 26" style={{ margin: "0 3px" }}>
+                  <line x1={0} y1={18} x2={80} y2={18} stroke={P.gridLabel} strokeWidth={3} strokeLinecap="round" />
+                  <circle cx={stats.p90 === stats.p10 ? 40 : 4 + ((stats.median - stats.p10) / (stats.p90 - stats.p10)) * 72} cy={18} r={3.5} fill={P.text} />
+                  <text x={stats.p90 === stats.p10 ? 40 : 4 + ((stats.median - stats.p10) / (stats.p90 - stats.p10)) * 72} y={10} textAnchor="middle" fill={P.text} fontSize={10} fontFamily="IBM Plex Sans" fontWeight={600}>~{stats.median}</text>
                 </svg>
-                <span className="text-sm font-normal tabular-nums" style={{ color: P.textSecondary }}>{stats.p90}</span>
-                <span className="text-sm font-normal ml-1.5" style={{ color: P.textMuted }}>{unit}</span>
+                <span className="text-[11px] font-normal tabular-nums" style={{ color: P.textDim }}>{stats.p90}</span>
+                <span className="text-[11px] font-normal ml-1" style={{ color: P.textDim }}>{unit}</span>
               </div>
             ) : (
               <span className="text-sm font-normal" style={{ color: P.textMuted }}>{yDomain[0]}–{yDomain[1]} {unit}</span>
@@ -1255,14 +1254,8 @@ export default function VitalDashboard() {
               {ticks.map(t => (
                 <g key={t}>
                   <line x1={0} x2={innerW} y1={yS(t)} y2={yS(t)} stroke={P.grid} strokeWidth={1} />
-                  <text x={-10} y={yS(t)} dy="0.35em" textAnchor="end" fill={P.gridLabel} fontSize={13} fontFamily="IBM Plex Sans">{t}</text>
+                  {type !== "mood" && <text x={-10} y={yS(t)} dy="0.35em" textAnchor="end" fill={P.gridLabel} fontSize={13} fontFamily="IBM Plex Sans">{t}</text>}
                 </g>
-              ))}
-              {/* X ticks */}
-              {xScale.ticks(detail.xTickCount).map(t => (
-                <text key={t.getTime()} x={xScale(t)} y={iH + 20} textAnchor="middle" fill={P.gridLabel} fontSize={range <= 14 ? 11 : 12} fontFamily="IBM Plex Sans">
-                  {detail.xTickFormat(t)}
-                </text>
               ))}
               {/* Thresholds — clickable to go to settings */}
               {vis.thresholds && thresholds?.upper && yDomain[1] >= thresholds.upper && (
@@ -1288,6 +1281,30 @@ export default function VitalDashboard() {
               <g clipPath={`url(#${clipId})`}>
                 {renderContent(xScale, yS, iH)}
               </g>
+              {/* Cross-graph hover area */}
+              <rect x={0} y={0} width={innerW} height={iH} fill="transparent"
+                onMouseMove={(e) => {
+                  const svg = e.currentTarget.closest('svg');
+                  if (!svg) return;
+                  const rect = svg.getBoundingClientRect();
+                  const svgX = (e.clientX - rect.left) * (chartW / rect.width) - margin.left;
+                  const date = xScale.invert(svgX);
+                  setCrossHairDate(date);
+                }}
+                onMouseLeave={() => setCrossHairDate(null)}
+              />
+              {crossHairDate && (() => {
+                const cx = xScale(crossHairDate);
+                if (cx < 0 || cx > innerW) return null;
+                return (
+                  <g>
+                    <line x1={cx} y1={0} x2={cx} y2={iH} stroke={P.textMuted} strokeWidth={1} strokeDasharray="3,3" opacity={0.6} />
+                    <text x={cx} y={iH + 4} textAnchor="middle" fill={P.text} fontSize={11} fontFamily="IBM Plex Sans" fontWeight={500}>
+                      {d3.timeFormat("%d.%m.%Y")(crossHairDate)}
+                    </text>
+                  </g>
+                );
+              })()}
             </g>
           </svg>
         </div>
@@ -1558,6 +1575,18 @@ export default function VitalDashboard() {
   const moodChart = renderChart("mood", tr.mood, <Smile size={18} color={P.mood} />, P.mood,
     (xS, yS, iH) => (
       <g>
+        {/* Emoji y-axis labels */}
+        {[1, 2, 3, 4, 5].map(v => {
+          const MoodIcon = moodFaces[v] || MoodFace3;
+          return (
+            <foreignObject key={`yemoji-${v}`} x={-52} y={yS(v) - 8} width={20} height={20}>
+              <div style={{ width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <MoodIcon size={16} color={moodColor(v)} />
+              </div>
+            </foreignObject>
+          );
+        })}
+        {/* Gray measurement dots */}
         {chartData.mood.map((p, i) => {
           const x = xS(new Date(p.date));
           const y = yS(p.value);
@@ -1568,18 +1597,10 @@ export default function VitalDashboard() {
               onMouseLeave={handleDataLeave}
               onClick={() => setSidePanel({ type: "mood", date: p.date, data: p })}
               className="cursor-pointer">
-              <circle cx={x} cy={y} r={12} fill="transparent" />
-              <foreignObject x={x - 8} y={y - 8} width={16} height={16}>
-                <div style={{ width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {(() => {
-                    const mv = Math.round(p.value);
-                    const MoodIcon = moodFaces[mv] || MoodFace3;
-                    return <MoodIcon size={16} color={moodColor(mv)} />;
-                  })()}
-                </div>
-              </foreignObject>
+              <circle cx={x} cy={y} r={detail.hitRadius} fill="transparent" />
+              <circle cx={x} cy={y} r={detail.dotRadius} fill={P.detailLine} />
               {detail.showValues && (
-                <text x={x} y={y - 12 - 4} fontSize={9} fill={moodColor(Math.round(p.value))} fontFamily="IBM Plex Sans" textAnchor="middle">
+                <text x={x} y={y - detail.dotRadius - 4} fontSize={9} fill={P.detailLine} fontFamily="IBM Plex Sans" textAnchor="middle">
                   {(moodLabels[lang] || moodLabels.de)[Math.round(p.value)]}
                 </text>
               )}
@@ -1719,28 +1740,6 @@ export default function VitalDashboard() {
           <div className="flex items-center gap-3">
             <Activity size={18} color={P.text} />
             <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>{tr.overview}</span>
-            <div className="flex items-center gap-4 ml-4 text-xs" style={{ color: P.textMuted }}>
-              <button onClick={() => setOverviewVisible(v => ({ ...v, sys: !v.sys }))} className="flex items-center gap-1.5 px-2 py-1 rounded transition-opacity hover:opacity-70" style={{ opacity: overviewVisible.sys ? 1 : 0.4 }}>
-                <svg width="10" height="10" viewBox="0 0 10 10"><polygon points="5,0 0,8 10,8" fill={P.bpSystolic} /></svg>
-                {tr.sys}
-              </button>
-              <button onClick={() => setOverviewVisible(v => ({ ...v, dia: !v.dia }))} className="flex items-center gap-1.5 px-2 py-1 rounded transition-opacity hover:opacity-70" style={{ opacity: overviewVisible.dia ? 1 : 0.4 }}>
-                <svg width="10" height="10" viewBox="0 0 10 10"><polygon points="5,10 0,2 10,2" fill={P.bpDiastolic} /></svg>
-                {tr.dia}
-              </button>
-              <button onClick={() => setOverviewVisible(v => ({ ...v, hr: !v.hr }))} className="flex items-center gap-1.5 px-2 py-1 rounded transition-opacity hover:opacity-70" style={{ opacity: overviewVisible.hr ? 1 : 0.4 }}>
-                <svg width="10" height="10" viewBox="0 0 10 10"><polygon points="5,0 10,5 5,10 0,5" fill={P.heartRate} /></svg>
-                {tr.hr}
-              </button>
-              <button onClick={() => setOverviewVisible(v => ({ ...v, weight: !v.weight }))} className="flex items-center gap-1.5 px-2 py-1 rounded transition-opacity hover:opacity-70" style={{ opacity: overviewVisible.weight ? 1 : 0.4 }}>
-                <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill={P.weight} /></svg>
-                {tr.weight}
-              </button>
-              <button onClick={() => setOverviewVisible(v => ({ ...v, mood: !v.mood }))} className="flex items-center gap-1.5 px-2 py-1 rounded transition-opacity hover:opacity-70" style={{ opacity: overviewVisible.mood ? 1 : 0.4 }}>
-                <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill={P.mood} /></svg>
-                {tr.mood}
-              </button>
-            </div>
           </div>
           <button onClick={() => setExpanded(expanded === "overview" ? null : "overview")} className="p-1.5 rounded-lg transition-colors" style={{ color: P.textMuted }}>
             {expanded === "overview" ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
@@ -1770,12 +1769,6 @@ export default function VitalDashboard() {
                   <text key={`right-${t}`} x={innerW + 10} y={yScaleRight(t)} dy="0.35em" textAnchor="start" fill={P.gridLabel} fontSize={11} fontFamily="IBM Plex Sans">{t.toFixed(1)}</text>
                 ))
               }
-              {/* X ticks */}
-              {xScale.ticks(detail.xTickCount).map(t => (
-                <text key={t.getTime()} x={xScale(t)} y={iH + 15} textAnchor="middle" fill={P.gridLabel} fontSize={11} fontFamily="IBM Plex Sans">
-                  {detail.xTickFormat(t)}
-                </text>
-              ))}
               {/* Clipped content */}
               <g clipPath="url(#clip-overview)">
                 {overviewVisible.sys && <>
@@ -3912,9 +3905,19 @@ export default function VitalDashboard() {
               {tr.monitoring}
             </span>
           </div>
-          <h1 className="text-2xl font-bold" style={{ color: P.text }}>
-            {patient.name}
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold" style={{ color: P.text }}>
+              {patient.name}
+            </h1>
+            <button
+              onClick={() => setNotesOpen(!notesOpen)}
+              className="px-2 py-1 rounded text-xs font-semibold"
+              style={{ backgroundColor: "#fef9c3", color: "#713f12", border: "1px solid #fde68a" }}
+              title="Notizen zum Patienten"
+            >
+              📝
+            </button>
+          </div>
           {/* Compact patient chips + ICD-10 */}
           <div className="flex flex-wrap items-center gap-1.5 mt-2">
             <span className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: P.bgInput, color: P.text }}>{patient.age} {tr.years}</span>
@@ -3945,6 +3948,7 @@ export default function VitalDashboard() {
               { key: "documents", label: tr.documents },
               { key: "app", label: tr.app },
               { key: "contact-persons", label: tr.contactPersons },
+              { key: "settings", label: "Einstellungen" },
             ].map((tab) => (
               <button
                 key={tab.key}
@@ -3975,42 +3979,20 @@ export default function VitalDashboard() {
 
           {patientTab === "dashboard" && (
             <div className="space-y-5">
-              {/* Settings button row - only on dashboard */}
-              {page === "dashboard" && (
-                <div className="flex items-center gap-2 justify-end">
-                  <button
-                    onClick={() => setPage("thresholds")}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors"
-                    style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
-                    title={tr.thresholds + " & Alarme"}
-                  >
-                    <Settings size={14} />
-                    {tr.thresholds}
-                  </button>
-                </div>
+              {notesOpen && (
+                <textarea
+                  className="w-full rounded-lg p-3 text-sm resize-none mt-2"
+                  style={{
+                    backgroundColor: "#fef9c3",
+                    color: "#713f12",
+                    border: "1px solid #fde68a",
+                    minHeight: 60,
+                    fontFamily: "'IBM Plex Sans', sans-serif",
+                  }}
+                  placeholder="Notizen zum Patienten..."
+                  defaultValue="Telefonat am 04.03. — Patient berichtet über Schwindel bei Lagewechsel. Medikation prüfen."
+                />
               )}
-
-
-              {/* Page content */}
-              {page === "thresholds" && thresholdSettingsPage}
-
-              {page === "dashboard" && (
-                <>
-                  {/* Comments */}
-                  <div className="mb-4">
-                      <textarea
-                        className="w-full rounded-lg p-3 text-sm resize-none"
-                        style={{
-                          backgroundColor: "#fef9c3",
-                          color: "#713f12",
-                          border: "1px solid #fde68a",
-                          minHeight: 80,
-                          fontFamily: "'IBM Plex Sans', sans-serif",
-                        }}
-                        placeholder="Notizen zum Patienten..."
-                        defaultValue="Telefonat am 04.03. — Patient berichtet über Schwindel bei Lagewechsel. Medikation prüfen."
-                      />
-                  </div>
 
                   {/* Devices — collapsible */}
                   <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
@@ -4282,31 +4264,8 @@ export default function VitalDashboard() {
                   </div>
                 </div>
 
-                {/* ── Calendar View (Events + ECG) ── */}
-                {/* Calendar/Timeline toggle */}
-                <div className="flex items-center gap-2 mb-3">
-                  <button
-                    onClick={() => setCalendarViewMode("calendar")}
-                    className="px-3 py-1.5 rounded text-sm font-medium transition-all"
-                    style={{
-                      backgroundColor: calendarViewMode === "calendar" ? P.text : P.bgInput,
-                      color: calendarViewMode === "calendar" ? P.bg : P.textMuted,
-                    }}
-                  >
-                    <Calendar size={14} className="inline mr-1.5" style={{ verticalAlign: "-2px" }} /> Kalender
-                  </button>
-                  <button
-                    onClick={() => setCalendarViewMode("timeline")}
-                    className="px-3 py-1.5 rounded text-sm font-medium transition-all"
-                    style={{
-                      backgroundColor: calendarViewMode === "timeline" ? P.text : P.bgInput,
-                      color: calendarViewMode === "timeline" ? P.bg : P.textMuted,
-                    }}
-                  >
-                    <BarChart3 size={14} className="inline mr-1.5" style={{ verticalAlign: "-2px" }} /> Episoden-Zeitleiste
-                  </button>
-                </div>
-                {calendarViewMode === "calendar" ? calendarView : episodeTimelineChart}
+                {/* ── Episoden-Zeitleiste (always shown) ── */}
+                {episodeTimelineChart}
 
                   {/* ── Toggles + View mode ── */}
                   <div className="flex items-center gap-2 flex-wrap">
@@ -4321,12 +4280,6 @@ export default function VitalDashboard() {
                       active={vis.thresholds}
                       onToggle={() => setVis(v => ({ ...v, thresholds: !v.thresholds }))}
                       shortcut="G"
-                    />
-                    <ToggleBtn
-                      label="Werte"
-                      active={vis.values}
-                      onToggle={() => setVis(v => ({ ...v, values: !v.values }))}
-                      shortcut="W"
                     />
                     <div className="w-px h-6 mx-1" style={{ backgroundColor: P.borderStrong }} />
                     <button
@@ -4398,12 +4351,12 @@ export default function VitalDashboard() {
                   ) : (
                     tableView
                   )}
-                </>
-              )}
             </div>
           )}
 
-          {patientTab !== "dashboard" && (
+          {patientTab === "settings" && thresholdSettingsPage}
+
+          {patientTab !== "dashboard" && patientTab !== "settings" && (
             <div className="text-center py-12" style={{ color: P.textMuted }}>
               <span className="capitalize">{patientTab.replace("-", " ")} — Inhalt folgt</span>
             </div>
