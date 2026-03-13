@@ -4238,7 +4238,6 @@ export default function VitalDashboard() {
                 </div>
               </div>
             </div>
-          </div>
 
           {patientTab === "dashboard" && (
             <div className="space-y-5 pt-4">
@@ -4364,6 +4363,7 @@ export default function VitalDashboard() {
               <span className="capitalize">{patientTab.replace("-", " ")} — Inhalt folgt</span>
             </div>
           )}
+        </div>
 
         {/* Shortcut Bar - always visible */}
         {shortcutBar}
