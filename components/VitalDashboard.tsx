@@ -154,8 +154,8 @@ const darkPalette = {
 };
 
 const lightPalette: typeof darkPalette = {
-  bg: "#ffffff", bgCard: "#ffffff", bgCardHover: "rgba(244,244,245,0.8)",
-  bgPanel: "#fafafa", bgInput: "#f5f5f5",
+  bg: "#f8f8f8", bgCard: "#ffffff", bgCardHover: "rgba(244,244,245,0.8)",
+  bgPanel: "#fafafa", bgInput: "#f4f4f5",
   border: "#e5e5e5", borderStrong: "#d4d4d4",
   text: "#0a0a0a", textSecondary: "#171717", textMuted: "#737373", textDim: "#a3a3a3",
   grid: "#e5e5e5", gridLabel: "#a3a3a3",
@@ -2406,7 +2406,7 @@ export default function VitalDashboard() {
 
   /* ─── Side Panel ─── */
   const sidePanelEl = (
-    <div className={`fixed right-0 top-0 h-full w-full sm:w-[440px] z-50 overflow-y-auto transition-transform duration-300 ${sidePanel ? "translate-x-0" : "translate-x-full"}`}
+    <div className={`fixed right-0 top-0 h-full w-full sm:w-[440px] z-50 overflow-y-auto transition-transform duration-300 ${sidePanel ? "translate-x-0 pointer-events-auto" : "translate-x-full pointer-events-none"}`}
       style={{ backgroundColor: P.bgPanel, borderLeft: `1px solid ${P.border}`, backdropFilter: "blur(12px)" }}>
       {sidePanel && (
         <>
@@ -2619,6 +2619,7 @@ export default function VitalDashboard() {
         borderTop: `1px solid ${P.borderStrong}`,
         backdropFilter: "blur(12px)",
         transform: ecgDrawerVisible && ecgDrawer && ecgDrawer.waveform ? "translateY(0)" : "translateY(100%)",
+        pointerEvents: ecgDrawerVisible && ecgDrawer && ecgDrawer.waveform ? "auto" : "none",
       }}>
       {ecgDrawer && ecgDrawer.waveform && (
         <>
@@ -3635,7 +3636,7 @@ export default function VitalDashboard() {
   }));
 
   const episodeSidebarEl = (
-    <div className={`fixed top-0 right-0 bottom-10 w-96 z-[60] overflow-y-auto transition-transform duration-300 ${episodeSidebar ? "translate-x-0" : "translate-x-full"}`}
+    <div className={`fixed top-0 right-0 bottom-10 w-96 z-[60] overflow-y-auto transition-transform duration-300 ${episodeSidebar ? "translate-x-0 pointer-events-auto" : "translate-x-full pointer-events-none"}`}
       style={{ backgroundColor: P.bgPanel, borderLeft: `1px solid ${P.borderStrong}` }}>
       {episodeSidebar && (
         <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${P.border}` }}>
@@ -4052,7 +4053,7 @@ export default function VitalDashboard() {
           {ecgDrawerEl}
           {episodeSidebarEl}
 
-          {/* Device Sidebar */}
+          {/* Device Sidebar - fixed overlay */}
           <div className={`fixed inset-0 z-50 flex justify-end transition-all duration-300 ${devicesOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`} onClick={() => setDevicesOpen(false)}>
             <div className={`absolute inset-0 bg-black/20 transition-opacity duration-300 ${devicesOpen ? "opacity-100" : "opacity-0"}`} />
             <div className={`relative w-[420px] h-full overflow-y-auto transition-transform duration-300 ${devicesOpen ? "translate-x-0" : "translate-x-full"}`} style={{ backgroundColor: P.bgPanel }} onClick={e => e.stopPropagation()}>
@@ -4243,7 +4244,7 @@ export default function VitalDashboard() {
             <div className="space-y-5 pt-4">
 
                 {/* ── Time range selector (segmented control) ── */}
-                <div className="sticky top-0 z-20 flex items-center gap-3 py-2 -mx-6 px-6" style={{ backgroundColor: theme === "dark" ? "rgba(24,24,27,0.75)" : "rgba(255,255,255,0.75)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+                <div className="sticky top-0 z-20 flex items-center gap-3 py-2 -mx-6 px-6" style={{ backgroundColor: theme === "dark" ? "rgba(9,9,11,0.85)" : "rgba(248,248,248,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                   <div className="inline-flex items-center rounded-lg p-1" style={{ backgroundColor: theme === "dark" ? "rgba(39,39,42,0.6)" : "rgba(244,244,245,0.8)" }}>
                     {RANGES.map((r) => {
                       const isActive = range === r && !customDateRange;
