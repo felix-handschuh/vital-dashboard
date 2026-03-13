@@ -537,6 +537,68 @@ const ALARM_LABELS: Record<string, string> = {
 };
 
 /* ═══════════════════════════════════════════════════════════════════════════════
+   PATIENTS DATA
+   ═══════════════════════════════════════════════════════════════════════════════ */
+const PATIENTS_DATA = [
+  {
+    name: "Max Mustermann", dob: "12.05.1967", age: 58, gender: "Männlich", nyha: "II", lvef: 35, anticoag: true,
+    icd10: [{ code: "I50.0", text: "Herzinsuffizienz, kongestiv" }, { code: "I48.0", text: "Vorhofflimmern, paroxysmal" }, { code: "I25.1", text: "Atherosklerotische Herzkrankheit" }, { code: "E11.9", text: "Diabetes mellitus, Typ 2" }],
+    implant: { type: "Boston Scientific RESONATE X4 CRT-D", serial: "BEZ 437892", implantDate: "15.03.2023", lastCheck: "04.03.2026", battery: { voltage: 3.15, impedance: 450, status: "BOL", estimatedEol: "2034" }, leads: [{ position: "RA", impedance: 520, threshold: 0.75, sensing: 3.2 }, { position: "RV", impedance: 480, threshold: 0.5, sensing: 11.5 }, { position: "LV", impedance: 620, threshold: 1.0, sensing: null }] },
+    connectedDevices: [{ type: "ICD (Implantierbarer Kardioverter-Defibrillator)", manufacturer: "Boston Scientific", model: "RESONATE X4 CRT-D", serial: "BEZ 437892", implantDate: "15.03.2023", lastTransmission: "04.03.2026", nextScheduled: "11.03.2026", transmissionListLink: "#" }, { type: "Waage", manufacturer: "Withings", model: "Body+", serial: "WS-304827", lastTransmission: "05.03.2026", paired: "12.04.2023", transmissionListLink: "#" }, { type: "Blutdruckmanschette", manufacturer: "Withings", model: "BPM Connect", serial: "BP-118493", lastTransmission: "05.03.2026", paired: "12.04.2023", transmissionListLink: "#" }],
+    notes: "Telefonat am 04.03. — Patient berichtet über Schwindel bei Lagewechsel. Medikation prüfen.",
+  },
+  {
+    name: "Müller, Anna", dob: "15.04.1992", age: 33, gender: "Weiblich", nyha: "I", lvef: 55, anticoag: false,
+    icd10: [{ code: "I47.1", text: "Supraventrikuläre Tachykardie" }, { code: "R00.0", text: "Tachykardie" }],
+    implant: { type: "Medtronic Azure XT DR", serial: "MDT 229847", implantDate: "08.11.2024", lastCheck: "28.02.2026", battery: { voltage: 2.85, impedance: 380, status: "BOL", estimatedEol: "2036" }, leads: [{ position: "RA", impedance: 490, threshold: 0.5, sensing: 2.8 }, { position: "RV", impedance: 510, threshold: 0.75, sensing: 10.2 }] },
+    connectedDevices: [{ type: "ICD (Herzschrittmacher)", manufacturer: "Medtronic", model: "Azure XT DR", serial: "MDT 229847", implantDate: "08.11.2024", lastTransmission: "01.03.2026", nextScheduled: "08.03.2026", transmissionListLink: "#" }, { type: "Blutdruckmanschette", manufacturer: "Omron", model: "Evolv", serial: "OM-993827", lastTransmission: "02.03.2026", paired: "15.11.2024", transmissionListLink: "#" }],
+    notes: "Stabile Patientin, SVT-Episoden rückläufig seit Betablocker-Erhöhung.",
+  },
+  {
+    name: "Meier, Laura", dob: "30.08.1978", age: 47, gender: "Weiblich", nyha: "III", lvef: 28, anticoag: true,
+    icd10: [{ code: "I42.0", text: "Dilatative Kardiomyopathie" }, { code: "I50.1", text: "Linksherzinsuffizienz" }, { code: "I48.1", text: "Vorhofflimmern, persistierend" }],
+    implant: { type: "Abbott Gallant CRT-D", serial: "ABT 881234", implantDate: "22.06.2022", lastCheck: "15.02.2026", battery: { voltage: 2.95, impedance: 520, status: "MOL", estimatedEol: "2030" }, leads: [{ position: "RA", impedance: 550, threshold: 1.0, sensing: 2.5 }, { position: "RV", impedance: 460, threshold: 0.75, sensing: 9.8 }, { position: "LV", impedance: 680, threshold: 1.5, sensing: null }] },
+    connectedDevices: [{ type: "ICD (CRT-Defibrillator)", manufacturer: "Abbott", model: "Gallant CRT-D", serial: "ABT 881234", implantDate: "22.06.2022", lastTransmission: "28.02.2026", nextScheduled: "07.03.2026", transmissionListLink: "#" }, { type: "Waage", manufacturer: "Withings", model: "Body Cardio", serial: "WS-772341", lastTransmission: "04.03.2026", paired: "01.07.2022", transmissionListLink: "#" }, { type: "Blutdruckmanschette", manufacturer: "Withings", model: "BPM Connect", serial: "BP-339821", lastTransmission: "04.03.2026", paired: "01.07.2022", transmissionListLink: "#" }],
+    notes: "Gewichtszunahme +2.1kg in 3 Tagen. Diuretika-Anpassung am 03.03. — Kontrolle in 1 Woche.",
+  },
+  {
+    name: "Schneider, Jonas", dob: "01.11.1990", age: 35, gender: "Männlich", nyha: "I", lvef: 60, anticoag: false,
+    icd10: [{ code: "I49.0", text: "Kammerflimmern" }, { code: "I46.0", text: "Herzstillstand mit Reanimation" }],
+    implant: { type: "Boston Scientific EMBLEM S-ICD", serial: "BSC 556712", implantDate: "03.09.2025", lastCheck: "10.03.2026", battery: { voltage: 3.20, impedance: 42, status: "BOL", estimatedEol: "2037" }, leads: [{ position: "Subcutaneous", impedance: 70, threshold: null, sensing: 0.8 }] },
+    connectedDevices: [{ type: "S-ICD (Subkutaner Defibrillator)", manufacturer: "Boston Scientific", model: "EMBLEM S-ICD", serial: "BSC 556712", implantDate: "03.09.2025", lastTransmission: "10.03.2026", nextScheduled: "17.03.2026", transmissionListLink: "#" }],
+    notes: "Junger Patient nach überlebtem Kammerflimmern. Sportfreigabe erteilt für moderate Belastung.",
+  },
+  {
+    name: "Fischer, Sophie", dob: "05.02.1989", age: 37, gender: "Weiblich", nyha: "II", lvef: 42, anticoag: true,
+    icd10: [{ code: "I42.1", text: "Hypertrophische obstruktive Kardiomyopathie" }, { code: "I48.0", text: "Vorhofflimmern, paroxysmal" }, { code: "I34.1", text: "Mitralklappenprolaps" }],
+    implant: { type: "Medtronic Cobalt XT CRT-D", serial: "MDT 773291", implantDate: "14.01.2024", lastCheck: "05.03.2026", battery: { voltage: 3.10, impedance: 430, status: "BOL", estimatedEol: "2035" }, leads: [{ position: "RA", impedance: 500, threshold: 0.5, sensing: 3.0 }, { position: "RV", impedance: 470, threshold: 0.75, sensing: 12.1 }, { position: "LV", impedance: 590, threshold: 1.25, sensing: null }] },
+    connectedDevices: [{ type: "ICD (CRT-Defibrillator)", manufacturer: "Medtronic", model: "Cobalt XT CRT-D", serial: "MDT 773291", implantDate: "14.01.2024", lastTransmission: "05.03.2026", nextScheduled: "12.03.2026", transmissionListLink: "#" }, { type: "Waage", manufacturer: "Beurer", model: "BF 720", serial: "BF-443218", lastTransmission: "03.03.2026", paired: "20.01.2024", transmissionListLink: "#" }, { type: "Blutdruckmanschette", manufacturer: "Beurer", model: "BM 57", serial: "BM-128734", lastTransmission: "03.03.2026", paired: "20.01.2024", transmissionListLink: "#" }],
+    notes: "HOCM unter Beobachtung. Gradient aktuell 45mmHg. Myektomie-Evaluation geplant.",
+  },
+  {
+    name: "Weber, Noah", dob: "12.03.1984", age: 41, gender: "Männlich", nyha: "II", lvef: 38, anticoag: true,
+    icd10: [{ code: "I25.2", text: "Alter Myokardinfarkt" }, { code: "I50.0", text: "Herzinsuffizienz, kongestiv" }, { code: "E78.0", text: "Hypercholesterinämie" }],
+    implant: { type: "Abbott Assura ICD DR", serial: "ABT 662918", implantDate: "20.08.2023", lastCheck: "01.03.2026", battery: { voltage: 3.05, impedance: 470, status: "BOL", estimatedEol: "2033" }, leads: [{ position: "RA", impedance: 540, threshold: 0.5, sensing: 2.6 }, { position: "RV", impedance: 490, threshold: 0.75, sensing: 10.8 }] },
+    connectedDevices: [{ type: "ICD (Defibrillator)", manufacturer: "Abbott", model: "Assura ICD DR", serial: "ABT 662918", implantDate: "20.08.2023", lastTransmission: "01.03.2026", nextScheduled: "08.03.2026", transmissionListLink: "#" }, { type: "Waage", manufacturer: "Withings", model: "Body+", serial: "WS-881234", lastTransmission: "05.03.2026", paired: "01.09.2023", transmissionListLink: "#" }],
+    notes: "Post-MI Patient. Stabile Medikation. VT-Zone seit 6 Monaten ohne Episoden.",
+  },
+  {
+    name: "Hoffmann, Lena", dob: "18.07.1991", age: 34, gender: "Weiblich", nyha: "I", lvef: 58, anticoag: false,
+    icd10: [{ code: "I44.1", text: "AV-Block II. Grades" }, { code: "R55", text: "Synkope" }],
+    implant: { type: "Biotronik Edora 8 DR-T", serial: "BTK 445591", implantDate: "11.05.2025", lastCheck: "08.03.2026", battery: { voltage: 2.80, impedance: 400, status: "BOL", estimatedEol: "2038" }, leads: [{ position: "RA", impedance: 480, threshold: 0.5, sensing: 3.1 }, { position: "RV", impedance: 500, threshold: 0.5, sensing: 11.0 }] },
+    connectedDevices: [{ type: "Herzschrittmacher", manufacturer: "Biotronik", model: "Edora 8 DR-T", serial: "BTK 445591", implantDate: "11.05.2025", lastTransmission: "08.03.2026", nextScheduled: "15.03.2026", transmissionListLink: "#" }],
+    notes: "Schrittmacher wegen symptomatischem AV-Block. VP-Anteil 42%. Asymptomatisch seit Implantation.",
+  },
+  {
+    name: "Klein, Finn", dob: "25.09.1983", age: 42, gender: "Männlich", nyha: "III", lvef: 25, anticoag: true,
+    icd10: [{ code: "I42.0", text: "Dilatative Kardiomyopathie" }, { code: "I50.1", text: "Linksherzinsuffizienz" }, { code: "I48.1", text: "Vorhofflimmern, persistierend" }, { code: "N18.3", text: "Chronische Nierenkrankheit, Stadium 3" }],
+    implant: { type: "Medtronic Cobalt CRT-D", serial: "MDT 998721", implantDate: "05.12.2021", lastCheck: "25.02.2026", battery: { voltage: 2.70, impedance: 560, status: "ERI", estimatedEol: "2027" }, leads: [{ position: "RA", impedance: 580, threshold: 1.25, sensing: 2.0 }, { position: "RV", impedance: 510, threshold: 1.0, sensing: 8.5 }, { position: "LV", impedance: 720, threshold: 2.0, sensing: null }] },
+    connectedDevices: [{ type: "ICD (CRT-Defibrillator)", manufacturer: "Medtronic", model: "Cobalt CRT-D", serial: "MDT 998721", implantDate: "05.12.2021", lastTransmission: "25.02.2026", nextScheduled: "04.03.2026", transmissionListLink: "#" }, { type: "Waage", manufacturer: "Withings", model: "Body Cardio", serial: "WS-229384", lastTransmission: "01.03.2026", paired: "15.12.2021", transmissionListLink: "#" }, { type: "Blutdruckmanschette", manufacturer: "Withings", model: "BPM Core", serial: "BP-772918", lastTransmission: "01.03.2026", paired: "15.12.2021", transmissionListLink: "#" }],
+    notes: "ACHTUNG: ERI erreicht! Aggregatwechsel dringend planen. GFR 38 — Nephrologisches Konsil angefordert.",
+  },
+];
+
+/* ═══════════════════════════════════════════════════════════════════════════════
    THRESHOLD / ALARM CONFIGURATION TYPES
    ═══════════════════════════════════════════════════════════════════════════════ */
 interface AlarmLevel {
@@ -978,6 +1040,7 @@ const SvgExamIcon = ({ x, y, color, size = 1 }: { x: number; y: number; color: s
 export default function VitalDashboard() {
   const [allData, setAllData] = useState<AllData>(() => detectOutliers(generateData()));
   const [range, setRange] = useState<Range>(30);
+  const [selectedPatientIdx, setSelectedPatientIdx] = useState(-1);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [hoverInfo, setHoverInfo] = useState<any>(null);
   const mousePosRef = useRef<{ cx: number; cy: number } | null>(null);
@@ -1006,7 +1069,7 @@ export default function VitalDashboard() {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [overviewVisible, setOverviewVisible] = useState({ sys: true, dia: true, hr: true, weight: true, mood: true });
   const [overviewHover, setOverviewHover] = useState<{ xPos: number; yPos: number; data: Record<string, any> } | null>(null);
-  const [notesText, setNotesText] = useState("Telefonat am 04.03. — Patient berichtet über Schwindel bei Lagewechsel. Medikation prüfen.");
+  const [notesText, setNotesText] = useState(PATIENTS_DATA[0].notes);
   const [notesOpen, setNotesOpen] = useState(false);
   const notesRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -1132,10 +1195,11 @@ export default function VitalDashboard() {
       if (e.key === "Escape") { setSidePanel(null); setEcgDrawer(null); }
       if (e.key === "t" && !e.ctrlKey && !e.metaKey) setViewMode(v => v === "chart" ? "table" : "chart");
       if (e.key === "d" && !e.ctrlKey && !e.metaKey) setTheme(t => t === "dark" ? "light" : "dark");
-      if (e.key === "1" && !e.ctrlKey && !e.metaKey) { setRange(14); setChartOffset(0); }
-      if (e.key === "2" && !e.ctrlKey && !e.metaKey) { setRange(30); setChartOffset(0); }
-      if (e.key === "3" && !e.ctrlKey && !e.metaKey) { setRange(60); setChartOffset(0); }
-      if (e.key === "4" && !e.ctrlKey && !e.metaKey) { setRange(90); setChartOffset(0); }
+      if (e.key === "1" && !e.ctrlKey && !e.metaKey) { setRange(7); setChartOffset(0); }
+      if (e.key === "2" && !e.ctrlKey && !e.metaKey) { setRange(14); setChartOffset(0); }
+      if (e.key === "3" && !e.ctrlKey && !e.metaKey) { setRange(30); setChartOffset(0); }
+      if (e.key === "4" && !e.ctrlKey && !e.metaKey) { setRange(60); setChartOffset(0); }
+      if (e.key === "5" && !e.ctrlKey && !e.metaKey) { setRange(90); setChartOffset(0); }
       if (e.key === "g" && !e.ctrlKey && !e.metaKey) setVis(v => ({ ...v, thresholds: !v.thresholds }));
       if (e.key === "m" && !e.ctrlKey && !e.metaKey) setVis(v => ({ ...v, missed: !v.missed }));
       if (e.key === "w" && !e.ctrlKey && !e.metaKey) setVis(v => ({ ...v, values: !v.values }));
@@ -1227,7 +1291,7 @@ export default function VitalDashboard() {
     const clipId = `clip-${type}`;
 
     return (
-      <div key={type} className="rounded-md overflow-hidden shadow-sm transition-all" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
+      <div key={type} className="rounded-xl overflow-hidden transition-all" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
         <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: `1px solid ${P.border}` }}>
           <div className="flex items-center gap-3">
             {icon}
@@ -1747,7 +1811,7 @@ export default function VitalDashboard() {
     };
 
     return (
-      <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
+      <div className="rounded-xl overflow-hidden" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
         <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: `1px solid ${P.border}` }}>
           <div className="flex items-center gap-3">
             <Activity size={18} color={P.text} />
@@ -1953,7 +2017,7 @@ export default function VitalDashboard() {
 
   const EPISODE_COLORS: Record<string, string> = {
     "VT1": "#ef4444", "VT2": "#dc2626", "VF": "#991b1b",
-    "ATR": "#f59e0b", "AT/AF": "#f97316", "NST": "#60a5fa", "Periodic IEGM": "#a1a1aa",
+    "ATR": "#f59e0b", "AT/AF": "#f97316", "NST": "#60a5fa", "Periodic IEGM": "#818cf8",
   };
 
   const episodeTimelineChart = (() => {
@@ -1976,7 +2040,7 @@ export default function VitalDashboard() {
     if (maxCount > 50) yTicks.push(maxCount);
 
     return (
-      <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
+      <div className="rounded-xl overflow-hidden" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
         <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: `1px solid ${P.border}` }}>
           <div className="flex items-center gap-3">
             <BarChart3 size={18} color={P.text} />
@@ -2068,7 +2132,7 @@ export default function VitalDashboard() {
   })();
 
   const calendarView = (
-    <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
+    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
       {/* Header — clickable toggle */}
       <button
         className="w-full flex items-center gap-3 px-5 py-3 text-left transition-colors"
@@ -2168,7 +2232,7 @@ export default function VitalDashboard() {
 
       {/* Hover tooltip for day */}
       {calendarHoverDay && calendarData[calendarHoverDay.dateStr] && (
-        <div className="fixed z-[200] rounded-lg p-4 shadow-2xl pointer-events-none max-w-xs"
+        <div className="fixed z-[200] rounded-lg p-4 pointer-events-none max-w-xs"
           style={{
             left: calendarHoverDay.cx + 16,
             top: calendarHoverDay.cy - 16,
@@ -2208,7 +2272,7 @@ export default function VitalDashboard() {
       {/* Calendar day dialog */}
       {calendarDialog && calendarData[calendarDialog.dateStr] && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} onClick={() => setCalendarDialog(null)}>
-          <div className="rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto mx-4" style={{ backgroundColor: P.bgPanel, border: `1px solid ${P.borderStrong}` }} onClick={(e) => e.stopPropagation()}>
+          <div className="rounded-xl w-full max-w-lg max-h-[80vh] overflow-y-auto mx-4" style={{ backgroundColor: P.bgPanel, border: `1px solid ${P.borderStrong}` }} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${P.border}` }}>
               <div className="text-base font-semibold" style={{ color: P.text }}>
                 {new Date(calendarDialog.dateStr).toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
@@ -2279,7 +2343,7 @@ export default function VitalDashboard() {
 
   /* ─── Tooltip ─── */
   const tooltip = hoverInfo && (
-    <div ref={tooltipRef} className="fixed z-[100] pointer-events-none rounded-lg px-5 py-3 shadow-2xl"
+    <div ref={tooltipRef} className="fixed z-[100] pointer-events-none rounded-lg px-5 py-3"
       style={{
         left: mousePosRef.current ? mousePosRef.current.cx + 16 : -9999,
         top: mousePosRef.current ? mousePosRef.current.cy - 16 : -9999,
@@ -2341,16 +2405,18 @@ export default function VitalDashboard() {
   );
 
   /* ─── Side Panel ─── */
-  const sidePanelEl = sidePanel && (
-    <div className="fixed right-0 top-0 h-full w-full sm:w-[440px] z-50 overflow-y-auto shadow-2xl"
+  const sidePanelEl = (
+    <div className={`fixed right-0 top-0 h-full w-full sm:w-[440px] z-50 overflow-y-auto transition-transform duration-300 ${sidePanel ? "translate-x-0" : "translate-x-full"}`}
       style={{ backgroundColor: P.bgPanel, borderLeft: `1px solid ${P.border}`, backdropFilter: "blur(12px)" }}>
-      <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: `1px solid ${P.border}` }}>
-        <h3 className="text-lg font-semibold tracking-tight" style={{ color: P.text }}>Tagesdetail — {sidePanel.date}</h3>
-        <button onClick={() => setSidePanel(null)} className="p-1.5 rounded-lg transition-colors" style={{ color: P.textMuted }}><X size={20} /></button>
-      </div>
-      <div className="p-5 space-y-4">
-        {(() => {
-          const dayBp = allData.bp.find(p => p.date === sidePanel.date);
+      {sidePanel && (
+        <>
+          <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: `1px solid ${P.border}` }}>
+            <h3 className="text-lg font-semibold tracking-tight" style={{ color: P.text }}>Tagesdetail — {sidePanel.date}</h3>
+            <button onClick={() => setSidePanel(null)} className="p-1.5 rounded-lg transition-colors" style={{ color: P.textMuted }}><X size={20} /></button>
+          </div>
+          <div className="p-5 space-y-4">
+            {(() => {
+              const dayBp = allData.bp.find(p => p.date === sidePanel.date);
           const dayHr = allData.hr.find(p => p.date === sidePanel.date);
           const dayW = allData.weight.find(p => p.date === sidePanel.date);
           const dayM = allData.mood.find(p => p.date === sidePanel.date);
@@ -2516,8 +2582,10 @@ export default function VitalDashboard() {
               </div>
             </>
           );
-        })()}
-      </div>
+            })()}
+          </div>
+        </>
+      )}
     </div>
   );
 
@@ -2543,26 +2611,28 @@ export default function VitalDashboard() {
   // ECG drawer timeline position
   const [ecgTimelinePos, setEcgTimelinePos] = useState(0);
 
-  const ecgDrawerEl = ecgDrawer && ecgDrawer.waveform && (
-    <div className="fixed bottom-10 left-0 right-0 z-50 shadow-2xl transition-transform duration-300 ease-out"
+  const ecgDrawerEl = (
+    <div className="fixed bottom-10 left-0 right-0 z-50 transition-transform duration-300 ease-out"
       style={{
         height: "380px",
         backgroundColor: P.bgPanel,
         borderTop: `1px solid ${P.borderStrong}`,
         backdropFilter: "blur(12px)",
-        transform: ecgDrawerVisible ? "translateY(0)" : "translateY(100%)",
+        transform: ecgDrawerVisible && ecgDrawer && ecgDrawer.waveform ? "translateY(0)" : "translateY(100%)",
       }}>
-      {/* Header with meta info */}
-      <div className="flex flex-wrap items-center justify-between px-6 py-3 gap-3" style={{ borderBottom: `1px solid ${P.border}` }}>
-        <div className="flex items-center gap-3 flex-wrap">
-          <FileHeart size={20} color={P.ecg} />
-          <span className="text-lg font-semibold tracking-tight" style={{ color: P.text }}>IEGM — {ecgDrawer.date} {ecgDrawer.time}</span>
-          {ecgDrawer.alarm && <span className="text-sm px-2.5 py-1 rounded-full font-medium" style={{ backgroundColor: ALARM_COLORS[ecgDrawer.alarm], color: "white" }}>{ALARM_LABELS[ecgDrawer.alarm]}</span>}
-          {ecgDrawer.atrialBurden !== undefined && ecgDrawer.atrialBurden > 0 && (
-            <span className="text-sm font-semibold" style={{ color: ecgDrawer.atrialBurden > 15 ? P.atrialHigh : P.atrialMod }}>AF: {ecgDrawer.atrialBurden}%</span>
-          )}
-          {ecgDrawer.trigger && (
-            <span className="text-sm px-2.5 py-1 rounded-full font-medium" style={{ backgroundColor: `${P.bpSystolic}22`, color: P.bpSystolic }}>Auslöser: {ecgDrawer.trigger}</span>
+      {ecgDrawer && ecgDrawer.waveform && (
+        <>
+          {/* Header with meta info */}
+          <div className="flex flex-wrap items-center justify-between px-6 py-3 gap-3" style={{ borderBottom: `1px solid ${P.border}` }}>
+            <div className="flex items-center gap-3 flex-wrap">
+              <FileHeart size={20} color={P.ecg} />
+              <span className="text-lg font-semibold tracking-tight" style={{ color: P.text }}>IEGM — {ecgDrawer.date} {ecgDrawer.time}</span>
+              {ecgDrawer.alarm && <span className="text-sm px-2.5 py-1 rounded-full font-medium" style={{ backgroundColor: ALARM_COLORS[ecgDrawer.alarm], color: "white" }}>{ALARM_LABELS[ecgDrawer.alarm]}</span>}
+              {ecgDrawer.atrialBurden !== undefined && ecgDrawer.atrialBurden > 0 && (
+                <span className="text-sm font-semibold" style={{ color: ecgDrawer.atrialBurden > 15 ? P.atrialHigh : P.atrialMod }}>AF: {ecgDrawer.atrialBurden}%</span>
+              )}
+              {ecgDrawer.trigger && (
+                <span className="text-sm px-2.5 py-1 rounded-full font-medium" style={{ backgroundColor: `${P.bpSystolic}22`, color: P.bpSystolic }}>Auslöser: {ecgDrawer.trigger}</span>
           )}
         </div>
         <div className="flex items-center gap-3">
@@ -2643,16 +2713,18 @@ export default function VitalDashboard() {
         <span className="text-xs font-mono" style={{ color: P.textMuted }}>0s</span>
         <div className="flex-1 h-2 rounded-full relative" style={{ backgroundColor: theme === "dark" ? "rgba(39,39,42,0.6)" : "rgba(228,228,231,0.6)" }}>
           <div className="absolute top-0 left-0 h-full rounded-full transition-all" style={{ width: `${Math.max(5, ecgTimelinePos * 100)}%`, backgroundColor: P.ecg, opacity: 0.6 }} />
-          <div className="absolute top-[-2px] h-3 w-3 rounded-full shadow-sm transition-all" style={{ left: `${ecgTimelinePos * 100}%`, backgroundColor: P.ecg, border: `2px solid ${P.bgPanel}` }} />
+          <div className="absolute top-[-2px] h-3 w-3 rounded-full transition-all" style={{ left: `${ecgTimelinePos * 100}%`, backgroundColor: P.ecg, border: `2px solid ${P.bgPanel}` }} />
         </div>
         <span className="text-xs font-mono" style={{ color: P.textMuted }}>{ecgDrawer.duration}s</span>
-      </div>
+        </div>
+        </>
+      )}
     </div>
   );
 
   /* ─── Table View ─── */
   const tableView = (
-    <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
+    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
       <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${P.border}` }}>
         <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>Tabellenansicht</span>
         <div className="flex gap-2">
@@ -2736,7 +2808,7 @@ export default function VitalDashboard() {
   const shortcuts = [
     { key: "T", label: "Tabelle/Graph" },
     { key: "D", label: "Dark/Light" },
-    { key: "1-4", label: "Zeitraum" },
+    { key: "1-5", label: "Zeitraum" },
     { key: "G", label: "Grenzwerte" },
     { key: "Esc", label: "Schließen" },
   ];
@@ -2898,7 +2970,7 @@ export default function VitalDashboard() {
                 onMouseDown={(e) => startDrag(e, "right")} />
               <div className="flex items-center justify-center h-full text-[10px] font-mono select-none pointer-events-none"
                 style={{ color: theme === "dark" ? "rgba(165,180,252,0.9)" : "rgba(79,70,229,0.8)" }}>
-                {range}T
+                {range}
               </div>
             </div>
           </div>
@@ -2921,91 +2993,20 @@ export default function VitalDashboard() {
   })();
 
   /* ═══════════════════════════════════════════════════════════════════════════════
-     PATIENT DATA (static demo)
+     PATIENT DATA (derived from PATIENTS_DATA based on selection)
      ═══════════════════════════════════════════════════════════════════════════════ */
+  const patientData = selectedPatientIdx === -1 ? PATIENTS_DATA[0] : PATIENTS_DATA[selectedPatientIdx] || PATIENTS_DATA[0];
   const patient = {
-    name: "Max Mustermann",
-    dob: "12.05.1967",
-    age: 58,
-    gender: "Männlich",
-    nyha: "II",
-    lvef: 35,
-    anticoag: true,
-    icd10: [
-      { code: "I50.0", text: "Herzinsuffizienz, kongestiv" },
-      { code: "I48.0", text: "Vorhofflimmern, paroxysmal" },
-      { code: "I25.1", text: "Atherosklerotische Herzkrankheit" },
-      { code: "E11.9", text: "Diabetes mellitus, Typ 2, ohne Komplikationen" },
-    ],
-    implant: {
-      manufacturer: "Biotronik",
-      model: "Rivacor 7 VR-T DX",
-      type: "ICD (Implantierbarer Kardioverter-Defibrillator)",
-      serial: "SN-BTK-2024-48291",
-      implantDate: "2024-03-15",
-      batteryVoltage: 3.12,
-      batteryStatus: "OK" as const,
-      batteryMOS: "MOS 1" as string,
-      lastTransmission: "2026-03-05T08:14:00",
-      detailLink: "#implant-detail",
-      transmissionListLink: "#transmission-list-implant",
-      // Pacemaker programming data (from Patientenausweis)
-      indication: "AV-Block II ohne Angaben",
-      electrodes: [
-        { type: "RA", manufacturer: "Guidant", serial: "21206NK", implantDate: "1997-01-01" },
-      ],
-      programming: {
-        mode: "VDD",
-        lowerRate: null as number | null,
-        upperRate: null as number | null,
-        maxSensorRate: null as number | null,
-        hysteresisRate: null as number | null,
-        modeSwitchMode: "VDI",
-        modeSwitchDetRate: null as number | null,
-        stimAVTime: 180,
-        sensedAVTime: 180,
-        raAmplitude: null as number | null,
-        rvAmplitude: 2.5,
-        raPulseDuration: null as number | null,
-        rvPulseDuration: 0.4,
-        raSensitivity: "0.15Fixe" as string,
-        rvSensitivity: "2.5Fixed" as string,
-      },
-      lastMeasurement: {
-        date: "2026-01-15",
-        electrodeImpedance: { ra: 3000, rv: 414 },
-        batteryCapacity: null as number | null,
-        remainingLifetime: null as number | null,
-        batteryVoltageDetail: null as number | null,
-        batteryStatusDetail: "BOS",
-      },
-      stimulationStats: {
-        stimRA: null as number | null,
-        stimRV: null as number | null,
-        asVS: null as number | null,
-        asVP: null as number | null,
-        apVS: null as number | null,
-        apVP: null as number | null,
-      },
-    },
-    externalDevices: [
-      {
-        type: "Waage",
-        manufacturer: "Withings",
-        model: "Body Comp",
-        serial: "WBS14-DE-2025-19482",
-        lastTransmission: "2026-03-06T07:22:00",
-        transmissionListLink: "#transmission-list-scale",
-      },
-      {
-        type: "Blutdruckmanschette",
-        manufacturer: "Withings",
-        model: "BPM Connect Pro",
-        serial: "WPM05-DE-2025-83741",
-        lastTransmission: "2026-03-06T07:18:00",
-        transmissionListLink: "#transmission-list-bpm",
-      },
-    ],
+    name: patientData.name,
+    dob: patientData.dob,
+    age: patientData.age,
+    gender: patientData.gender,
+    nyha: patientData.nyha,
+    lvef: patientData.lvef,
+    anticoag: patientData.anticoag,
+    icd10: patientData.icd10,
+    implant: patientData.implant,
+    externalDevices: patientData.connectedDevices || [],
   };
 
   const timeSince = (isoStr: string) => {
@@ -3194,7 +3195,7 @@ export default function VitalDashboard() {
       </div>
 
       {/* Template selector + actions */}
-      <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
+      <div className="rounded-xl overflow-hidden" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
         <div className="px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-wrap">
             <span className="text-sm font-semibold uppercase tracking-wider" style={{ color: P.textMuted }}>Vorlage:</span>
@@ -3248,7 +3249,7 @@ export default function VitalDashboard() {
       {/* Save dialog */}
       {showSaveDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-          <div className="rounded-md p-6 shadow-2xl w-full max-w-md space-y-4" style={{ backgroundColor: P.bgPanel, border: `1px solid ${P.border}` }}>
+          <div className="rounded-md p-6 w-full max-w-md space-y-4" style={{ backgroundColor: P.bgPanel, border: `1px solid ${P.border}` }}>
             <h3 className="text-lg font-semibold" style={{ color: P.text }}>Neue Vorlage speichern</h3>
             <input
               type="text" placeholder="Name der Vorlage..."
@@ -3282,7 +3283,7 @@ export default function VitalDashboard() {
           const icon = paramIconMap[param.id] || <Activity size={18} />;
 
           return (
-            <div key={param.id} className="rounded-lg overflow-hidden shadow-sm transition-all"
+            <div key={param.id} className="rounded-lg overflow-hidden transition-all"
               style={{
                 backgroundColor: P.bgCard,
                 border: `1px solid ${P.border}`,
@@ -3625,29 +3626,28 @@ export default function VitalDashboard() {
   /* ═══════════════════════════════════════════════════════════════════════════════
      MOCK PATIENT DATA
      ═══════════════════════════════════════════════════════════════════════════════ */
-  const mockPatients = [
-    { id: "XZ12345678", name: "Müller, Anna", gender: "♀", dob: "15.04.92", active: false },
-    { id: "CD54321678", name: "Meier, Laura", gender: "—", dob: "30.08.78", active: false },
-    { id: "EF87654321", name: "Schneider, Jonas", gender: "♂", dob: "01.11.90", active: false },
-    { id: "GH65432109", name: "Fischer, Sophie", gender: "♀", dob: "05.02.89", active: false },
-    { id: "IJ32109876", name: "Weber, Noah", gender: "♂", dob: "12.03.84", active: false },
-    { id: "KL21098765", name: "Hoffmann, Lena", gender: "♀", dob: "18.07.91", active: false },
-    { id: "MN09876543", name: "Klein, Finn", gender: "♂", dob: "25.09.83", active: false },
-    { id: "AB98765432", name: "Schmidt, Lukas", gender: "♂", dob: "22.06.85", active: false },
-  ];
+  const mockPatients = PATIENTS_DATA.map((p, i) => ({
+    id: `P${String(i + 1).padStart(3, "0")}`,
+    name: p.name,
+    gender: p.gender === "Männlich" ? "♂" : p.gender === "Weiblich" ? "♀" : "—",
+    dob: p.dob,
+    active: selectedPatientIdx === i - 1 || (selectedPatientIdx === -1 && i === 0),
+  }));
 
-  const episodeSidebarEl = episodeSidebar && (
-    <div className="fixed top-0 right-0 bottom-10 w-96 z-[60] shadow-2xl overflow-y-auto"
+  const episodeSidebarEl = (
+    <div className={`fixed top-0 right-0 bottom-10 w-96 z-[60] overflow-y-auto transition-transform duration-300 ${episodeSidebar ? "translate-x-0" : "translate-x-full"}`}
       style={{ backgroundColor: P.bgPanel, borderLeft: `1px solid ${P.borderStrong}` }}>
-      <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${P.border}` }}>
-        <div>
-          <div className="text-base font-semibold" style={{ color: P.text }}>Episoden</div>
-          <div className="text-xs" style={{ color: P.textMuted }}>KW ab {new Date(episodeSidebar.date).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}</div>
+      {episodeSidebar && (
+        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${P.border}` }}>
+          <div>
+            <div className="text-base font-semibold" style={{ color: P.text }}>Episoden</div>
+            <div className="text-xs" style={{ color: P.textMuted }}>KW ab {new Date(episodeSidebar.date).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}</div>
+          </div>
+          <button onClick={() => setEpisodeSidebar(null)} className="p-1.5 rounded-md" style={{ color: P.textMuted }}><X size={16} /></button>
         </div>
-        <button onClick={() => setEpisodeSidebar(null)} className="p-1.5 rounded-md" style={{ color: P.textMuted }}><X size={16} /></button>
-      </div>
+      )}
       <div className="divide-y" style={{ borderColor: P.border }}>
-        {episodeSidebar.episodes.map((ep: any, i: number) => (
+        {episodeSidebar && episodeSidebar.episodes.map((ep: any, i: number) => (
           <div key={i}
             className="px-5 py-3 cursor-pointer transition-colors hover:opacity-80"
             style={{ backgroundColor: i % 2 === 0 ? "transparent" : P.bgInput }}
@@ -3796,29 +3796,38 @@ export default function VitalDashboard() {
 
         {/* Patient list */}
         <div className="flex-1 overflow-y-auto">
-          {mockPatients.map((p, idx) => (
-            <div
-              key={idx}
-              className="px-3 py-2.5 border-b cursor-pointer transition-colors"
-              style={{
-                borderBottomColor: P.border,
-                backgroundColor: "transparent",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = P.bgInput;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-              }}
-            >
-              <div className="font-medium text-sm" style={{ color: P.text }}>
-                {p.name} {p.gender}
+          {mockPatients.map((p, idx) => {
+            const isActive = p.active;
+            return (
+              <div
+                key={idx}
+                className="px-3 py-2.5 border-b cursor-pointer transition-colors"
+                style={{
+                  borderBottomColor: P.border,
+                  backgroundColor: isActive ? (theme === "dark" ? "rgba(63,63,70,0.5)" : "rgba(228,228,231,0.5)") : "transparent",
+                }}
+                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.backgroundColor = P.bgInput; }}
+                onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.backgroundColor = "transparent"; }}
+                onClick={() => {
+                  const newIdx = idx === 0 ? -1 : idx - 1;
+                  setSelectedPatientIdx(newIdx);
+                  const pd = PATIENTS_DATA[idx];
+                  setNotesText(pd.notes);
+                  setAllData(generateData());
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  {isActive && <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: P.bpSystolic }} />}
+                  <div className="font-medium text-sm" style={{ color: P.text }}>
+                    {p.name} {p.gender}
+                  </div>
+                </div>
+                <div className="text-xs" style={{ color: P.textMuted }}>
+                  📅 {p.dob}  #{p.id}
+                </div>
               </div>
-              <div className="text-xs" style={{ color: P.textMuted }}>
-                📅 {p.dob}  #{p.id}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </aside>
 
@@ -3877,7 +3886,7 @@ export default function VitalDashboard() {
                 <ChevronDown size={14} />
               </button>
               {langOpen && (
-                <div className="absolute right-0 mt-2 rounded-md shadow-lg p-2 z-50" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}`, minWidth: "140px" }}>
+                <div className="absolute right-0 mt-2 rounded-md p-2 z-50" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}`, minWidth: "140px" }}>
                   {["de", "en", "hu", "mk", "uk"].map((langCode) => (
                     <button
                       key={langCode}
@@ -3940,7 +3949,7 @@ export default function VitalDashboard() {
                   </button>
                   {notesOpen && (
                     <div className="absolute left-0 top-full mt-1 z-50">
-                      <div className="rounded-lg shadow-lg p-3 w-[320px]" style={{ backgroundColor: "#fef9c3", color: "#713f12", border: "1px solid #fde68a" }}>
+                      <div className="rounded-lg p-3 w-[320px]" style={{ backgroundColor: "#fef9c3", color: "#713f12", border: "1px solid #fde68a" }}>
                         <textarea
                           className="w-full text-sm resize-none bg-transparent border-none outline-none"
                           style={{ color: "#713f12", minHeight: 80, fontFamily: "'IBM Plex Sans', sans-serif" }}
@@ -4030,10 +4039,9 @@ export default function VitalDashboard() {
           {episodeSidebarEl}
 
           {/* Device Sidebar */}
-          {devicesOpen && (
-            <div className="fixed inset-0 z-50 flex justify-end" onClick={() => setDevicesOpen(false)}>
-              <div className="absolute inset-0 bg-black/20" />
-              <div className="relative w-[420px] h-full overflow-y-auto shadow-2xl" style={{ backgroundColor: P.bgPanel }} onClick={e => e.stopPropagation()}>
+          <div className={`fixed inset-0 z-50 flex justify-end transition-all duration-300 ${devicesOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`} onClick={() => setDevicesOpen(false)}>
+            <div className={`absolute inset-0 bg-black/20 transition-opacity duration-300 ${devicesOpen ? "opacity-100" : "opacity-0"}`} />
+            <div className={`relative w-[420px] h-full overflow-y-auto transition-transform duration-300 ${devicesOpen ? "translate-x-0" : "translate-x-full"}`} style={{ backgroundColor: P.bgPanel }} onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderBottomColor: P.border }}>
                   <div className="flex items-center gap-2">
                     <Cpu size={18} color={P.text} />
@@ -4215,7 +4223,7 @@ export default function VitalDashboard() {
                 </div>
               </div>
             </div>
-          )}
+          </div>
 
           {patientTab === "dashboard" && (
             <div className="space-y-5 pt-4">
@@ -4343,7 +4351,6 @@ export default function VitalDashboard() {
               <span className="capitalize">{patientTab.replace("-", " ")} — Inhalt folgt</span>
             </div>
           )}
-        </div>
 
         {/* Shortcut Bar - always visible */}
         {shortcutBar}
@@ -4369,6 +4376,29 @@ export default function VitalDashboard() {
             <Edit size={14} className="inline mr-1" />
             Notes 4
           </button>
+        </div>
+
+        {/* Floating Action Buttons */}
+        <div className="fixed bottom-24 right-6 z-30 flex flex-col gap-2">
+          {[
+            { icon: <ImplantIcon size={20} color={P.text} />, label: "ICD-Abfrage", action: () => setDevicesOpen(true) },
+            { icon: <Weight size={20} color={P.text} />, label: "Messung starten" },
+            { icon: <Activity size={20} color={P.text} />, label: "BP Messung" },
+          ].map((fab, i) => (
+            <div key={i} className="relative group">
+              <button
+                onClick={fab.action}
+                className="w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-105"
+                style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}
+              >
+                {fab.icon}
+              </button>
+              <span className="absolute right-14 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+                style={{ backgroundColor: P.bgPanel, color: P.text, border: `1px solid ${P.border}` }}>
+                {fab.label}
+              </span>
+            </div>
+          ))}
         </div>
       </main>
 
@@ -4399,7 +4429,7 @@ export default function VitalDashboard() {
       {/* Bee toast */}
       {showBeeToast && (
         <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[110] animate-bounce">
-          <div className="relative px-8 py-6 rounded-2xl shadow-2xl text-center max-w-sm"
+          <div className="relative px-8 py-6 rounded-2xl text-center max-w-sm"
             style={{ backgroundColor: theme === "dark" ? "rgba(30,30,30,0.95)" : "rgba(255,255,255,0.97)", border: `2px solid #f59e0b` }}>
             <div className="text-4xl mb-3">🐝</div>
             <p className="text-base font-bold mb-1" style={{ color: P.text }}>{tr.beeToast}</p>
