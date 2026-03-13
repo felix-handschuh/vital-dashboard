@@ -1810,6 +1810,31 @@ export default function VitalDashboard() {
       setCrossHairDate(null);
     };
 
+    const handleOverviewClick = (e: React.MouseEvent<SVGSVGElement>) => {
+      const svg = e.currentTarget;
+      const rect = svg.getBoundingClientRect();
+      const x = e.clientX - rect.left - margin.left;
+      if (x < 0 || x > innerW) return;
+      const xValue = xScale.invert(x);
+      // Find nearest date across all visible series
+      let nearestDate: string | null = null;
+      let minDist = Infinity;
+      const checkNearest = (arr: { date: string }[]) => {
+        for (const p of arr) {
+          const dist = Math.abs(new Date(p.date).getTime() - xValue.getTime());
+          if (dist < minDist) { minDist = dist; nearestDate = p.date; }
+        }
+      };
+      if (overviewVisible.sys || overviewVisible.dia) checkNearest(filteredData.bp);
+      if (overviewVisible.hr) checkNearest(filteredData.hr);
+      if (overviewVisible.weight) checkNearest(filteredData.weight);
+      if (overviewVisible.mood) checkNearest(filteredData.mood);
+      if (nearestDate) {
+        const bp = allData.bp.find(p => p.date === nearestDate);
+        setSidePanel({ type: "bp", date: nearestDate, data: bp || {} });
+      }
+    };
+
     return (
       <div className="rounded-xl overflow-hidden" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
         <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: `1px solid ${P.border}` }}>
@@ -1825,6 +1850,8 @@ export default function VitalDashboard() {
           <svg width="100%" height={h} viewBox={`0 0 ${chartW} ${h}`} preserveAspectRatio="xMidYMid meet"
             onMouseMove={handleOverviewHover}
             onMouseLeave={handleOverviewLeave}
+            onClick={handleOverviewClick}
+            className="cursor-pointer"
           >
             <defs>
               <clipPath id="clip-overview">
@@ -4392,7 +4419,7 @@ export default function VitalDashboard() {
         </div>
 
         {/* Floating Action Buttons */}
-        <div className="fixed bottom-24 right-6 z-30 flex flex-col gap-2">
+        <div className="fixed top-4 right-6 z-30 flex flex-row gap-2">
           {[
             { icon: <ImplantIcon size={20} color={P.text} />, label: "ICD-Abfrage", action: () => setDevicesOpen(true) },
             { icon: <Weight size={20} color={P.text} />, label: "Messung starten" },
