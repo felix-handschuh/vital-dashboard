@@ -1875,7 +1875,7 @@ export default function VitalDashboard() {
               {/* Clipped content */}
               <g clipPath="url(#clip-overview)">
                 {overviewVisible.sys && <>
-                  <path d={sysLine(chartData.bp) || ""} fill="none" stroke={P.bpSystolic} strokeWidth={1.2} opacity={0.5} />
+                  <path d={sysLine(chartData.bp) || ""} fill="none" stroke={P.bpSystolic} strokeWidth={2} />
                   {chartData.bp.map((p, i) => {
                     const x = xScale(new Date(p.date));
                     const y = yScaleLeft(p.systolic);
@@ -1884,7 +1884,7 @@ export default function VitalDashboard() {
                   })}
                 </>}
                 {overviewVisible.dia && <>
-                  <path d={diaLine(chartData.bp) || ""} fill="none" stroke={P.bpDiastolic} strokeWidth={1.2} opacity={0.5} />
+                  <path d={diaLine(chartData.bp) || ""} fill="none" stroke={P.bpDiastolic} strokeWidth={2} />
                   {chartData.bp.map((p, i) => {
                     const x = xScale(new Date(p.date));
                     const y = yScaleLeft(p.diastolic);
@@ -1893,7 +1893,7 @@ export default function VitalDashboard() {
                   })}
                 </>}
                 {overviewVisible.hr && <>
-                  <path d={hrLine(chartData.hr) || ""} fill="none" stroke={P.heartRate} strokeWidth={1.2} opacity={0.5} />
+                  <path d={hrLine(chartData.hr) || ""} fill="none" stroke={P.heartRate} strokeWidth={2} />
                   {chartData.hr.map((p, i) => {
                     const x = xScale(new Date(p.date));
                     const y = yScaleLeft(p.value);
@@ -1902,11 +1902,11 @@ export default function VitalDashboard() {
                   })}
                 </>}
                 {overviewVisible.weight && <>
-                  <path d={weightLine(chartData.weight) || ""} fill="none" stroke={P.weight} strokeWidth={1.2} opacity={0.5} />
+                  <path d={weightLine(chartData.weight) || ""} fill="none" stroke={P.weight} strokeWidth={2} />
                   {chartData.weight.map((p, i) => <circle key={`w-${i}`} cx={xScale(new Date(p.date))} cy={yScaleRight(p.value)} r={2.5} fill={P.weight} />)}
                 </>}
                 {overviewVisible.mood && <>
-                  <path d={moodLine(chartData.mood) || ""} fill="none" stroke={P.mood} strokeWidth={1.2} opacity={0.5} />
+                  <path d={moodLine(chartData.mood) || ""} fill="none" stroke={P.mood} strokeWidth={2} />
                   {chartData.mood.map((p, i) => <circle key={`m-${i}`} cx={xScale(new Date(p.date))} cy={yScaleLeft(mapMoodToLeftScale(p.value))} r={2.5} fill={P.mood} />)}
                 </>}
                 {/* Hover vertical line */}
@@ -3888,33 +3888,6 @@ export default function VitalDashboard() {
             <span style={{ color: P.text, fontWeight: 500 }}>{patient.name}</span>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              className="p-1.5 rounded transition-colors"
-              style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
-              title="Previous"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <button
-              className="p-1.5 rounded transition-colors"
-              style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
-              title="Next"
-            >
-              <ChevronRight size={16} />
-            </button>
-            <div className="w-px h-6 mx-1" style={{ backgroundColor: P.border }} />
-            <button
-              className="px-3 py-1.5 rounded text-sm transition-colors"
-              style={{ backgroundColor: "transparent", color: P.textSecondary, border: `1px solid ${P.border}` }}
-            >
-              Cancel
-            </button>
-            <button
-              className="px-3 py-1.5 rounded text-sm transition-colors"
-              style={{ backgroundColor: P.text, color: P.bg }}
-            >
-              Save
-            </button>
             {/* Language picker */}
             <div className="relative">
               <button
@@ -4022,20 +3995,27 @@ export default function VitalDashboard() {
                 })}
               </div>
             </div>
-            {/* Device chips - right side */}
-            <div className="flex items-center gap-2">
-              <button onClick={() => setDevicesOpen(!devicesOpen)} className="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors" style={{ backgroundColor: P.bgInput, border: `1px solid ${P.border}` }}>
-                <Cpu size={14} color={P.textSecondary} />
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-medium" style={{ color: P.textSecondary }}>
-                  <ImplantIcon size={10} color={P.textSecondary} />
-                  {patient.implant.type.split(" ")[0]}
-                </span>
-                {patient.externalDevices.map((dev, i) => (
-                  <span key={i} className="text-[11px] font-medium" style={{ color: P.textSecondary }}>
-                    {dev.type}
-                  </span>
-                ))}
-              </button>
+            {/* FABs as ButtonGroup - inline with patient info */}
+            <div className="inline-flex items-center rounded-lg overflow-hidden" style={{ border: `1px solid ${P.border}` }}>
+              {[
+                { icon: <ImplantIcon size={14} color={P.textSecondary} />, label: "ICD-Abfrage", action: () => setDevicesOpen(true) },
+                { icon: <Weight size={14} color={P.textSecondary} />, label: "Messung starten" },
+                { icon: <Activity size={14} color={P.textSecondary} />, label: "BP Messung" },
+              ].map((fab, i) => (
+                <button
+                  key={i}
+                  onClick={fab.action}
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors hover:opacity-80"
+                  style={{
+                    backgroundColor: P.bgCard,
+                    color: P.textSecondary,
+                    borderRight: i < 2 ? `1px solid ${P.border}` : "none",
+                  }}
+                >
+                  {fab.icon}
+                  {fab.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -4280,9 +4260,9 @@ export default function VitalDashboard() {
                           onClick={() => { setRange(r); setChartOffset(0); }}
                           className="relative px-3.5 py-1.5 rounded-md text-sm font-semibold transition-all"
                           style={{
-                            backgroundColor: isActive ? "#FF5C00" : "transparent",
-                            color: isActive ? "#ffffff" : P.textMuted,
-                            boxShadow: isActive ? "0 1px 3px rgba(0,0,0,0.2)" : "none",
+                            backgroundColor: isActive ? P.bgCard : "transparent",
+                            color: isActive ? P.text : P.textMuted,
+                            boxShadow: isActive ? "0 1px 2px rgba(0,0,0,0.08)" : "none",
                           }}
                         >
                           {r}
@@ -4418,28 +4398,6 @@ export default function VitalDashboard() {
           </button>
         </div>
 
-        {/* Floating Action Buttons */}
-        <div className="fixed top-4 right-6 z-30 flex flex-row gap-2">
-          {[
-            { icon: <ImplantIcon size={20} color={P.text} />, label: "ICD-Abfrage", action: () => setDevicesOpen(true) },
-            { icon: <Weight size={20} color={P.text} />, label: "Messung starten" },
-            { icon: <Activity size={20} color={P.text} />, label: "BP Messung" },
-          ].map((fab, i) => (
-            <div key={i} className="relative group">
-              <button
-                onClick={fab.action}
-                className="w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-105"
-                style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}
-              >
-                {fab.icon}
-              </button>
-              <span className="absolute right-14 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-                style={{ backgroundColor: P.bgPanel, color: P.text, border: `1px solid ${P.border}` }}>
-                {fab.label}
-              </span>
-            </div>
-          ))}
-        </div>
       </main>
 
       {/* Confetti animation */}
