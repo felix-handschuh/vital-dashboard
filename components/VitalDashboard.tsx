@@ -794,12 +794,12 @@ const generateData = (): AllData => {
       });
     }
 
-    // ECG (~15%)
-    if (Math.random() < 0.15) {
+    // ECG (~22% to include more Periodic IEGM)
+    if (Math.random() < 0.22) {
       const ab = Math.random();
       const atrialBurden = ab < 0.15 ? Math.round(Math.random() * 30 + 20) : ab < 0.3 ? Math.round(Math.random() * 10 + 2) : 0;
       const ecgAlarm = atrialBurden > 15 ? "critical" : atrialBurden > 5 ? "warning" : undefined;
-      const triggers = ["VT-Stimulation", "Vorhofflimmerdetektion", "Tachykardieepisode", "Manuelle Auslösung", "AT/AF-Episode"];
+      const triggers = ["VT-Stimulation", "Vorhofflimmerdetektion", "Tachykardieepisode", "Manuelle Auslösung", "AT/AF-Episode", "Periodic IEGM", "Periodic IEGM"];
       const trigger = triggers[Math.floor(Math.random() * triggers.length)];
       data.ecgs.push({
         date: ds, time: `${8 + Math.floor(Math.random() * 12)}:${String(Math.floor(Math.random() * 60)).padStart(2, "0")}`,
@@ -1006,7 +1006,7 @@ export default function VitalDashboard() {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [overviewVisible, setOverviewVisible] = useState({ sys: true, dia: true, hr: true, weight: true, mood: true });
   const [overviewHover, setOverviewHover] = useState<{ xPos: number; yPos: number; data: Record<string, any> } | null>(null);
-  const [notesOpen, setNotesOpen] = useState(false);
+  const [notesText, setNotesText] = useState("Telefonat am 04.03. — Patient berichtet über Schwindel bei Lagewechsel. Medikation prüfen.");
   const [crossHairDate, setCrossHairDate] = useState<Date | null>(null);
 
   /* ── Threshold settings state ── */
@@ -1243,7 +1243,17 @@ export default function VitalDashboard() {
         </div>
         {/* Chart area — responsive width */}
         <div>
-          <svg width="100%" height={h} viewBox={`0 0 ${chartW} ${h}`} preserveAspectRatio="xMidYMid meet">
+          <svg width="100%" height={h} viewBox={`0 0 ${chartW} ${h}`} preserveAspectRatio="xMidYMid meet"
+            onMouseMove={(e) => {
+              const svg = e.currentTarget;
+              const rect = svg.getBoundingClientRect();
+              const svgX = (e.clientX - rect.left) * (chartW / rect.width) - margin.left;
+              if (svgX >= 0 && svgX <= innerW) {
+                setCrossHairDate(xScale.invert(svgX));
+              }
+            }}
+            onMouseLeave={() => setCrossHairDate(null)}
+          >
             <defs>
               <clipPath id={clipId}>
                 <rect x={0} y={0} width={innerW} height={iH} />
@@ -1281,18 +1291,6 @@ export default function VitalDashboard() {
               <g clipPath={`url(#${clipId})`}>
                 {renderContent(xScale, yS, iH)}
               </g>
-              {/* Cross-graph hover area */}
-              <rect x={0} y={0} width={innerW} height={iH} fill="transparent"
-                onMouseMove={(e) => {
-                  const svg = e.currentTarget.closest('svg');
-                  if (!svg) return;
-                  const rect = svg.getBoundingClientRect();
-                  const svgX = (e.clientX - rect.left) * (chartW / rect.width) - margin.left;
-                  const date = xScale.invert(svgX);
-                  setCrossHairDate(date);
-                }}
-                onMouseLeave={() => setCrossHairDate(null)}
-              />
               {crossHairDate && (() => {
                 const cx = xScale(crossHairDate);
                 if (cx < 0 || cx > innerW) return null;
@@ -1728,10 +1726,12 @@ export default function VitalDashboard() {
       }
 
       setOverviewHover({ xPos: x, yPos, data });
+      setCrossHairDate(xValue);
     };
 
     const handleOverviewLeave = () => {
       setOverviewHover(null);
+      setCrossHairDate(null);
     };
 
     return (
@@ -1810,6 +1810,19 @@ export default function VitalDashboard() {
                 {overviewHover && (
                   <line x1={overviewHover.xPos} y1={0} x2={overviewHover.xPos} y2={iH} stroke={P.textMuted} strokeWidth={1} opacity={0.5} strokeDasharray="3,3" />
                 )}
+                {/* Crosshair from detail charts */}
+                {crossHairDate && (() => {
+                  const cx = xScale(crossHairDate);
+                  if (cx < 0 || cx > innerW) return null;
+                  return (
+                    <g>
+                      <line x1={cx} y1={0} x2={cx} y2={iH} stroke={P.textMuted} strokeWidth={1} strokeDasharray="3,3" opacity={0.6} />
+                      <text x={cx} y={iH + 4} textAnchor="middle" fill={P.text} fontSize={11} fontFamily="IBM Plex Sans" fontWeight={500}>
+                        {d3.timeFormat("%d.%m.%Y")(crossHairDate)}
+                      </text>
+                    </g>
+                  );
+                })()}
               </g>
             </g>
           </svg>
@@ -3894,46 +3907,67 @@ export default function VitalDashboard() {
 
         {/* Patient header */}
         <div className="px-6 py-4 border-b" style={{ borderBottomColor: P.border }}>
-          <div className="flex items-center gap-3 mb-2">
-            <span
-              className="text-xs font-semibold px-3 py-1 rounded-full"
-              style={{
-                backgroundColor: "rgba(22,163,74,0.15)",
-                color: "#16A34A",
-              }}
-            >
-              {tr.monitoring}
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold" style={{ color: P.text }}>
-              {patient.name}
-            </h1>
-            <button
-              onClick={() => setNotesOpen(!notesOpen)}
-              className="px-2 py-1 rounded text-xs font-semibold"
-              style={{ backgroundColor: "#fef9c3", color: "#713f12", border: "1px solid #fde68a" }}
-              title="Notizen zum Patienten"
-            >
-              📝
-            </button>
-          </div>
-          {/* Compact patient chips + ICD-10 */}
-          <div className="flex flex-wrap items-center gap-1.5 mt-2">
-            <span className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: P.bgInput, color: P.text }}>{patient.age} {tr.years}</span>
-            <span className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: P.bgInput, color: P.text }}>{patient.gender === "Männlich" ? tr.male : tr.female}</span>
-            <span className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: P.bgInput, color: P.text }}>NYHA {patient.nyha}</span>
-            <span className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: P.bgInput, color: patient.lvef < 40 ? P.danger : patient.lvef < 50 ? P.warning : P.text }}>LVEF {patient.lvef}%</span>
-            <span className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: P.bgInput, color: patient.anticoag ? P.text : P.textMuted }}>{tr.anticoagulation}: {patient.anticoag ? tr.yes : tr.no}</span>
-            <span className="mx-0.5 text-sm" style={{ color: P.border }}>|</span>
-            {patient.icd10.map((d, i) => {
-              const icdText = (tr as any).icd10Texts?.[d.code] || d.text;
-              return (
-                <span key={i} className="text-xs font-mono font-semibold px-2 py-1 rounded-md cursor-default" style={{ backgroundColor: P.bgInput, color: P.text }} title={icdText}>
-                  {d.code}
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "rgba(22,163,74,0.15)", color: "#16A34A" }}>
+                  {tr.monitoring}
                 </span>
-              );
-            })}
+              </div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-bold" style={{ color: P.text }}>{patient.name}</h1>
+                <div className="relative group">
+                  <span
+                    className="px-2 py-1 rounded text-xs cursor-default truncate max-w-[200px] inline-block align-middle"
+                    style={{ backgroundColor: "#fef9c3", color: "#713f12", border: "1px solid #fde68a" }}
+                  >
+                    📝 {notesText.slice(0, 30)}{notesText.length > 30 ? "…" : ""}
+                  </span>
+                  <div className="absolute left-0 top-full mt-1 z-50 hidden group-hover:block">
+                    <div className="rounded-lg shadow-lg p-3 w-[320px]" style={{ backgroundColor: "#fef9c3", color: "#713f12", border: "1px solid #fde68a" }}>
+                      <textarea
+                        className="w-full text-sm resize-none bg-transparent border-none outline-none"
+                        style={{ color: "#713f12", minHeight: 80, fontFamily: "'IBM Plex Sans', sans-serif" }}
+                        value={notesText}
+                        onChange={(e) => setNotesText(e.target.value)}
+                        placeholder="Notizen zum Patienten..."
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                <span className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: P.bgInput, color: P.text }}>{patient.age} {tr.years}</span>
+                <span className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: P.bgInput, color: P.text }}>{patient.gender === "Männlich" ? tr.male : tr.female}</span>
+                <span className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: P.bgInput, color: P.text }}>NYHA {patient.nyha}</span>
+                <span className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: P.bgInput, color: patient.lvef < 40 ? P.danger : patient.lvef < 50 ? P.warning : P.text }}>LVEF {patient.lvef}%</span>
+                <span className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: P.bgInput, color: patient.anticoag ? P.text : P.textMuted }}>{tr.anticoagulation}: {patient.anticoag ? tr.yes : tr.no}</span>
+                <span className="mx-0.5 text-sm" style={{ color: P.border }}>|</span>
+                {patient.icd10.map((d, i) => {
+                  const icdText = (tr as any).icd10Texts?.[d.code] || d.text;
+                  return (
+                    <span key={i} className="text-xs font-mono font-semibold px-2 py-1 rounded-md cursor-default" style={{ backgroundColor: P.bgInput, color: P.text }} title={icdText}>
+                      {d.code}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+            {/* Device chips - right side */}
+            <div className="flex items-center gap-2">
+              <button onClick={() => setDevicesOpen(!devicesOpen)} className="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors" style={{ backgroundColor: P.bgInput, border: `1px solid ${P.border}` }}>
+                <Cpu size={14} color={P.textSecondary} />
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-medium" style={{ color: P.textSecondary }}>
+                  <ImplantIcon size={10} color={P.textSecondary} />
+                  {patient.implant.type.split(" ")[0]}
+                </span>
+                {patient.externalDevices.map((dev, i) => (
+                  <span key={i} className="text-[11px] font-medium" style={{ color: P.textSecondary }}>
+                    {dev.type}
+                  </span>
+                ))}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -3971,233 +4005,202 @@ export default function VitalDashboard() {
         </div>
 
         {/* Content area - scrollable */}
-        <div className="flex-1 overflow-y-auto px-6 py-5" style={{ paddingBottom: 90 }}>
+        <div className="flex-1 overflow-y-auto px-6" style={{ paddingBottom: 90 }}>
           {tooltip}
           {sidePanelEl}
           {ecgDrawerEl}
           {episodeSidebarEl}
 
-          {patientTab === "dashboard" && (
-            <div className="space-y-5">
-              {notesOpen && (
-                <textarea
-                  className="w-full rounded-lg p-3 text-sm resize-none mt-2"
-                  style={{
-                    backgroundColor: "#fef9c3",
-                    color: "#713f12",
-                    border: "1px solid #fde68a",
-                    minHeight: 60,
-                    fontFamily: "'IBM Plex Sans', sans-serif",
-                  }}
-                  placeholder="Notizen zum Patienten..."
-                  defaultValue="Telefonat am 04.03. — Patient berichtet über Schwindel bei Lagewechsel. Medikation prüfen."
-                />
-              )}
-
-                  {/* Devices — collapsible */}
-                  <div className="rounded-md overflow-hidden shadow-sm" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
-                    <button
-                      className="w-full flex items-center gap-3 px-5 py-3 text-left transition-colors"
-                      style={{ borderBottom: devicesOpen ? `1px solid ${P.border}` : "none" }}
-                      onClick={() => setDevicesOpen(!devicesOpen)}
-                    >
-                      <span className="transition-transform" style={{ transform: devicesOpen ? "rotate(90deg)" : "rotate(0deg)", color: P.textMuted }}>
-                        <ChevronRight size={16} />
-                      </span>
-                      <Cpu size={18} color={P.textMuted} />
-                      <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>{tr.devices}</span>
-                      <div className="flex items-center gap-2 ml-2">
-                        <span className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: P.bgInput, color: P.textSecondary }}>
-                          <ImplantIcon size={12} color={P.textSecondary} />
-                          {patient.implant.type.split(" ")[0]}
+          {/* Device Sidebar */}
+          {devicesOpen && (
+            <div className="fixed inset-0 z-50 flex justify-end" onClick={() => setDevicesOpen(false)}>
+              <div className="absolute inset-0 bg-black/20" />
+              <div className="relative w-[420px] h-full overflow-y-auto shadow-2xl" style={{ backgroundColor: P.bgPanel }} onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderBottomColor: P.border }}>
+                  <div className="flex items-center gap-2">
+                    <Cpu size={18} color={P.text} />
+                    <span className="text-base font-semibold" style={{ color: P.text }}>{tr.devices}</span>
+                  </div>
+                  <button onClick={() => setDevicesOpen(false)} className="p-1.5 rounded-lg" style={{ color: P.textMuted }}><X size={18} /></button>
+                </div>
+                <div className="p-4 space-y-3">
+                  {/* Implant */}
+                  <div
+                    className="rounded-lg p-4"
+                    style={{ backgroundColor: P.bgInput, border: `1px solid ${P.border}` }}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <ImplantIcon size={16} color={P.heartRate} />
+                        <span className="text-sm font-semibold" style={{ color: P.text }}>
+                          {tr.implant}
                         </span>
-                        {patient.externalDevices.map((dev, i) => (
-                          <span key={i} className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: P.bgInput, color: P.textSecondary }}>
-                            {dev.type === "Waage" ? (
-                              <Weight size={12} color={P.textSecondary} />
-                            ) : (
-                              <Activity size={12} color={P.textSecondary} />
-                            )}
-                            {dev.type}
-                          </span>
-                        ))}
                       </div>
-                    </button>
-                    {devicesOpen && (
-                    <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                      {/* Implant */}
-                      <div
-                        className="rounded-lg p-4"
-                        style={{ backgroundColor: P.bgInput, border: `1px solid ${P.border}` }}
+                      <a
+                        href={patient.implant.detailLink}
+                        className="inline-flex items-center gap-1 text-xs font-medium rounded-md px-2 py-1 transition-colors"
+                        style={{
+                          color: P.bpSystolic,
+                          backgroundColor:
+                            theme === "dark"
+                              ? "rgba(74,158,222,0.1)"
+                              : "rgba(37,99,235,0.1)",
+                        }}
                       >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <ImplantIcon size={16} color={P.heartRate} />
-                            <span className="text-sm font-semibold" style={{ color: P.text }}>
-                              {tr.implant}
-                            </span>
-                          </div>
-                          <a
-                            href={patient.implant.detailLink}
-                            className="inline-flex items-center gap-1 text-xs font-medium rounded-md px-2 py-1 transition-colors"
+                        {tr.details} <ExternalLink size={11} />
+                      </a>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-sm font-semibold" style={{ color: P.text }}>
+                        {patient.implant.manufacturer} {patient.implant.model}
+                      </div>
+                      <div className="text-xs" style={{ color: P.textMuted }}>
+                        {patient.implant.type}
+                      </div>
+                      <div className="text-xs" style={{ color: P.textMuted }}>
+                        Implantiert: {new Date(patient.implant.implantDate).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                      </div>
+                      <div className="flex items-center gap-3 mt-2">
+                        <div
+                          className="flex items-center gap-1.5 text-xs"
+                          style={{ color: P.textSecondary }}
+                        >
+                          <Battery size={13} />
+                          <span
+                            className="font-mono font-semibold"
                             style={{
-                              color: P.bpSystolic,
-                              backgroundColor:
-                                theme === "dark"
-                                  ? "rgba(74,158,222,0.1)"
-                                  : "rgba(37,99,235,0.1)",
+                              color:
+                                patient.implant.batteryVoltage > 2.8
+                                  ? P.good
+                                  : P.warning,
                             }}
                           >
-                            {tr.details} <ExternalLink size={11} />
-                          </a>
+                            {patient.implant.batteryVoltage} V ({patient.implant.batteryMOS})
+                          </span>
                         </div>
-                        <div className="space-y-1">
-                          <div className="text-sm font-semibold" style={{ color: P.text }}>
-                            {patient.implant.manufacturer} {patient.implant.model}
-                          </div>
-                          <div className="text-xs" style={{ color: P.textMuted }}>
-                            {patient.implant.type}
-                          </div>
-                          <div className="text-xs" style={{ color: P.textMuted }}>
-                            Implantiert: {new Date(patient.implant.implantDate).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}
-                          </div>
-                          <div className="flex items-center gap-3 mt-2">
-                            <div
-                              className="flex items-center gap-1.5 text-xs"
-                              style={{ color: P.textSecondary }}
-                            >
-                              <Battery size={13} />
-                              <span
-                                className="font-mono font-semibold"
-                                style={{
-                                  color:
-                                    patient.implant.batteryVoltage > 2.8
-                                      ? P.good
-                                      : P.warning,
-                                }}
-                              >
-                                {patient.implant.batteryVoltage} V ({patient.implant.batteryMOS})
-                              </span>
-                            </div>
-                            <div
-                              className="flex items-center gap-1.5 text-xs"
-                              style={{ color: P.textSecondary }}
-                            >
-                              <Radio size={13} />
-                              <span>{timeSince(patient.implant.lastTransmission)}</span>
-                            </div>
-                          </div>
-                          <a
-                            href={patient.implant.transmissionListLink}
-                            className="inline-flex items-center gap-1 text-xs mt-1 transition-colors"
-                            style={{ color: P.bpSystolic }}
-                          >
-                            <span title="Übertragungsverlauf"><Radio size={14} /></span>
-                          </a>
-                          <button
-                            onClick={() => setImplantDetailOpen(!implantDetailOpen)}
-                            className="text-xs mt-2 flex items-center gap-1 transition-colors"
-                            style={{ color: P.bpSystolic }}
-                          >
-                            <span style={{ transform: implantDetailOpen ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
-                              <ChevronRight size={12} />
-                            </span>
-                            Programmierung & Messwerte
-                          </button>
-                          {implantDetailOpen && (
-                            <div className="mt-3 space-y-3 text-xs" style={{ color: P.textSecondary }}>
-                              <div>
-                                <div className="font-semibold mb-1" style={{ color: P.text }}>Indikation</div>
-                                <div>{patient.implant.indication}</div>
-                              </div>
-                              <div>
-                                <div className="font-semibold mb-1" style={{ color: P.text }}>Elektroden</div>
-                                {patient.implant.electrodes.map((el: any, i: number) => (
-                                  <div key={i} className="flex items-center gap-2">
-                                    <span className="font-mono font-semibold" style={{ color: P.text }}>{el.type}</span>
-                                    <span>{el.manufacturer}</span>
-                                    <span className="font-mono">{el.serial}</span>
-                                  </div>
-                                ))}
-                              </div>
-                              <div>
-                                <div className="font-semibold mb-1" style={{ color: P.text }}>Aktuelle Programmierung</div>
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
-                                  <span>Betriebsart:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.mode}</span>
-                                  <span>Mode Switch Modus:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.modeSwitchMode}</span>
-                                  <span>Stim. AV-Zeit:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.stimAVTime} ms</span>
-                                  <span>Wahrg. AV-Zeit:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.sensedAVTime} ms</span>
-                                </div>
-                              </div>
-                              <div>
-                                <div className="font-semibold mb-1" style={{ color: P.text }}>Programmierte Werte (RA / RV)</div>
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
-                                  <span>Amplitude [V]:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.raAmplitude ?? "—"} / {patient.implant.programming.rvAmplitude}</span>
-                                  <span>Impulsdauer [ms]:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.raPulseDuration ?? "—"} / {patient.implant.programming.rvPulseDuration}</span>
-                                  <span>Empfindlichkeit:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.raSensitivity} / {patient.implant.programming.rvSensitivity}</span>
-                                </div>
-                              </div>
-                              <div>
-                                <div className="font-semibold mb-1" style={{ color: P.text }}>Letzte Messung ({patient.implant.lastMeasurement.date})</div>
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
-                                  <span>Impedanz RA/RV [Ohm]:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.lastMeasurement.electrodeImpedance.ra} / {patient.implant.lastMeasurement.electrodeImpedance.rv}</span>
-                                  <span>Batteriestatus:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.lastMeasurement.batteryStatusDetail}</span>
-                                </div>
-                              </div>
-                            </div>
-                          )}
+                        <div
+                          className="flex items-center gap-1.5 text-xs"
+                          style={{ color: P.textSecondary }}
+                        >
+                          <Radio size={13} />
+                          <span>{timeSince(patient.implant.lastTransmission)}</span>
                         </div>
                       </div>
-
-                      {/* External devices */}
-                      {patient.externalDevices.map((dev, i) => (
-                        <div
-                          key={i}
-                          className="rounded-lg p-4"
-                          style={{ backgroundColor: P.bgInput, border: `1px solid ${P.border}` }}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              {dev.type === "Waage" ? (
-                                <Weight size={16} color={P.weight} />
-                              ) : (
-                                <Activity size={16} color={P.bpSystolic} />
-                              )}
-                              <span className="text-sm font-semibold" style={{ color: P.text }}>
-                                {dev.type}
-                              </span>
-                            </div>
-                            <Bluetooth size={14} style={{ color: P.bpSystolic }} />
+                      <a
+                        href={patient.implant.transmissionListLink}
+                        className="inline-flex items-center gap-1 text-xs mt-1 transition-colors"
+                        style={{ color: P.bpSystolic }}
+                      >
+                        <span title="Übertragungsverlauf"><Radio size={14} /></span>
+                      </a>
+                      <button
+                        onClick={() => setImplantDetailOpen(!implantDetailOpen)}
+                        className="text-xs mt-2 flex items-center gap-1 transition-colors"
+                        style={{ color: P.bpSystolic }}
+                      >
+                        <span style={{ transform: implantDetailOpen ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
+                          <ChevronRight size={12} />
+                        </span>
+                        Programmierung & Messwerte
+                      </button>
+                      {implantDetailOpen && (
+                        <div className="mt-3 space-y-3 text-xs" style={{ color: P.textSecondary }}>
+                          <div>
+                            <div className="font-semibold mb-1" style={{ color: P.text }}>Indikation</div>
+                            <div>{patient.implant.indication}</div>
                           </div>
-                          <div className="space-y-1">
-                            <div className="text-sm font-semibold" style={{ color: P.text }}>
-                              {dev.manufacturer} {dev.model}
+                          <div>
+                            <div className="font-semibold mb-1" style={{ color: P.text }}>Elektroden</div>
+                            {patient.implant.electrodes.map((el: any, i: number) => (
+                              <div key={i} className="flex items-center gap-2">
+                                <span className="font-mono font-semibold" style={{ color: P.text }}>{el.type}</span>
+                                <span>{el.manufacturer}</span>
+                                <span className="font-mono">{el.serial}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <div>
+                            <div className="font-semibold mb-1" style={{ color: P.text }}>Aktuelle Programmierung</div>
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+                              <span>Betriebsart:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.mode}</span>
+                              <span>Mode Switch Modus:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.modeSwitchMode}</span>
+                              <span>Stim. AV-Zeit:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.stimAVTime} ms</span>
+                              <span>Wahrg. AV-Zeit:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.sensedAVTime} ms</span>
                             </div>
-                            <div
-                              className="flex items-center gap-1.5 text-xs mt-2"
-                              style={{ color: P.textSecondary }}
-                            >
-                              <Wifi size={13} />
-                              <span>
-                                Letzte Übertragung:{" "}
-                                <span className="font-medium" style={{ color: P.text }}>
-                                  {timeSince(dev.lastTransmission)}
-                                </span>
-                              </span>
+                          </div>
+                          <div>
+                            <div className="font-semibold mb-1" style={{ color: P.text }}>Programmierte Werte (RA / RV)</div>
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+                              <span>Amplitude [V]:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.raAmplitude ?? "—"} / {patient.implant.programming.rvAmplitude}</span>
+                              <span>Impulsdauer [ms]:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.raPulseDuration ?? "—"} / {patient.implant.programming.rvPulseDuration}</span>
+                              <span>Empfindlichkeit:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.raSensitivity} / {patient.implant.programming.rvSensitivity}</span>
                             </div>
-                            <a
-                              href={dev.transmissionListLink}
-                              className="inline-flex items-center gap-1 text-xs mt-1 transition-colors"
-                              style={{ color: P.bpSystolic }}
-                            >
-                              <span title="Übertragungsverlauf"><Radio size={14} /></span>
-                            </a>
+                          </div>
+                          <div>
+                            <div className="font-semibold mb-1" style={{ color: P.text }}>Letzte Messung ({patient.implant.lastMeasurement.date})</div>
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+                              <span>Impedanz RA/RV [Ohm]:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.lastMeasurement.electrodeImpedance.ra} / {patient.implant.lastMeasurement.electrodeImpedance.rv}</span>
+                              <span>Batteriestatus:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.lastMeasurement.batteryStatusDetail}</span>
+                            </div>
                           </div>
                         </div>
-                      ))}
+                      )}
                     </div>
-                    )}
                   </div>
+
+                  {/* External devices */}
+                  {patient.externalDevices.map((dev, i) => (
+                    <div
+                      key={i}
+                      className="rounded-lg p-4"
+                      style={{ backgroundColor: P.bgInput, border: `1px solid ${P.border}` }}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          {dev.type === "Waage" ? (
+                            <Weight size={16} color={P.weight} />
+                          ) : (
+                            <Activity size={16} color={P.bpSystolic} />
+                          )}
+                          <span className="text-sm font-semibold" style={{ color: P.text }}>
+                            {dev.type}
+                          </span>
+                        </div>
+                        <Bluetooth size={14} style={{ color: P.bpSystolic }} />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-sm font-semibold" style={{ color: P.text }}>
+                          {dev.manufacturer} {dev.model}
+                        </div>
+                        <div
+                          className="flex items-center gap-1.5 text-xs mt-2"
+                          style={{ color: P.textSecondary }}
+                        >
+                          <Wifi size={13} />
+                          <span>
+                            Letzte Übertragung:{" "}
+                            <span className="font-medium" style={{ color: P.text }}>
+                              {timeSince(dev.lastTransmission)}
+                            </span>
+                          </span>
+                        </div>
+                        <a
+                          href={dev.transmissionListLink}
+                          className="inline-flex items-center gap-1 text-xs mt-1 transition-colors"
+                          style={{ color: P.bpSystolic }}
+                        >
+                          <span title="Übertragungsverlauf"><Radio size={14} /></span>
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {patientTab === "dashboard" && (
+            <div className="space-y-5 pt-4">
 
                 {/* ── Time range selector + view toggle ── */}
                 <div className="sticky top-0 z-20 flex items-center gap-2 flex-wrap py-2 -mx-6 px-6" style={{ backgroundColor: theme === "dark" ? "rgba(24,24,27,0.75)" : "rgba(255,255,255,0.75)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
@@ -4219,49 +4222,6 @@ export default function VitalDashboard() {
                       {r}T
                     </button>
                   ))}
-                  <div className="relative">
-                    <button
-                      onClick={() => setDatePickerOpen(!datePickerOpen)}
-                      className="p-1.5 rounded transition-colors"
-                      style={{ backgroundColor: P.bgInput, color: P.textSecondary }}
-                      title="Date range picker"
-                    >
-                      <Calendar size={16} />
-                    </button>
-                    {datePickerOpen && (
-                      <div className="absolute top-10 right-0 z-50 rounded-md shadow-lg p-4" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
-                        <div className="flex flex-col gap-3 min-w-[300px]">
-                          <div>
-                            <label className="block text-xs font-semibold mb-1" style={{ color: P.textMuted }}>Von</label>
-                            <input
-                              type="date"
-                              value={customDateRange?.[0] ?? ""}
-                              onChange={(e) => setCustomDateRange([e.target.value, customDateRange?.[1] ?? ""])}
-                              className="w-full px-2 py-1.5 rounded text-sm border"
-                              style={{ backgroundColor: P.bgInput, borderColor: P.border, color: P.text }}
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-semibold mb-1" style={{ color: P.textMuted }}>Bis</label>
-                            <input
-                              type="date"
-                              value={customDateRange?.[1] ?? ""}
-                              onChange={(e) => setCustomDateRange([customDateRange?.[0] ?? "", e.target.value])}
-                              className="w-full px-2 py-1.5 rounded text-sm border"
-                              style={{ backgroundColor: P.bgInput, borderColor: P.border, color: P.text }}
-                            />
-                          </div>
-                          <button
-                            onClick={() => setDatePickerOpen(false)}
-                            className="px-3 py-1.5 rounded text-sm font-medium"
-                            style={{ backgroundColor: P.bpSystolic, color: "white" }}
-                          >
-                            OK
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
                 </div>
 
                 {/* ── Episoden-Zeitleiste (always shown) ── */}
