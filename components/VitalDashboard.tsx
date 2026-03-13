@@ -770,7 +770,7 @@ const generateData = (): AllData => {
     const date = new Date(NOW); date.setDate(date.getDate() - i);
     const ds = date.toISOString().split("T")[0];
 
-    if (Math.random() < 0.06 && !outlierDays.has(i)) { data.missed.push(ds); continue; }
+    if (Math.random() < 0.03 && !outlierDays.has(i)) { data.missed.push(ds); continue; }
     if (i === 55 || i === 54) { data.missed.push(ds); continue; }
 
     const drift = Math.sin(i / 15) * 5;
@@ -817,7 +817,7 @@ const generateData = (): AllData => {
     const avgW = Math.round(wReadings.reduce((s, r) => s + r.value, 0) / wReadings.length * 10) / 10;
     data.weight.push({ date: ds, readings: wReadings, value: avgW, alarm: isOutlierW ? "warning" : undefined, outlier: false });
 
-    if (Math.random() < 0.7) {
+    if (Math.random() < 0.96) {
       data.mood.push({ date: ds, value: Math.min(5, Math.max(1, Math.round(3 + Math.sin(i / 8) + (Math.random() - 0.5) * 2))) });
     }
 
@@ -1059,7 +1059,7 @@ export default function VitalDashboard() {
   const [calendarDialog, setCalendarDialog] = useState<{ dateStr: string } | null>(null);
   const [calendarHoverDay, setCalendarHoverDay] = useState<{ dateStr: string; cx: number; cy: number } | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [devicesOpen, setDevicesOpen] = useState(false);
+  const [devicesOpen, setDevicesOpen] = useState(true);
   const [implantDetailOpen, setImplantDetailOpen] = useState(false);
   const [calendarViewMode, setCalendarViewMode] = useState<"calendar" | "timeline">("calendar");
   const [episodeSidebar, setEpisodeSidebar] = useState<{ date: string; episodes: any[] } | null>(null);
@@ -4060,191 +4060,6 @@ export default function VitalDashboard() {
           {ecgDrawerEl}
           {episodeSidebarEl}
 
-          {/* Device Sidebar - fixed overlay */}
-          <div className={`fixed inset-0 z-50 flex justify-end transition-all duration-300 ${devicesOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`} onClick={() => setDevicesOpen(false)}>
-            <div className={`absolute inset-0 bg-black/20 transition-opacity duration-300 ${devicesOpen ? "opacity-100" : "opacity-0"}`} />
-            <div className={`relative w-[420px] h-full overflow-y-auto transition-transform duration-300 ${devicesOpen ? "translate-x-0" : "translate-x-full"}`} style={{ backgroundColor: P.bgPanel }} onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderBottomColor: P.border }}>
-                  <div className="flex items-center gap-2">
-                    <Cpu size={18} color={P.text} />
-                    <span className="text-base font-semibold" style={{ color: P.text }}>{tr.devices}</span>
-                  </div>
-                  <button onClick={() => setDevicesOpen(false)} className="p-1.5 rounded-lg" style={{ color: P.textMuted }}><X size={18} /></button>
-                </div>
-                <div className="p-4 space-y-3">
-                  {/* Implant */}
-                  <div
-                    className="rounded-lg p-4"
-                    style={{ backgroundColor: P.bgInput, border: `1px solid ${P.border}` }}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <ImplantIcon size={16} color={P.heartRate} />
-                        <span className="text-sm font-semibold" style={{ color: P.text }}>
-                          {tr.implant}
-                        </span>
-                      </div>
-                      <a
-                        href={patient.implant.detailLink}
-                        className="inline-flex items-center gap-1 text-xs font-medium rounded-md px-2 py-1 transition-colors"
-                        style={{
-                          color: P.bpSystolic,
-                          backgroundColor:
-                            theme === "dark"
-                              ? "rgba(74,158,222,0.1)"
-                              : "rgba(37,99,235,0.1)",
-                        }}
-                      >
-                        {tr.details} <ExternalLink size={11} />
-                      </a>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-sm font-semibold" style={{ color: P.text }}>
-                        {patient.implant.manufacturer} {patient.implant.model}
-                      </div>
-                      <div className="text-xs" style={{ color: P.textMuted }}>
-                        {patient.implant.type}
-                      </div>
-                      <div className="text-xs" style={{ color: P.textMuted }}>
-                        Implantiert: {new Date(patient.implant.implantDate).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}
-                      </div>
-                      <div className="flex items-center gap-3 mt-2">
-                        <div
-                          className="flex items-center gap-1.5 text-xs"
-                          style={{ color: P.textSecondary }}
-                        >
-                          <Battery size={13} />
-                          <span
-                            className="font-mono font-semibold"
-                            style={{
-                              color:
-                                patient.implant.batteryVoltage > 2.8
-                                  ? P.good
-                                  : P.warning,
-                            }}
-                          >
-                            {patient.implant.batteryVoltage} V ({patient.implant.batteryMOS})
-                          </span>
-                        </div>
-                        <div
-                          className="flex items-center gap-1.5 text-xs"
-                          style={{ color: P.textSecondary }}
-                        >
-                          <Radio size={13} />
-                          <span>{timeSince(patient.implant.lastTransmission)}</span>
-                        </div>
-                      </div>
-                      <a
-                        href={patient.implant.transmissionListLink}
-                        className="inline-flex items-center gap-1 text-xs mt-1 transition-colors"
-                        style={{ color: P.bpSystolic }}
-                      >
-                        <span title="Übertragungsverlauf"><Radio size={14} /></span>
-                      </a>
-                      <button
-                        onClick={() => setImplantDetailOpen(!implantDetailOpen)}
-                        className="text-xs mt-2 flex items-center gap-1 transition-colors"
-                        style={{ color: P.bpSystolic }}
-                      >
-                        <span style={{ transform: implantDetailOpen ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
-                          <ChevronRight size={12} />
-                        </span>
-                        Programmierung & Messwerte
-                      </button>
-                      {implantDetailOpen && (
-                        <div className="mt-3 space-y-3 text-xs" style={{ color: P.textSecondary }}>
-                          <div>
-                            <div className="font-semibold mb-1" style={{ color: P.text }}>Indikation</div>
-                            <div>{patient.implant.indication}</div>
-                          </div>
-                          <div>
-                            <div className="font-semibold mb-1" style={{ color: P.text }}>Elektroden</div>
-                            {patient.implant.electrodes.map((el: any, i: number) => (
-                              <div key={i} className="flex items-center gap-2">
-                                <span className="font-mono font-semibold" style={{ color: P.text }}>{el.type}</span>
-                                <span>{el.manufacturer}</span>
-                                <span className="font-mono">{el.serial}</span>
-                              </div>
-                            ))}
-                          </div>
-                          <div>
-                            <div className="font-semibold mb-1" style={{ color: P.text }}>Aktuelle Programmierung</div>
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
-                              <span>Betriebsart:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.mode}</span>
-                              <span>Mode Switch Modus:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.modeSwitchMode}</span>
-                              <span>Stim. AV-Zeit:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.stimAVTime} ms</span>
-                              <span>Wahrg. AV-Zeit:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.sensedAVTime} ms</span>
-                            </div>
-                          </div>
-                          <div>
-                            <div className="font-semibold mb-1" style={{ color: P.text }}>Programmierte Werte (RA / RV)</div>
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
-                              <span>Amplitude [V]:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.raAmplitude ?? "—"} / {patient.implant.programming.rvAmplitude}</span>
-                              <span>Impulsdauer [ms]:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.raPulseDuration ?? "—"} / {patient.implant.programming.rvPulseDuration}</span>
-                              <span>Empfindlichkeit:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.programming.raSensitivity} / {patient.implant.programming.rvSensitivity}</span>
-                            </div>
-                          </div>
-                          <div>
-                            <div className="font-semibold mb-1" style={{ color: P.text }}>Letzte Messung ({patient.implant.lastMeasurement.date})</div>
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
-                              <span>Impedanz RA/RV [Ohm]:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.lastMeasurement.electrodeImpedance.ra} / {patient.implant.lastMeasurement.electrodeImpedance.rv}</span>
-                              <span>Batteriestatus:</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.lastMeasurement.batteryStatusDetail}</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* External devices */}
-                  {patient.externalDevices.map((dev, i) => (
-                    <div
-                      key={i}
-                      className="rounded-lg p-4"
-                      style={{ backgroundColor: P.bgInput, border: `1px solid ${P.border}` }}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          {dev.type === "Waage" ? (
-                            <Weight size={16} color={P.weight} />
-                          ) : (
-                            <Activity size={16} color={P.bpSystolic} />
-                          )}
-                          <span className="text-sm font-semibold" style={{ color: P.text }}>
-                            {dev.type}
-                          </span>
-                        </div>
-                        <Bluetooth size={14} style={{ color: P.bpSystolic }} />
-                      </div>
-                      <div className="space-y-1">
-                        <div className="text-sm font-semibold" style={{ color: P.text }}>
-                          {dev.manufacturer} {dev.model}
-                        </div>
-                        <div
-                          className="flex items-center gap-1.5 text-xs mt-2"
-                          style={{ color: P.textSecondary }}
-                        >
-                          <Wifi size={13} />
-                          <span>
-                            Letzte Übertragung:{" "}
-                            <span className="font-medium" style={{ color: P.text }}>
-                              {timeSince(dev.lastTransmission)}
-                            </span>
-                          </span>
-                        </div>
-                        <a
-                          href={dev.transmissionListLink}
-                          className="inline-flex items-center gap-1 text-xs mt-1 transition-colors"
-                          style={{ color: P.bpSystolic }}
-                        >
-                          <span title="Übertragungsverlauf"><Radio size={14} /></span>
-                        </a>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
 
           {patientTab === "dashboard" && (
             <div className="space-y-5 pt-4">
@@ -4399,6 +4214,151 @@ export default function VitalDashboard() {
         </div>
 
       </main>
+
+      {/* Right sidebar - Device Info */}
+      {devicesOpen && (
+        <aside className="flex flex-col border-l overflow-y-auto" style={{ width: 340, backgroundColor: P.bgCard, borderLeftColor: P.border }}>
+          {/* Header with patient name + case number */}
+          <div className="px-5 py-4 border-b" style={{ borderBottomColor: P.border }}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <User size={18} color={P.textMuted} />
+                <div>
+                  <div className="text-sm font-semibold" style={{ color: P.text }}>{patient.name}</div>
+                  <div className="text-xs" style={{ color: P.textMuted }}># {patient.dob?.replace(/\./g, '')}{patient.age}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <button onClick={() => setDevicesOpen(false)} className="p-1 rounded transition-colors" style={{ color: P.textMuted }}><X size={16} /></button>
+              </div>
+            </div>
+          </div>
+
+          {/* Patient info rows - like screenshot */}
+          <div className="px-5 py-3 space-y-2 border-b" style={{ borderBottomColor: P.border }}>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium" style={{ color: P.textMuted }}>Telemonitoring</span>
+              <div className="flex flex-col items-end gap-1">
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(22,163,74,0.15)", color: "#16A34A" }}>Telemonitoring</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium" style={{ color: P.textMuted }}>{tr.birthday || "Geburtstag"}</span>
+              <span className="text-xs" style={{ color: P.text }}>{patient.dob} ({patient.age} {tr.years})</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium" style={{ color: P.textMuted }}>{tr.gender || "Geschlecht"}</span>
+              <span className="text-xs" style={{ color: P.text }}>{patient.gender === "Männlich" ? "♂ " + (tr.male || "Männlich") : "♀ " + (tr.female || "Weiblich")}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium" style={{ color: P.textMuted }}>Telefon</span>
+              <span className="text-xs" style={{ color: P.text }}>+49 160 80 70 713</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium" style={{ color: P.textMuted }}>E-Mail</span>
+              <span className="text-xs" style={{ color: P.text }}>patient@home.de</span>
+            </div>
+          </div>
+
+          {/* Implant section */}
+          <div className="px-5 py-3 space-y-2 border-b" style={{ borderBottomColor: P.border }}>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-semibold" style={{ color: P.textMuted }}>Implant</span>
+              <span className="text-xs flex items-center gap-1 transition-colors cursor-pointer" style={{ color: P.textSecondary }}>
+                Go to device <ExternalLink size={11} />
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium" style={{ color: P.textMuted }}>Battery</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-semibold" style={{ color: P.text }}>{patient.implant.battery.status}</span>
+                <Battery size={12} color={patient.implant.battery.voltage > 2.8 ? P.good : P.warning} />
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium" style={{ color: P.textMuted }}>Model</span>
+              <span className="text-xs font-semibold" style={{ color: P.text }}>{patient.implant.type.split(" ").slice(0, 2).join(" ")} — {patient.implant.type.split(" ").slice(2).join(" ")}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium" style={{ color: P.textMuted }}>Type</span>
+              <div className="flex items-center gap-1">
+                <ImplantIcon size={12} color={P.heartRate} />
+                <span className="text-xs" style={{ color: P.text }}>{patient.implant.type.includes("CRT") ? "CRT-D" : patient.implant.type.includes("S-ICD") ? "S-ICD" : "ICD"}</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium" style={{ color: P.textMuted }}>Remaining</span>
+              <span className="text-xs" style={{ color: P.text }}>{(() => { const y = parseInt(patient.implant.battery.estimatedEol) - 2026; return y > 0 ? `${y} years` : "< 1 year"; })()}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium" style={{ color: P.textMuted }}>Voltage/Impedance</span>
+              <span className="text-xs" style={{ color: P.text }}>{patient.implant.battery.voltage}V / {patient.implant.battery.impedance}Ω</span>
+            </div>
+            <button
+              onClick={() => setImplantDetailOpen(!implantDetailOpen)}
+              className="text-xs mt-2 flex items-center gap-1 transition-colors"
+              style={{ color: P.bpSystolic }}
+            >
+              <span style={{ transform: implantDetailOpen ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
+                <ChevronRight size={12} />
+              </span>
+              Elektroden & Details
+            </button>
+            {implantDetailOpen && (
+              <div className="mt-3 space-y-3 text-xs" style={{ color: P.textSecondary }}>
+                <div>
+                  <div className="font-semibold mb-1" style={{ color: P.text }}>Serial</div>
+                  <div className="font-mono">{patient.implant.serial}</div>
+                </div>
+                <div>
+                  <div className="font-semibold mb-1" style={{ color: P.text }}>Implantiert</div>
+                  <div>{patient.implant.implantDate}</div>
+                </div>
+                <div>
+                  <div className="font-semibold mb-1" style={{ color: P.text }}>Letzte Kontrolle</div>
+                  <div>{patient.implant.lastCheck}</div>
+                </div>
+                <div>
+                  <div className="font-semibold mb-1" style={{ color: P.text }}>Elektroden</div>
+                  {patient.implant.leads.map((lead: any, i: number) => (
+                    <div key={i} className="flex items-center gap-3 py-0.5">
+                      <span className="font-mono font-semibold" style={{ color: P.text }}>{lead.position}</span>
+                      <span>{lead.impedance} Ω</span>
+                      {lead.threshold != null && <span>Thr: {lead.threshold} V</span>}
+                      {lead.sensing != null && <span>Sens: {lead.sensing} mV</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* External devices */}
+          {patient.externalDevices.map((dev, i) => (
+            <div key={i} className="px-5 py-3 space-y-2 border-b last:border-b-0" style={{ borderBottomColor: P.border }}>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  {dev.type === "Waage" ? (
+                    <Weight size={14} color={P.weight} />
+                  ) : (
+                    <Activity size={14} color={P.bpSystolic} />
+                  )}
+                  <span className="text-xs font-semibold" style={{ color: P.text }}>{dev.type}</span>
+                </div>
+                <Bluetooth size={12} color={P.bpSystolic} />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium" style={{ color: P.textMuted }}>Model</span>
+                <span className="text-xs" style={{ color: P.text }}>{dev.manufacturer} {dev.model}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium" style={{ color: P.textMuted }}>Last transmission</span>
+                <span className="text-xs" style={{ color: P.text }}>{timeSince(dev.lastTransmission)}</span>
+              </div>
+            </div>
+          ))}
+        </aside>
+      )}
 
       {/* Confetti animation */}
       {showConfetti && (
