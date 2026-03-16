@@ -296,6 +296,9 @@ const translations = {
     noTherapies: "No therapies",
     successful: "Successful",
     unsuccessful: "Unsuccessful",
+    commentNote1: "Telefonat am 04.03. — Patient berichtet über Schwindel bei Lagewechsel. Medikation prüfen.",
+    commentNote2: "Telemonitoringdaten unauffällig. Weiter beobachten.",
+    commentNote3: "Patient berichtet über gelegentliches Schwindelgefühl bei schnellem Aufstehen.",
   },
   en: {
     dashboard: "Dashboard",
@@ -399,6 +402,9 @@ const translations = {
     noTherapies: "No therapies",
     successful: "Successful",
     unsuccessful: "Unsuccessful",
+    commentNote1: "Phone call on 04.03. — Patient reports dizziness during position changes. Review medication.",
+    commentNote2: "Telemonitoring data unremarkable. Continue observation.",
+    commentNote3: "Patient reports occasional dizziness when standing up quickly.",
   },
   hu: {
     dashboard: "Irányítópult",
@@ -502,6 +508,9 @@ const translations = {
     noTherapies: "Nincs terápia",
     successful: "Sikeres",
     unsuccessful: "Sikertelen",
+    commentNote1: "Telefonhívás 03.04-én — A páciens szédülésről számol be helyzetváltoztatáskor. Gyógyszerezés ellenőrzése.",
+    commentNote2: "Távolmonitorozási adatok feltűnés nélküliek. Továbbra is megfigyelés alatt.",
+    commentNote3: "A páciens alkalmi szédülésről számol be gyors felálláskor.",
   },
   mk: {
     // Tabs
@@ -613,6 +622,9 @@ const translations = {
     noTherapies: "Нема терапии",
     successful: "Успешно",
     unsuccessful: "Неуспешно",
+    commentNote1: "Телефонски повик на 04.03. — Пациентот пријавува вртоглавица при промена на положбата. Проверка на лекови.",
+    commentNote2: "Податоците од телемониторингот се без забелешки. Продолжи со набљудување.",
+    commentNote3: "Пациентот пријавува повремена вртоглавица при брзо станување.",
   },
   uk: {
     // Tabs
@@ -724,6 +736,9 @@ const translations = {
     noTherapies: "Без терапій",
     successful: "Успішно",
     unsuccessful: "Неуспішно",
+    commentNote1: "Телефонний дзвінок 04.03. — Пацієнт повідомляє про запаморочення при зміні положення. Перевірити медикаменти.",
+    commentNote2: "Дані телемоніторингу без відхилень. Продовжити спостереження.",
+    commentNote3: "Пацієнт повідомляє про періодичне запаморочення при швидкому вставанні.",
   },
 };
 
@@ -1330,6 +1345,18 @@ export default function VitalDashboard() {
   const ALARM_COLORS: Record<string, string> = { critical: P.alarmRed, warning: P.alarmYellow, change: P.alarmBlue, info: P.alarmGray };
 
   const tr = useMemo(() => translations[lang], [lang]);
+
+  /* ── Keep default comments in sync with selected language ── */
+  const defaultCommentsRef = useRef(new Set([1, 2, 3]));
+  useEffect(() => {
+    setComments(prev => prev.map(c => {
+      if (!defaultCommentsRef.current.has(c.id)) return c;
+      if (c.id === 1) return { ...c, text: tr.commentNote1 || c.text };
+      if (c.id === 2) return { ...c, text: tr.commentNote2 || c.text };
+      if (c.id === 3) return { ...c, text: tr.commentNote3 || c.text };
+      return c;
+    }));
+  }, [lang, tr]);
 
   const score = useMemo(() => complianceScore(allData, range), [allData, range]);
 
@@ -4080,8 +4107,8 @@ export default function VitalDashboard() {
                   setSelectedPatientIdx(newIdx);
                   const pd = PATIENTS_DATA[idx];
                   setComments([
-                    { id: 1, text: pd.notes, author: "Dr. Annamária Kosztin", time: "14.03.2026 09:15" },
-                    { id: 2, text: "Telemonitoringdaten unauffällig.", author: "Sr. Weber", time: "12.03.2026 14:30" },
+                    { id: 1, text: tr.commentNote1 || pd.notes, author: "Dr. Annamária Kosztin", time: "14.03.2026 09:15" },
+                    { id: 2, text: tr.commentNote2 || "Telemonitoringdaten unauffällig.", author: "Sr. Weber", time: "12.03.2026 14:30" },
                   ]);
                   setAllData(generateData());
                 }}
