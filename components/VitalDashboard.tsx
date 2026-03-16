@@ -4162,7 +4162,7 @@ export default function VitalDashboard() {
 
       {/* Right sidebar - Device Info */}
       {devicesOpen && (
-        <aside className="flex flex-col border-l" style={{ width: 340, minWidth: 340, backgroundColor: P.bgCard, borderLeftColor: P.border, minHeight: 0 }}>
+        <aside className="flex flex-col border-l overflow-hidden" style={{ width: 340, minWidth: 340, backgroundColor: P.bgCard, borderLeftColor: P.border, minHeight: 0 }}>
           {/* Fixed header with patient name + case number */}
           <div className="px-5 py-4 border-b" style={{ borderBottomColor: P.border, flexShrink: 0 }}>
             <div className="flex items-center justify-between">
