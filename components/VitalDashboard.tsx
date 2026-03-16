@@ -3712,7 +3712,7 @@ export default function VitalDashboard() {
      RENDER
      ═══════════════════════════════════════════════════════════════════════════════ */
   return (
-    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: P.bg, color: P.text }}>
+    <div className="flex overflow-hidden" style={{ backgroundColor: P.bg, color: P.text, height: "100dvh" }}>
       {/* ═══════════════════════════════════════════════════════════════════════════════
           1. ICON SIDEBAR (48px)
           ═══════════════════════════════════════════════════════════════════════════════ */}
@@ -4162,7 +4162,7 @@ export default function VitalDashboard() {
 
       {/* Right sidebar - Device Info */}
       {devicesOpen && (
-        <aside className="flex flex-col border-l" style={{ width: 340, minWidth: 340, backgroundColor: P.bgCard, borderLeftColor: P.border, height: "100%", minHeight: 0 }}>
+        <aside className="flex flex-col border-l" style={{ width: 340, minWidth: 340, backgroundColor: P.bgCard, borderLeftColor: P.border, minHeight: 0 }}>
           {/* Fixed header with patient name + case number */}
           <div className="px-5 py-4 border-b" style={{ borderBottomColor: P.border, flexShrink: 0 }}>
             <div className="flex items-center justify-between">
