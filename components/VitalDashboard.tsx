@@ -1075,7 +1075,7 @@ export default function VitalDashboard() {
   const [overviewVisible, setOverviewVisible] = useState({ sys: true, dia: true, hr: true, weight: true, mood: true });
   const [overviewHover, setOverviewHover] = useState<{ xPos: number; yPos: number; data: Record<string, any> } | null>(null);
   const [comments, setComments] = useState<{ id: number; text: string; author: string; time: string }[]>([
-    { id: 1, text: PATIENTS_DATA[0].notes, author: "Dr. Schmidt", time: "14.03.2026 09:15" },
+    { id: 1, text: PATIENTS_DATA[0].notes, author: "Dr. Annamária Kosztin", time: "14.03.2026 09:15" },
     { id: 2, text: "Telemonitoringdaten unauffällig. Weiter beobachten.", author: "Sr. Weber", time: "12.03.2026 14:30" },
     { id: 3, text: "Patient berichtet über gelegentliches Schwindelgefühl bei schnellem Aufstehen.", author: "Dr. Müller", time: "10.03.2026 11:00" },
   ]);
@@ -3857,7 +3857,7 @@ export default function VitalDashboard() {
                   setSelectedPatientIdx(newIdx);
                   const pd = PATIENTS_DATA[idx];
                   setComments([
-                    { id: 1, text: pd.notes, author: "Dr. Schmidt", time: "14.03.2026 09:15" },
+                    { id: 1, text: pd.notes, author: "Dr. Annamária Kosztin", time: "14.03.2026 09:15" },
                     { id: 2, text: "Telemonitoringdaten unauffällig.", author: "Sr. Weber", time: "12.03.2026 14:30" },
                   ]);
                   setAllData(generateData());
@@ -4163,7 +4163,7 @@ export default function VitalDashboard() {
 
       {/* Right sidebar - Device Info */}
       {devicesOpen && (
-        <aside className="flex flex-col border-l" style={{ width: 340, backgroundColor: P.bgCard, borderLeftColor: P.border }}>
+        <aside className="flex flex-col border-l h-full overflow-hidden" style={{ width: 340, backgroundColor: P.bgCard, borderLeftColor: P.border }}>
           {/* Header with patient name + case number */}
           <div className="px-5 py-4 border-b" style={{ borderBottomColor: P.border }}>
             <div className="flex items-center justify-between">
@@ -4265,6 +4265,10 @@ export default function VitalDashboard() {
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium" style={{ color: P.textMuted }}>Remaining</span>
               <span className="text-xs" style={{ color: P.text }}>{(() => { const y = parseInt(patient.implant.battery.estimatedEol) - 2026; return y > 0 ? `${y} years` : "< 1 year"; })()}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium" style={{ color: P.textMuted }}>Last transmission</span>
+              <span className="text-xs" style={{ color: P.text }}>{(() => { const icdDev = patient.externalDevices.find((d: any) => d.type.includes("ICD") || d.type.includes("Defibrillator") || d.type.includes("Herzschrittmacher")); return icdDev ? timeSince(icdDev.lastTransmission) : timeSince(patient.implant.lastCheck); })()}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium" style={{ color: P.textMuted }}>Voltage/Impedance</span>
@@ -4435,7 +4439,7 @@ export default function VitalDashboard() {
                 onChange={(e) => setCommentInput(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && commentInput.trim()) {
-                    setComments(prev => [{ id: Date.now(), text: commentInput.trim(), author: "Dr. Schmidt", time: new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) + " " + new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) }, ...prev]);
+                    setComments(prev => [{ id: Date.now(), text: commentInput.trim(), author: "Dr. Annamária Kosztin", time: new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) + " " + new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) }, ...prev]);
                     setCommentInput("");
                   }
                 }}
@@ -4446,7 +4450,7 @@ export default function VitalDashboard() {
               <button
                 onClick={() => {
                   if (commentInput.trim()) {
-                    setComments(prev => [{ id: Date.now(), text: commentInput.trim(), author: "Dr. Schmidt", time: new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) + " " + new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) }, ...prev]);
+                    setComments(prev => [{ id: Date.now(), text: commentInput.trim(), author: "Dr. Annamária Kosztin", time: new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) + " " + new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) }, ...prev]);
                     setCommentInput("");
                   }
                 }}
