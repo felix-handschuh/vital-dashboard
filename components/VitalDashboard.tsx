@@ -3712,7 +3712,7 @@ export default function VitalDashboard() {
      RENDER
      ═══════════════════════════════════════════════════════════════════════════════ */
   return (
-    <div className="flex overflow-hidden" style={{ backgroundColor: P.bg, color: P.text, height: "100dvh" }}>
+    <div className="flex overflow-hidden" style={{ backgroundColor: P.bg, color: P.text, height: "100%" }}>
       {/* ═══════════════════════════════════════════════════════════════════════════════
           1. ICON SIDEBAR (48px)
           ═══════════════════════════════════════════════════════════════════════════════ */}

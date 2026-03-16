@@ -4,6 +4,12 @@
   --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Full height layout */
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
 /* Smooth theme transitions */
 body {
   transition: background-color 0.2s ease, color 0.2s ease;
