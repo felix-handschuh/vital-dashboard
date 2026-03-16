@@ -2949,8 +2949,8 @@ export default function VitalDashboard() {
     };
 
     return (
-      <div className="fixed bottom-0 left-0 right-0 z-40 px-6 pb-2 pt-1"
-        style={{ backgroundColor: P.shortcutBg, borderTop: `1px solid ${P.border}`, backdropFilter: "blur(8px)" }}>
+      <div className="fixed bottom-0 left-0 z-40 px-6 pb-2 pt-1"
+        style={{ right: devicesOpen ? 340 : 0, backgroundColor: P.shortcutBg, borderTop: `1px solid ${P.border}`, backdropFilter: "blur(8px)", transition: "right 0.2s ease" }}>
         {/* Timeline slider */}
         <div className="relative mb-1.5">
           {/* Drag label - shows month/year while dragging (centered above slider track) */}
