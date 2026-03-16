@@ -3712,7 +3712,7 @@ export default function VitalDashboard() {
      RENDER
      ═══════════════════════════════════════════════════════════════════════════════ */
   return (
-    <div className="flex h-screen" style={{ backgroundColor: P.bg, color: P.text }}>
+    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: P.bg, color: P.text }}>
       {/* ═══════════════════════════════════════════════════════════════════════════════
           1. ICON SIDEBAR (48px)
           ═══════════════════════════════════════════════════════════════════════════════ */}
@@ -3945,25 +3945,24 @@ export default function VitalDashboard() {
             >
               ⋮
             </button>
+            <div className="w-px h-5" style={{ backgroundColor: P.border }} />
+            <button
+              onClick={() => setDevicesOpen(!devicesOpen)}
+              className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
+              style={{ backgroundColor: devicesOpen ? P.accent : P.bgInput, color: devicesOpen ? "#fff" : P.textMuted }}
+              title="Patientenprofil"
+            >
+              <User size={16} />
+            </button>
           </div>
         </div>
 
         {/* Patient header - simplified */}
-        <div className="px-6 py-3 border-b flex items-center justify-between" style={{ borderBottomColor: P.border }}>
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold" style={{ color: P.text }}>{patient.name}</h1>
-            <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "rgba(22,163,74,0.15)", color: "#16A34A" }}>
-              {tr.telemonitoring || "Telemonitoring"}
-            </span>
-          </div>
-          <button
-            onClick={() => setDevicesOpen(!devicesOpen)}
-            className="w-9 h-9 rounded-full flex items-center justify-center transition-all"
-            style={{ backgroundColor: devicesOpen ? P.accent : P.bgInput, color: devicesOpen ? "#fff" : P.textMuted }}
-            title="Patientenprofil"
-          >
-            <User size={18} />
-          </button>
+        <div className="px-6 py-3 border-b flex items-center gap-3" style={{ borderBottomColor: P.border }}>
+          <h1 className="text-xl font-bold" style={{ color: P.text }}>{patient.name}</h1>
+          <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "rgba(22,163,74,0.15)", color: "#16A34A" }}>
+            {tr.telemonitoring || "Telemonitoring"}
+          </span>
         </div>
 
         {/* Tab bar */}
@@ -4163,7 +4162,7 @@ export default function VitalDashboard() {
 
       {/* Right sidebar - Device Info */}
       {devicesOpen && (
-        <aside className="flex flex-col border-l overflow-hidden" style={{ width: 340, minWidth: 340, backgroundColor: P.bgCard, borderLeftColor: P.border, height: "100vh", maxHeight: "100vh" }}>
+        <aside className="flex flex-col border-l overflow-hidden" style={{ width: 340, minWidth: 340, backgroundColor: P.bgCard, borderLeftColor: P.border, height: "100%", maxHeight: "100%" }}>
           <div className="flex-1 min-h-0 overflow-y-auto">
           {/* Header with patient name + case number */}
           <div className="px-5 py-4 border-b" style={{ borderBottomColor: P.border }}>
