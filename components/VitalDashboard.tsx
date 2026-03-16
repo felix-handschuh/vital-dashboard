@@ -255,6 +255,31 @@ const translations = {
       "I25.1": "Atherosklerotische Herzkrankheit",
       "E11.9": "Diabetes mellitus, Typ 2, ohne Komplikationen",
     },
+    settings: "Einstellungen",
+    birthday: "Geburtstag",
+    phone: "Telefon",
+    email: "E-Mail",
+    clinicalParameters: "Klinische Parameter",
+    comments: "Kommentare",
+    addComment: "Kommentar hinzufügen...",
+    episodes: "Episoden",
+    weekFrom: "KW ab",
+    dayDetail: "Tagesdetail",
+    electrodesDetails: "Elektroden & Details",
+    goToDevice: "Go to device",
+    openIegm: "Öffne IEGM",
+    monitoringOnly: "Monitoring only",
+    battery: "Batterie",
+    model: "Modell",
+    type: "Typ",
+    remaining: "Restlaufzeit",
+    lastTransmission: "Letzte Transmission",
+    voltageImpedance: "Voltage/Impedance",
+    compliance: "Compliance",
+    trend30Days: "TREND — 30 TAGE",
+    iegmRecordings: "IEGM-AUFZEICHNUNGEN",
+    confirmedBy: "Bestätigt",
+    noData: "Keine Daten",
     beeToast: "Du kleines Fleißbienchen! Deine Patienten haben es gut!",
   },
   en: {
@@ -318,17 +343,32 @@ const translations = {
       "I25.1": "Atherosclerotic heart disease",
       "E11.9": "Type 2 diabetes mellitus, without complications",
     },
+    settings: "Settings",
+    birthday: "Date of Birth",
+    phone: "Phone",
+    email: "Email",
+    clinicalParameters: "Clinical Parameters",
+    comments: "Comments",
+    addComment: "Add comment...",
+    episodes: "Episodes",
+    weekFrom: "Week from",
+    dayDetail: "Day Detail",
+    electrodesDetails: "Electrodes & Details",
+    goToDevice: "Go to device",
+    openIegm: "Open IEGM",
+    monitoringOnly: "Monitoring only",
+    battery: "Battery",
+    model: "Model",
+    type: "Type",
+    remaining: "Remaining",
+    lastTransmission: "Last Transmission",
+    voltageImpedance: "Voltage/Impedance",
+    compliance: "Compliance",
+    trend30Days: "TREND — 30 DAYS",
+    iegmRecordings: "IEGM RECORDINGS",
+    confirmedBy: "Confirmed by",
+    noData: "No data",
     beeToast: "You busy little bee! Your patients are in good hands!",
-    male: "Männlich",
-    female: "Weiblich",
-    yes: "Ja",
-    no: "Nein",
-    icd10Texts: {
-      "I50.0": "Herzinsuffizienz, kongestiv",
-      "I48.0": "Vorhofflimmern, paroxysmal",
-      "I25.1": "Atherosklerotische Herzkrankheit",
-      "E11.9": "Diabetes mellitus, Typ 2, ohne Komplikationen",
-    },
   },
   hu: {
     dashboard: "Irányítópult",
@@ -391,6 +431,31 @@ const translations = {
       "I25.1": "Atherosclerotikus szívbetegség",
       "E11.9": "2-es típusú diabetes mellitus, szövődmények nélkül",
     },
+    settings: "Beállítások",
+    birthday: "Születési dátum",
+    phone: "Telefon",
+    email: "E-mail",
+    clinicalParameters: "Klinikai paraméterek",
+    comments: "Megjegyzések",
+    addComment: "Megjegyzés hozzáadása...",
+    episodes: "Epizódok",
+    weekFrom: "Hét kezdete",
+    dayDetail: "Napi részletek",
+    electrodesDetails: "Elektródák és részletek",
+    goToDevice: "Eszköz megnyitása",
+    openIegm: "IEGM megnyitása",
+    monitoringOnly: "Csak megfigyelés",
+    battery: "Akkumulátor",
+    model: "Modell",
+    type: "Típus",
+    remaining: "Hátralévő",
+    lastTransmission: "Utolsó átvitel",
+    voltageImpedance: "Feszültség/Impedancia",
+    compliance: "Megfelelőség",
+    trend30Days: "TREND — 30 NAP",
+    iegmRecordings: "IEGM-FELVÉTELEK",
+    confirmedBy: "Jóváhagyta",
+    noData: "Nincs adat",
     beeToast: "Te kis szorgalmas méhecske! A pácienseidnek jó dolguk van!",
   },
   mk: {
@@ -462,6 +527,31 @@ const translations = {
       "I25.1": "Атеросклеротична болест на срцето",
       "E11.9": "Дијабетес мелитус тип 2, без компликации",
     },
+    settings: "Поставки",
+    birthday: "Датум на раѓање",
+    phone: "Телефон",
+    email: "Е-пошта",
+    clinicalParameters: "Клинички параметри",
+    comments: "Коментари",
+    addComment: "Додади коментар...",
+    episodes: "Епизоди",
+    weekFrom: "Недела од",
+    dayDetail: "Дневен детал",
+    electrodesDetails: "Електроди и детали",
+    goToDevice: "Оди до уред",
+    openIegm: "Отвори IEGM",
+    monitoringOnly: "Само мониторирање",
+    battery: "Батерија",
+    model: "Модел",
+    type: "Тип",
+    remaining: "Преостанато",
+    lastTransmission: "Последна трансмисија",
+    voltageImpedance: "Напон/Импеданса",
+    compliance: "Усогласеност",
+    trend30Days: "ТРЕНД — 30 ДЕНА",
+    iegmRecordings: "IEGM-СНИМКИ",
+    confirmedBy: "Потврдено од",
+    noData: "Нема податоци",
     beeToast: "Ти мало вредно пчеличка! Твоите пациенти ја имаат добро!",
   },
   uk: {
@@ -533,6 +623,31 @@ const translations = {
       "I25.1": "Атеросклеротична хвороба серця",
       "E11.9": "Цукровий діабет 2 типу без ускладнень",
     },
+    settings: "Налаштування",
+    birthday: "Дата народження",
+    phone: "Телефон",
+    email: "Ел. пошта",
+    clinicalParameters: "Клінічні параметри",
+    comments: "Коментарі",
+    addComment: "Додати коментар...",
+    episodes: "Епізоди",
+    weekFrom: "Тиждень від",
+    dayDetail: "Деталі дня",
+    electrodesDetails: "Електроди та деталі",
+    goToDevice: "Перейти до пристрою",
+    openIegm: "Відкрити IEGM",
+    monitoringOnly: "Тільки моніторинг",
+    battery: "Батарея",
+    model: "Модель",
+    type: "Тип",
+    remaining: "Залишок",
+    lastTransmission: "Остання трансмісія",
+    voltageImpedance: "Напруга/Імпеданс",
+    compliance: "Відповідність",
+    trend30Days: "ТРЕНД — 30 ДНІВ",
+    iegmRecordings: "ЗАПИСИ IEGM",
+    confirmedBy: "Підтверджено",
+    noData: "Немає даних",
     beeToast: "Ти маленька працьовита бджілка! Твоїм пацієнтам пощастило!",
   },
 };
@@ -2464,7 +2579,7 @@ export default function VitalDashboard() {
       {sidePanel && (
         <>
           <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: `1px solid ${P.border}` }}>
-            <h3 className="text-lg font-semibold tracking-tight" style={{ color: P.text }}>Tagesdetail — {sidePanel.date}</h3>
+            <h3 className="text-lg font-semibold tracking-tight" style={{ color: P.text }}>{tr.dayDetail || "Tagesdetail"} — {sidePanel.date}</h3>
             <button onClick={() => setSidePanel(null)} className="p-1.5 rounded-lg transition-colors" style={{ color: P.textMuted }}><X size={20} /></button>
           </div>
           <div className="p-5 space-y-4">
@@ -3694,8 +3809,8 @@ export default function VitalDashboard() {
       {episodeSidebar && (
         <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${P.border}` }}>
           <div>
-            <div className="text-base font-semibold" style={{ color: P.text }}>Episoden</div>
-            <div className="text-xs" style={{ color: P.textMuted }}>KW ab {new Date(episodeSidebar.date).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}</div>
+            <div className="text-base font-semibold" style={{ color: P.text }}>{tr.episodes || "Episoden"}</div>
+            <div className="text-xs" style={{ color: P.textMuted }}>{tr.weekFrom || "KW ab"} {new Date(episodeSidebar.date).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}</div>
           </div>
           <button onClick={() => setEpisodeSidebar(null)} className="p-1.5 rounded-md" style={{ color: P.textMuted }}><X size={16} /></button>
         </div>
@@ -3715,7 +3830,7 @@ export default function VitalDashboard() {
               <span className="text-xs" style={{ color: P.textMuted }}>{ep.duration ? `${Math.floor(ep.duration / 60)}:${String(ep.duration % 60).padStart(2, "0")}` : "—"}</span>
             </div>
             <div className="flex items-center gap-3 text-xs" style={{ color: P.textMuted }}>
-              <span>{ep.therapy || "Monitoring only"}</span>
+              <span>{ep.therapy || (tr.monitoringOnly || "Monitoring only")}</span>
               {ep.result && ep.result !== "-" && (
                 <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
                   style={{ backgroundColor: ep.result === "Successful" ? `${P.good}22` : `${P.danger}22`, color: ep.result === "Successful" ? P.good : P.danger }}>
@@ -3729,6 +3844,20 @@ export default function VitalDashboard() {
           </div>
         ))}
       </div>
+      {episodeSidebar && (
+        <div className="px-5 py-4 border-t" style={{ borderTopColor: P.border, position: "sticky", bottom: 0, backgroundColor: P.bgPanel }}>
+          <button
+            onClick={() => {
+              const firstWithWaveform = episodeSidebar.episodes.find((ep: any) => ep.waveform);
+              if (firstWithWaveform) { setEcgDrawer(firstWithWaveform); setEpisodeSidebar(null); }
+            }}
+            className="w-full py-2 px-4 rounded-lg text-sm font-semibold transition-colors"
+            style={{ backgroundColor: P.accent, color: "#fff" }}
+          >
+            {tr.openIegm || "Öffne IEGM"}
+          </button>
+        </div>
+      )}
     </div>
   );
 
@@ -4222,18 +4351,18 @@ export default function VitalDashboard() {
               <span className="text-xs" style={{ color: P.text }}>{patient.gender === "Männlich" ? "♂ " + (tr.male || "Männlich") : "♀ " + (tr.female || "Weiblich")}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium" style={{ color: P.textMuted }}>Telefon</span>
+              <span className="text-xs font-medium" style={{ color: P.textMuted }}>{tr.phone || "Telefon"}</span>
               <span className="text-xs" style={{ color: P.text }}>+49 160 80 70 713</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium" style={{ color: P.textMuted }}>E-Mail</span>
+              <span className="text-xs font-medium" style={{ color: P.textMuted }}>{tr.email || "E-Mail"}</span>
               <span className="text-xs" style={{ color: P.text }}>patient@home.de</span>
             </div>
           </div>
 
           {/* Clinical parameters */}
           <div className="px-5 py-3 space-y-2 border-b" style={{ borderBottomColor: P.border }}>
-            <span className="text-xs font-semibold" style={{ color: P.textMuted }}>Klinische Parameter</span>
+            <span className="text-xs font-semibold" style={{ color: P.textMuted }}>{tr.clinicalParameters || "Klinische Parameter"}</span>
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium" style={{ color: P.textMuted }}>NYHA-Klasse</span>
               <span className="text-xs font-semibold" style={{ color: P.text }}>{patient.nyha}</span>
@@ -4266,7 +4395,7 @@ export default function VitalDashboard() {
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-semibold" style={{ color: P.textMuted }}>Implant</span>
               <span className="text-xs flex items-center gap-1 transition-colors cursor-pointer" style={{ color: P.textSecondary }}>
-                Go to device <ExternalLink size={11} />
+                {tr.goToDevice || "Go to device"} <ExternalLink size={11} />
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -4307,7 +4436,7 @@ export default function VitalDashboard() {
               <span style={{ transform: implantDetailOpen ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
                 <ChevronRight size={12} />
               </span>
-              Elektroden & Details
+              {tr.electrodesDetails || "Elektroden & Details"}
             </button>
             {implantDetailOpen && (
               <div className="mt-3 space-y-4 text-xs" style={{ color: P.textSecondary }}>
@@ -4403,7 +4532,7 @@ export default function VitalDashboard() {
               </div>
               <div className="flex items-center justify-end mt-1">
                 <span className="text-xs flex items-center gap-1 cursor-pointer transition-colors" style={{ color: P.textSecondary }}>
-                  Go to device <ExternalLink size={11} />
+                  {tr.goToDevice || "Go to device"} <ExternalLink size={11} />
                 </span>
               </div>
             </div>
@@ -4411,7 +4540,7 @@ export default function VitalDashboard() {
 
           {/* Comments section */}
           <div className="px-5 py-3">
-            <span className="text-xs font-semibold" style={{ color: P.textMuted }}>Kommentare</span>
+            <span className="text-xs font-semibold" style={{ color: P.textMuted }}>{tr.comments || "Kommentare"}</span>
             <div className="mt-2 space-y-3">
               {comments.map((c) => (
                 <div key={c.id} className="group">
@@ -4469,7 +4598,7 @@ export default function VitalDashboard() {
                     requestAnimationFrame(() => { const el = sidebarScrollRef.current; if (el) el.scrollTop = el.scrollHeight; });
                   }
                 }}
-                placeholder="Kommentar hinzufügen..."
+                placeholder={tr.addComment || "Kommentar hinzufügen..."}
                 className="flex-1 text-xs rounded-md px-3 py-2"
                 style={{ backgroundColor: P.bgInput, color: P.text, border: `1px solid ${P.border}` }}
               />
