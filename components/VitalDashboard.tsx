@@ -281,6 +281,21 @@ const translations = {
     confirmedBy: "Bestätigt",
     noData: "Keine Daten",
     beeToast: "Du kleines Fleißbienchen! Deine Patienten haben es gut!",
+    episodeTimeline: "Episoden-Zeitleiste",
+    duration: "Dauer",
+    device: "Gerät",
+    noise: "Noise",
+    samplingRate: "Abtastrate",
+    confirmed: "Bestätigt",
+    trigger: "Auslöser",
+    noiseHigh: "Hoch",
+    noiseMedium: "Mittel",
+    noiseLow: "Niedrig",
+    validated: "validiert",
+    check: "prüfen",
+    noTherapies: "No therapies",
+    successful: "Successful",
+    unsuccessful: "Unsuccessful",
   },
   en: {
     dashboard: "Dashboard",
@@ -369,6 +384,21 @@ const translations = {
     confirmedBy: "Confirmed by",
     noData: "No data",
     beeToast: "You busy little bee! Your patients are in good hands!",
+    episodeTimeline: "Episode Timeline",
+    duration: "Duration",
+    device: "Device",
+    noise: "Noise",
+    samplingRate: "Sampling Rate",
+    confirmed: "Confirmed",
+    trigger: "Trigger",
+    noiseHigh: "High",
+    noiseMedium: "Medium",
+    noiseLow: "Low",
+    validated: "validated",
+    check: "check",
+    noTherapies: "No therapies",
+    successful: "Successful",
+    unsuccessful: "Unsuccessful",
   },
   hu: {
     dashboard: "Irányítópult",
@@ -457,6 +487,21 @@ const translations = {
     confirmedBy: "Jóváhagyta",
     noData: "Nincs adat",
     beeToast: "Te kis szorgalmas méhecske! A pácienseidnek jó dolguk van!",
+    episodeTimeline: "Epizód idővonal",
+    duration: "Időtartam",
+    device: "Eszköz",
+    noise: "Zaj",
+    samplingRate: "Mintavételi ráta",
+    confirmed: "Jóváhagyva",
+    trigger: "Kiváltó",
+    noiseHigh: "Magas",
+    noiseMedium: "Közepes",
+    noiseLow: "Alacsony",
+    validated: "érvényesítve",
+    check: "ellenőrzés",
+    noTherapies: "Nincs terápia",
+    successful: "Sikeres",
+    unsuccessful: "Sikertelen",
   },
   mk: {
     // Tabs
@@ -553,6 +598,21 @@ const translations = {
     confirmedBy: "Потврдено од",
     noData: "Нема податоци",
     beeToast: "Ти мало вредно пчеличка! Твоите пациенти ја имаат добро!",
+    episodeTimeline: "Временска линија на епизоди",
+    duration: "Траење",
+    device: "Уред",
+    noise: "Шум",
+    samplingRate: "Фреквенција на земање примерок",
+    confirmed: "Потврдено",
+    trigger: "Активирање",
+    noiseHigh: "Високо",
+    noiseMedium: "Средно",
+    noiseLow: "Ниско",
+    validated: "валидирано",
+    check: "проверка",
+    noTherapies: "Нема терапии",
+    successful: "Успешно",
+    unsuccessful: "Неуспешно",
   },
   uk: {
     // Tabs
@@ -649,6 +709,21 @@ const translations = {
     confirmedBy: "Підтверджено",
     noData: "Немає даних",
     beeToast: "Ти маленька працьовита бджілка! Твоїм пацієнтам пощастило!",
+    episodeTimeline: "Часова шкала епізодів",
+    duration: "Тривалість",
+    device: "Пристрій",
+    noise: "Шум",
+    samplingRate: "Частота дискретизації",
+    confirmed: "Підтверджено",
+    trigger: "Тригер",
+    noiseHigh: "Високий",
+    noiseMedium: "Середній",
+    noiseLow: "Низький",
+    validated: "валідовано",
+    check: "перевірка",
+    noTherapies: "Без терапій",
+    successful: "Успішно",
+    unsuccessful: "Неуспішно",
   },
 };
 
@@ -2212,7 +2287,7 @@ export default function VitalDashboard() {
         <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: `1px solid ${P.border}` }}>
           <div className="flex items-center gap-3">
             <BarChart3 size={18} color={P.text} />
-            <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>Episoden-Zeitleiste</span>
+            <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>{tr.episodeTimeline || "Episoden-Zeitleiste"}</span>
           </div>
           <div className="flex items-center gap-3 text-xs" style={{ color: P.textMuted }}>
             {Object.entries(EPISODE_COLORS).map(([type, color]) => (
@@ -2479,7 +2554,7 @@ export default function VitalDashboard() {
                       <div className="text-sm font-medium" style={{ color: P.text }}>IEGM-Aufzeichnung · {ecg.time}</div>
                       <div className="text-xs mt-0.5" style={{ color: P.textMuted }}>
                         {ecg.duration}s{ecg.atrialBurden ? ` · Atrial Burden: ${ecg.atrialBurden}%` : ""}
-                        {ecg.trigger && <span className="ml-2">Auslöser: {ecg.trigger}</span>}
+                        {ecg.trigger && <span className="ml-2">{(tr.trigger || "Auslöser") + ": "}{ecg.trigger}</span>}
                         {ecg.alarm && <span className="ml-2 px-1.5 py-0.5 rounded-full text-[10px] font-semibold" style={{ backgroundColor: `${ALARM_COLORS[ecg.alarm]}22`, color: ALARM_COLORS[ecg.alarm] }}>{ALARM_LABELS[ecg.alarm]}</span>}
                         {ecg.acknowledgedBy && <span className="ml-2">✓ {ecg.acknowledgedBy}</span>}
                       </div>
@@ -2564,7 +2639,7 @@ export default function VitalDashboard() {
       {hoverInfo.type === "event" && (
         <div>
           <div className="text-base font-medium" style={{ color: P.text }}>{hoverInfo.label}</div>
-          {hoverInfo.acknowledgedBy && <div className="text-sm mt-1" style={{ color: P.textMuted }}>Bestätigt: {hoverInfo.acknowledgedBy}</div>}
+          {hoverInfo.acknowledgedBy && <div className="text-sm mt-1" style={{ color: P.textMuted }}>{(tr.confirmed || "Bestätigt") + ": "}{hoverInfo.acknowledgedBy}</div>}
         </div>
       )}
       {hoverInfo.alarm && <div className="mt-1 flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: ALARM_COLORS[hoverInfo.alarm] }} /><span className="text-sm">{ALARM_LABELS[hoverInfo.alarm]}</span></div>}
@@ -2711,7 +2786,7 @@ export default function VitalDashboard() {
               )}
               {dayEcgs.length > 0 && (
                 <div className="space-y-2">
-                  <div className="text-sm font-medium uppercase tracking-wider" style={{ color: P.textMuted }}>IEGM-Aufzeichnungen</div>
+                  <div className="text-sm font-medium uppercase tracking-wider" style={{ color: P.textMuted }}>{tr.iegmRecordings || "IEGM-AUFZEICHNUNGEN"}</div>
                   {dayEcgs.map((ecg, i) => (
                     <div key={i} className="rounded-lg p-4 cursor-pointer transition-colors" style={{ backgroundColor: P.bgCardHover }} onClick={() => { setSidePanel(null); setEcgDrawer(ecg); }}>
                       <div className="flex items-center justify-between">
@@ -2723,7 +2798,7 @@ export default function VitalDashboard() {
                           Atrial Burden: {ecg.atrialBurden}%
                         </div>
                       )}
-                      {ecg.acknowledgedBy && <div className="text-sm mt-1" style={{ color: P.textMuted }}>Bestätigt: {ecg.acknowledgedBy}</div>}
+                      {ecg.acknowledgedBy && <div className="text-sm mt-1" style={{ color: P.textMuted }}>{(tr.confirmed || "Bestätigt") + ": "}{ecg.acknowledgedBy}</div>}
                     </div>
                   ))}
                 </div>
@@ -2774,7 +2849,7 @@ export default function VitalDashboard() {
 
   const ecgGridColor = theme === "dark" ? "rgba(129,140,248,0.08)" : "rgba(99,102,241,0.08)";
   const ecgGridStrongColor = theme === "dark" ? "rgba(129,140,248,0.18)" : "rgba(99,102,241,0.18)";
-  const ecgNoiseLevel = ecgDrawer ? (ecgDrawer.atrialBurden && ecgDrawer.atrialBurden > 15 ? "Hoch" : ecgDrawer.atrialBurden && ecgDrawer.atrialBurden > 5 ? "Mittel" : "Niedrig") : "—";
+  const ecgNoiseLevel = ecgDrawer ? (ecgDrawer.atrialBurden && ecgDrawer.atrialBurden > 15 ? (tr.noiseHigh || "Hoch") : ecgDrawer.atrialBurden && ecgDrawer.atrialBurden > 5 ? (tr.noiseMedium || "Mittel") : (tr.noiseLow || "Niedrig")) : "—";
 
   // ECG drawer timeline position
   const [ecgTimelinePos, setEcgTimelinePos] = useState(0);
@@ -2801,7 +2876,7 @@ export default function VitalDashboard() {
                 <span className="text-sm font-semibold" style={{ color: ecgDrawer.atrialBurden > 15 ? P.atrialHigh : P.atrialMod }}>AF: {ecgDrawer.atrialBurden}%</span>
               )}
               {ecgDrawer.trigger && (
-                <span className="text-sm px-2.5 py-1 rounded-full font-medium" style={{ backgroundColor: `${P.bpSystolic}22`, color: P.bpSystolic }}>Auslöser: {ecgDrawer.trigger}</span>
+                <span className="text-sm px-2.5 py-1 rounded-full font-medium" style={{ backgroundColor: `${P.bpSystolic}22`, color: P.bpSystolic }}>{(tr.trigger || "Auslöser") + ": "}{ecgDrawer.trigger}</span>
           )}
         </div>
         <div className="flex items-center gap-3">
@@ -2816,27 +2891,27 @@ export default function VitalDashboard() {
       <div className="flex items-center gap-5 px-6 py-2 text-sm" style={{ borderBottom: `1px solid ${P.border}`, backgroundColor: theme === "dark" ? "rgba(39,39,42,0.3)" : "rgba(244,244,245,0.3)" }}>
         <div className="flex items-center gap-1.5">
           <Clock size={13} style={{ color: P.textMuted }} />
-          <span style={{ color: P.textMuted }}>Dauer:</span>
+          <span style={{ color: P.textMuted }}>{(tr.duration || "Dauer") + ":"}</span>
           <span className="font-semibold" style={{ color: P.text }}>{ecgDrawer.duration}s</span>
         </div>
         <div className="flex items-center gap-1.5">
           <Cpu size={13} style={{ color: P.textMuted }} />
-          <span style={{ color: P.textMuted }}>Gerät:</span>
+          <span style={{ color: P.textMuted }}>{(tr.device || "Gerät") + ":"}</span>
           <span className="font-semibold" style={{ color: P.text }}>Biotronik Rivacor 7 VR-T DX</span>
         </div>
         <div className="flex items-center gap-1.5">
           <Activity size={13} style={{ color: P.textMuted }} />
-          <span style={{ color: P.textMuted }}>Noise:</span>
-          <span className="font-semibold" style={{ color: ecgNoiseLevel === "Hoch" ? P.danger : ecgNoiseLevel === "Mittel" ? P.warning : P.good }}>{ecgNoiseLevel}</span>
+          <span style={{ color: P.textMuted }}>{(tr.noise || "Noise") + ":"}</span>
+          <span className="font-semibold" style={{ color: ecgNoiseLevel === (tr.noiseHigh || "Hoch") ? P.danger : ecgNoiseLevel === (tr.noiseMedium || "Mittel") ? P.warning : P.good }}>{ecgNoiseLevel}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span style={{ color: P.textMuted }}>Abtastrate:</span>
+          <span style={{ color: P.textMuted }}>{(tr.samplingRate || "Abtastrate") + ":"}</span>
           <span className="font-semibold" style={{ color: P.text }}>250 Hz</span>
         </div>
         {ecgDrawer.acknowledgedBy && (
           <div className="flex items-center gap-1.5">
             <CheckCircle size={13} style={{ color: P.good }} />
-            <span style={{ color: P.textMuted }}>Bestätigt:</span>
+            <span style={{ color: P.textMuted }}>{(tr.confirmed || "Bestätigt") + ":"}</span>
             <span className="font-semibold" style={{ color: P.text }}>{ecgDrawer.acknowledgedBy}</span>
           </div>
         )}
@@ -3841,23 +3916,18 @@ export default function VitalDashboard() {
             {ep.atrialBurden > 0 && (
               <div className="text-xs mt-1" style={{ color: ep.atrialBurden > 15 ? P.danger : P.warning }}>AF: {ep.atrialBurden}%</div>
             )}
+            {ep.waveform && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setEcgDrawer(ep); setEpisodeSidebar(null); }}
+                className="mt-2 w-full py-1.5 px-3 rounded-md text-xs font-semibold transition-colors"
+                style={{ backgroundColor: `${P.accent}15`, color: P.accent, border: `1px solid ${P.accent}33` }}
+              >
+                {tr.openIegm || "Öffne IEGM"}
+              </button>
+            )}
           </div>
         ))}
       </div>
-      {episodeSidebar && (
-        <div className="px-5 py-4 border-t" style={{ borderTopColor: P.border, position: "sticky", bottom: 0, backgroundColor: P.bgPanel }}>
-          <button
-            onClick={() => {
-              const firstWithWaveform = episodeSidebar.episodes.find((ep: any) => ep.waveform);
-              if (firstWithWaveform) { setEcgDrawer(firstWithWaveform); setEpisodeSidebar(null); }
-            }}
-            className="w-full py-2 px-4 rounded-lg text-sm font-semibold transition-colors"
-            style={{ backgroundColor: P.accent, color: "#fff" }}
-          >
-            {tr.openIegm || "Öffne IEGM"}
-          </button>
-        </div>
-      )}
     </div>
   );
 
