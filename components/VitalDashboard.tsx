@@ -1106,6 +1106,7 @@ export default function VitalDashboard() {
   const toastIdRef = useRef(0);
   const [chartOffset, setChartOffset] = useState(0);
   const timelineRef = useRef<HTMLDivElement>(null);
+  const sidebarScrollRef = useRef<HTMLDivElement>(null);
   const [isDraggingTimeline, setIsDraggingTimeline] = useState<"pan" | "left" | "right" | null>(null);
   const dragStartRef = useRef<{ x: number; offset: number; range: number }>({ x: 0, offset: 0, range: 90 });
 
@@ -1853,7 +1854,7 @@ export default function VitalDashboard() {
             onMouseMove={handleOverviewHover}
             onMouseLeave={handleOverviewLeave}
             onClick={handleOverviewClick}
-            className="cursor-pointer"
+            className="cursor-crosshair"
           >
             <defs>
               <clipPath id="clip-overview">
@@ -1882,7 +1883,10 @@ export default function VitalDashboard() {
                     const x = xScale(new Date(p.date));
                     const y = yScaleLeft(p.systolic);
                     const s = 3;
-                    return <polygon key={`sys-${i}`} points={`${x},${y - s - 1} ${x - s},${y + s - 1} ${x + s},${y + s - 1}`} fill={P.bpSystolic} />;
+                    return <g key={`sys-${i}`} className="cursor-crosshair" onClick={(e) => { e.stopPropagation(); const bp = allData.bp.find(b => b.date === p.date); setSidePanel({ type: "bp", date: p.date, data: bp || p }); }}>
+                      <circle cx={x} cy={y} r={8} fill="transparent" />
+                      <polygon points={`${x},${y - s - 1} ${x - s},${y + s - 1} ${x + s},${y + s - 1}`} fill={P.bpSystolic} />
+                    </g>;
                   })}
                 </>}
                 {overviewVisible.dia && <>
@@ -1891,7 +1895,10 @@ export default function VitalDashboard() {
                     const x = xScale(new Date(p.date));
                     const y = yScaleLeft(p.diastolic);
                     const s = 3;
-                    return <polygon key={`dia-${i}`} points={`${x},${y + s + 1} ${x - s},${y - s + 1} ${x + s},${y - s + 1}`} fill={P.bpDiastolic} />;
+                    return <g key={`dia-${i}`} className="cursor-crosshair" onClick={(e) => { e.stopPropagation(); const bp = allData.bp.find(b => b.date === p.date); setSidePanel({ type: "bp", date: p.date, data: bp || p }); }}>
+                      <circle cx={x} cy={y} r={8} fill="transparent" />
+                      <polygon points={`${x},${y + s + 1} ${x - s},${y - s + 1} ${x + s},${y - s + 1}`} fill={P.bpDiastolic} />
+                    </g>;
                   })}
                 </>}
                 {overviewVisible.hr && <>
@@ -1900,16 +1907,33 @@ export default function VitalDashboard() {
                     const x = xScale(new Date(p.date));
                     const y = yScaleLeft(p.value);
                     const s = 3;
-                    return <polygon key={`hr-${i}`} points={`${x - s},${y} ${x},${y - s} ${x + s},${y} ${x},${y + s}`} fill={P.heartRate} />;
+                    return <g key={`hr-${i}`} className="cursor-crosshair" onClick={(e) => { e.stopPropagation(); setSidePanel({ type: "hr", date: p.date, data: p }); }}>
+                      <circle cx={x} cy={y} r={8} fill="transparent" />
+                      <polygon points={`${x - s},${y} ${x},${y - s} ${x + s},${y} ${x},${y + s}`} fill={P.heartRate} />
+                    </g>;
                   })}
                 </>}
                 {overviewVisible.weight && <>
                   <path d={weightLine(chartData.weight) || ""} fill="none" stroke={P.weight} strokeWidth={2} />
-                  {chartData.weight.map((p, i) => <circle key={`w-${i}`} cx={xScale(new Date(p.date))} cy={yScaleRight(p.value)} r={2.5} fill={P.weight} />)}
+                  {chartData.weight.map((p, i) => {
+                    const x = xScale(new Date(p.date));
+                    const y = yScaleRight(p.value);
+                    return <g key={`w-${i}`} className="cursor-crosshair" onClick={(e) => { e.stopPropagation(); setSidePanel({ type: "weight", date: p.date, data: p }); }}>
+                      <circle cx={x} cy={y} r={8} fill="transparent" />
+                      <circle cx={x} cy={y} r={2.5} fill={P.weight} />
+                    </g>;
+                  })}
                 </>}
                 {overviewVisible.mood && <>
                   <path d={moodLine(chartData.mood) || ""} fill="none" stroke={P.mood} strokeWidth={2} />
-                  {chartData.mood.map((p, i) => <circle key={`m-${i}`} cx={xScale(new Date(p.date))} cy={yScaleLeft(mapMoodToLeftScale(p.value))} r={2.5} fill={P.mood} />)}
+                  {chartData.mood.map((p, i) => {
+                    const x = xScale(new Date(p.date));
+                    const y = yScaleLeft(mapMoodToLeftScale(p.value));
+                    return <g key={`m-${i}`} className="cursor-crosshair" onClick={(e) => { e.stopPropagation(); setSidePanel({ type: "mood", date: p.date, data: p }); }}>
+                      <circle cx={x} cy={y} r={8} fill="transparent" />
+                      <circle cx={x} cy={y} r={2.5} fill={P.mood} />
+                    </g>;
+                  })}
                 </>}
                 {/* Hover vertical line */}
                 {overviewHover && (
@@ -4180,7 +4204,7 @@ export default function VitalDashboard() {
           </div>
 
           {/* Scrollable content area */}
-          <div className="overflow-y-auto" style={{ minHeight: 0 }}>
+          <div ref={sidebarScrollRef} className="overflow-y-auto" style={{ minHeight: 0 }}>
           {/* Patient info rows - like screenshot */}
           <div className="px-5 py-3 space-y-2 border-b" style={{ borderBottomColor: P.border }}>
             <div className="flex items-center justify-between">
@@ -4442,6 +4466,7 @@ export default function VitalDashboard() {
                   if (e.key === "Enter" && commentInput.trim()) {
                     setComments(prev => [{ id: Date.now(), text: commentInput.trim(), author: "Dr. Annamária Kosztin", time: new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) + " " + new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) }, ...prev]);
                     setCommentInput("");
+                    requestAnimationFrame(() => { const el = sidebarScrollRef.current; if (el) el.scrollTop = el.scrollHeight; });
                   }
                 }}
                 placeholder="Kommentar hinzufügen..."
@@ -4453,6 +4478,7 @@ export default function VitalDashboard() {
                   if (commentInput.trim()) {
                     setComments(prev => [{ id: Date.now(), text: commentInput.trim(), author: "Dr. Annamária Kosztin", time: new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) + " " + new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) }, ...prev]);
                     setCommentInput("");
+                    requestAnimationFrame(() => { const el = sidebarScrollRef.current; if (el) el.scrollTop = el.scrollHeight; });
                   }
                 }}
                 className="p-2 rounded-md transition-colors"
