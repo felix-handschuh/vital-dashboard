@@ -4433,7 +4433,7 @@ export default function VitalDashboard() {
 
           </div>
           {/* Sticky comment input */}
-          <div className="px-5 py-3 border-t" style={{ flexShrink: 0, borderTopColor: P.border }}>
+          <div className="px-5 pt-3 pb-4 border-t" style={{ flexShrink: 0, borderTopColor: P.border }}>
             <div className="flex gap-2">
               <input
                 type="text"
