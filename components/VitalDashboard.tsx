@@ -299,6 +299,33 @@ const translations = {
     commentNote1: "Telefonat am 04.03. — Patient berichtet über Schwindel bei Lagewechsel. Medikation prüfen.",
     commentNote2: "Telemonitoringdaten unauffällig. Weiter beobachten.",
     commentNote3: "Patient berichtet über gelegentliches Schwindelgefühl bei schnellem Aufstehen.",
+    // Electrodes & Details section
+    rhythm: "Rhythmus",
+    dependent: "Abhängig",
+    no: "Nein",
+    intrinsicRhythm: "Eigenrhythmus",
+    sinusRhythm: "Sinusrhythmus",
+    intrinsicRate: "Eigenfrequenz",
+    vaConduction: "VA-Leitung",
+    stimPct: "Anteil Stim. /%",
+    program: "Programm",
+    operatingMode: "Betriebsart",
+    frequencyLHNU: "Frequenz (L/H/N-U)",
+    sensor: "Sensor",
+    modeSwitch: "Mode-Switch",
+    measurement: "Messung",
+    rightAtrium: "Rechter Vorhof",
+    rightVentricle: "Rechter Ventrikel",
+    leftVentricle: "Linker Ventrikel",
+    polaritySensStim: "Polarität Sens/Stim",
+    pulseDuration: "Impulsdauer (ms)",
+    output: "Output (V)",
+    sensitivity: "Empfindlichkeit (mV)",
+    impedance: "Impedanz (Ω)",
+    amplitude: "Amplitude (mV)",
+    serial: "Serial",
+    implanted: "Implantiert",
+    lastControl: "Letzte Kontrolle",
   },
   en: {
     dashboard: "Dashboard",
@@ -405,6 +432,32 @@ const translations = {
     commentNote1: "Phone call on 04.03. — Patient reports dizziness during position changes. Review medication.",
     commentNote2: "Telemonitoring data unremarkable. Continue observation.",
     commentNote3: "Patient reports occasional dizziness when standing up quickly.",
+    rhythm: "Rhythm",
+    dependent: "Dependent",
+    no: "No",
+    intrinsicRhythm: "Intrinsic Rhythm",
+    sinusRhythm: "Sinus Rhythm",
+    intrinsicRate: "Intrinsic Rate",
+    vaConduction: "VA Conduction",
+    stimPct: "Pacing %",
+    program: "Program",
+    operatingMode: "Operating Mode",
+    frequencyLHNU: "Rate (L/H/N-U)",
+    sensor: "Sensor",
+    modeSwitch: "Mode Switch",
+    measurement: "Measurement",
+    rightAtrium: "Right Atrium",
+    rightVentricle: "Right Ventricle",
+    leftVentricle: "Left Ventricle",
+    polaritySensStim: "Polarity Sens/Stim",
+    pulseDuration: "Pulse Duration (ms)",
+    output: "Output (V)",
+    sensitivity: "Sensitivity (mV)",
+    impedance: "Impedance (Ω)",
+    amplitude: "Amplitude (mV)",
+    serial: "Serial",
+    implanted: "Implanted",
+    lastControl: "Last Follow-up",
   },
   hu: {
     dashboard: "Irányítópult",
@@ -511,6 +564,32 @@ const translations = {
     commentNote1: "Telefonhívás 03.04-én — A páciens szédülésről számol be helyzetváltoztatáskor. Gyógyszerezés ellenőrzése.",
     commentNote2: "Távolmonitorozási adatok feltűnés nélküliek. Továbbra is megfigyelés alatt.",
     commentNote3: "A páciens alkalmi szédülésről számol be gyors felálláskor.",
+    rhythm: "Ritmus",
+    dependent: "Függő",
+    no: "Nem",
+    intrinsicRhythm: "Saját ritmus",
+    sinusRhythm: "Szinuszritmus",
+    intrinsicRate: "Saját frekvencia",
+    vaConduction: "VA-vezetés",
+    stimPct: "Stimuláció %",
+    program: "Program",
+    operatingMode: "Üzemmód",
+    frequencyLHNU: "Frekvencia (L/H/N-U)",
+    sensor: "Szenzor",
+    modeSwitch: "Módváltás",
+    measurement: "Mérés",
+    rightAtrium: "Jobb pitvar",
+    rightVentricle: "Jobb kamra",
+    leftVentricle: "Bal kamra",
+    polaritySensStim: "Polaritás Sens/Stim",
+    pulseDuration: "Impulzustartam (ms)",
+    output: "Kimenet (V)",
+    sensitivity: "Érzékenység (mV)",
+    impedance: "Impedancia (Ω)",
+    amplitude: "Amplitúdó (mV)",
+    serial: "Szériaszám",
+    implanted: "Beültetés",
+    lastControl: "Utolsó kontroll",
   },
   mk: {
     // Tabs
@@ -625,6 +704,32 @@ const translations = {
     commentNote1: "Телефонски повик на 04.03. — Пациентот пријавува вртоглавица при промена на положбата. Проверка на лекови.",
     commentNote2: "Податоците од телемониторингот се без забелешки. Продолжи со набљудување.",
     commentNote3: "Пациентот пријавува повремена вртоглавица при брзо станување.",
+    rhythm: "Ритам",
+    dependent: "Зависен",
+    no: "Не",
+    intrinsicRhythm: "Сопствен ритам",
+    sinusRhythm: "Синусен ритам",
+    intrinsicRate: "Сопствена фреквенција",
+    vaConduction: "VA-спроводливост",
+    stimPct: "Стимулација %",
+    program: "Програм",
+    operatingMode: "Режим на работа",
+    frequencyLHNU: "Фреквенција (L/H/N-U)",
+    sensor: "Сензор",
+    modeSwitch: "Промена на режим",
+    measurement: "Мерење",
+    rightAtrium: "Десен атриум",
+    rightVentricle: "Десна комора",
+    leftVentricle: "Лева комора",
+    polaritySensStim: "Поларитет Sens/Stim",
+    pulseDuration: "Времетраење на импулс (ms)",
+    output: "Излез (V)",
+    sensitivity: "Осетливост (mV)",
+    impedance: "Импеданса (Ω)",
+    amplitude: "Амплитуда (mV)",
+    serial: "Сериски број",
+    implanted: "Имплантиран",
+    lastControl: "Последна контрола",
   },
   uk: {
     // Tabs
@@ -739,6 +844,32 @@ const translations = {
     commentNote1: "Телефонний дзвінок 04.03. — Пацієнт повідомляє про запаморочення при зміні положення. Перевірити медикаменти.",
     commentNote2: "Дані телемоніторингу без відхилень. Продовжити спостереження.",
     commentNote3: "Пацієнт повідомляє про періодичне запаморочення при швидкому вставанні.",
+    rhythm: "Ритм",
+    dependent: "Залежний",
+    no: "Ні",
+    intrinsicRhythm: "Власний ритм",
+    sinusRhythm: "Синусовий ритм",
+    intrinsicRate: "Власна частота",
+    vaConduction: "VA-провідність",
+    stimPct: "Стимуляція %",
+    program: "Програма",
+    operatingMode: "Режим роботи",
+    frequencyLHNU: "Частота (L/H/N-U)",
+    sensor: "Сенсор",
+    modeSwitch: "Зміна режиму",
+    measurement: "Вимірювання",
+    rightAtrium: "Праве передсердя",
+    rightVentricle: "Правий шлуночок",
+    leftVentricle: "Лівий шлуночок",
+    polaritySensStim: "Полярність Sens/Stim",
+    pulseDuration: "Тривалість імпульсу (ms)",
+    output: "Вихід (V)",
+    sensitivity: "Чутливість (mV)",
+    impedance: "Імпеданс (Ω)",
+    amplitude: "Амплітуда (mV)",
+    serial: "Серійний номер",
+    implanted: "Імплантовано",
+    lastControl: "Остання перевірка",
   },
 };
 
@@ -4539,18 +4670,18 @@ export default function VitalDashboard() {
               <div className="mt-3 space-y-4 text-xs" style={{ color: P.textSecondary }}>
                 {/* Rhythmus */}
                 <div>
-                  <div className="font-semibold mb-1.5 text-xs" style={{ color: "#FF5C00" }}>Rhythmus</div>
+                  <div className="font-semibold mb-1.5 text-xs" style={{ color: "#FF5C00" }}>{tr.rhythm || "Rhythmus"}</div>
                   <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-                    <span>Abhängig</span><span className="font-semibold" style={{ color: P.text }}>Nein</span>
-                    <span>Eigenrhythmus</span><span className="font-semibold" style={{ color: P.text }}>Sinusrhythmus</span>
-                    <span>Eigenfrequenz</span><span className="font-semibold" style={{ color: P.text }}>65 /min</span>
-                    <span>VA-Leitung</span><span className="font-semibold" style={{ color: P.text }}>— ms</span>
+                    <span>{tr.dependent || "Abhängig"}</span><span className="font-semibold" style={{ color: P.text }}>{tr.no || "Nein"}</span>
+                    <span>{tr.intrinsicRhythm || "Eigenrhythmus"}</span><span className="font-semibold" style={{ color: P.text }}>{tr.sinusRhythm || "Sinusrhythmus"}</span>
+                    <span>{tr.intrinsicRate || "Eigenfrequenz"}</span><span className="font-semibold" style={{ color: P.text }}>65 /min</span>
+                    <span>{tr.vaConduction || "VA-Leitung"}</span><span className="font-semibold" style={{ color: P.text }}>— ms</span>
                   </div>
                 </div>
 
                 {/* Anteil Stim. /% */}
                 <div>
-                  <div className="font-semibold mb-1.5 text-xs" style={{ color: "#FF5C00" }}>Anteil Stim. /%</div>
+                  <div className="font-semibold mb-1.5 text-xs" style={{ color: "#FF5C00" }}>{tr.stimPct || "Anteil Stim. /%"}</div>
                   <div className="grid grid-cols-2 gap-x-3 gap-y-1">
                     {patient.implant.leads.map((lead: any, li: number) => (
                       <Fragment key={`stim-${li}`}>
@@ -4563,12 +4694,12 @@ export default function VitalDashboard() {
 
                 {/* Programm */}
                 <div>
-                  <div className="font-semibold mb-1.5 text-xs" style={{ color: "#FF5C00" }}>Programm</div>
+                  <div className="font-semibold mb-1.5 text-xs" style={{ color: "#FF5C00" }}>{tr.program || "Programm"}</div>
                   <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-                    <span>Betriebsart</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.leads.length >= 3 ? "DDD" : patient.implant.leads.length === 2 ? "DDD" : "VVI"}</span>
-                    <span>Frequenz (L/H/N-U)</span><span className="font-semibold" style={{ color: P.text }}>50/50/50 – 130</span>
-                    <span>Sensor</span><span className="font-semibold" style={{ color: P.text }}>Off</span>
-                    <span>Mode-Switch</span><span className="font-semibold" style={{ color: P.text }}>DDIR/160</span>
+                    <span>{tr.operatingMode || "Betriebsart"}</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.leads.length >= 3 ? "DDD" : patient.implant.leads.length === 2 ? "DDD" : "VVI"}</span>
+                    <span>{tr.frequencyLHNU || "Frequenz (L/H/N-U)"}</span><span className="font-semibold" style={{ color: P.text }}>50/50/50 – 130</span>
+                    <span>{tr.sensor || "Sensor"}</span><span className="font-semibold" style={{ color: P.text }}>Off</span>
+                    <span>{tr.modeSwitch || "Mode-Switch"}</span><span className="font-semibold" style={{ color: P.text }}>DDIR/160</span>
                     <span>AVD min</span><span className="font-semibold" style={{ color: P.text }}>240 ms</span>
                     <span>AVD max</span><span className="font-semibold" style={{ color: P.text }}>240 ms</span>
                     <span>VV-Delay</span><span className="font-semibold" style={{ color: P.text }}>— ms</span>
@@ -4577,18 +4708,18 @@ export default function VitalDashboard() {
 
                 {/* Messung */}
                 <div>
-                  <div className="font-semibold mb-1.5 text-xs" style={{ color: "#FF5C00" }}>Messung</div>
+                  <div className="font-semibold mb-1.5 text-xs" style={{ color: "#FF5C00" }}>{tr.measurement || "Messung"}</div>
                   <div className="space-y-3">
                     {patient.implant.leads.map((lead: any, li: number) => (
                       <div key={`meas-${li}`}>
-                        <div className="font-semibold mb-1" style={{ color: P.text }}>{lead.position === "RA" ? "Rechter Vorhof" : lead.position === "RV" ? "Rechter Ventrikel" : lead.position === "LV" ? "Linker Ventrikel" : lead.position}</div>
+                        <div className="font-semibold mb-1" style={{ color: P.text }}>{lead.position === "RA" ? (tr.rightAtrium || "Rechter Vorhof") : lead.position === "RV" ? (tr.rightVentricle || "Rechter Ventrikel") : lead.position === "LV" ? (tr.leftVentricle || "Linker Ventrikel") : lead.position}</div>
                         <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
-                          <span>Polarität Sens/Stim</span><span className="font-semibold" style={{ color: P.text }}>Bip/Bip</span>
-                          <span>Impulsdauer (ms)</span><span className="font-semibold" style={{ color: P.text }}>0,40</span>
-                          <span>Output (V)</span><span className="font-semibold" style={{ color: P.text }}>{lead.threshold != null ? (lead.threshold * 2.5).toFixed(1) : "—"}</span>
-                          <span>Empfindlichkeit (mV)</span><span className="font-semibold" style={{ color: P.text }}>{lead.sensing != null ? lead.sensing.toFixed(2).replace(".", ",") : "—"}</span>
-                          <span>Impedanz (Ω)</span><span className="font-semibold" style={{ color: P.text }}>{lead.impedance}</span>
-                          <span>Amplitude (mV)</span><span className="font-semibold" style={{ color: P.text }}>{lead.sensing != null ? (lead.sensing * 0.87).toFixed(2).replace(".", ",") : "—"}</span>
+                          <span>{tr.polaritySensStim || "Polarität Sens/Stim"}</span><span className="font-semibold" style={{ color: P.text }}>Bip/Bip</span>
+                          <span>{tr.pulseDuration || "Impulsdauer (ms)"}</span><span className="font-semibold" style={{ color: P.text }}>0,40</span>
+                          <span>{tr.output || "Output (V)"}</span><span className="font-semibold" style={{ color: P.text }}>{lead.threshold != null ? (lead.threshold * 2.5).toFixed(1) : "—"}</span>
+                          <span>{tr.sensitivity || "Empfindlichkeit (mV)"}</span><span className="font-semibold" style={{ color: P.text }}>{lead.sensing != null ? lead.sensing.toFixed(2).replace(".", ",") : "—"}</span>
+                          <span>{tr.impedance || "Impedanz (Ω)"}</span><span className="font-semibold" style={{ color: P.text }}>{lead.impedance}</span>
+                          <span>{tr.amplitude || "Amplitude (mV)"}</span><span className="font-semibold" style={{ color: P.text }}>{lead.sensing != null ? (lead.sensing * 0.87).toFixed(2).replace(".", ",") : "—"}</span>
                         </div>
                       </div>
                     ))}
@@ -4597,9 +4728,9 @@ export default function VitalDashboard() {
 
                 {/* Meta info */}
                 <div className="grid grid-cols-2 gap-x-3 gap-y-1 pt-2" style={{ borderTop: `1px solid ${P.border}` }}>
-                  <span>Serial</span><span className="font-mono font-semibold" style={{ color: P.text }}>{patient.implant.serial}</span>
-                  <span>Implantiert</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.implantDate}</span>
-                  <span>Letzte Kontrolle</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.lastCheck}</span>
+                  <span>{tr.serial || "Serial"}</span><span className="font-mono font-semibold" style={{ color: P.text }}>{patient.implant.serial}</span>
+                  <span>{tr.implanted || "Implantiert"}</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.implantDate}</span>
+                  <span>{tr.lastControl || "Letzte Kontrolle"}</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.lastCheck}</span>
                 </div>
               </div>
             )}
