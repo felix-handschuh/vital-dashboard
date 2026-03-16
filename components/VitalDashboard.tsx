@@ -4162,7 +4162,7 @@ export default function VitalDashboard() {
 
       {/* Right sidebar - Device Info */}
       {devicesOpen && (
-        <aside className="grid border-l overflow-hidden" style={{ width: 340, minWidth: 340, backgroundColor: P.bgCard, borderLeftColor: P.border, gridTemplateRows: "auto 1fr auto" }}>
+        <aside className="grid border-l overflow-hidden" style={{ width: 340, minWidth: 340, backgroundColor: P.bgCard, borderLeftColor: P.border, gridTemplateRows: "auto 1fr" }}>
           {/* Fixed header with patient name + case number */}
           <div className="px-5 py-4 border-b" style={{ borderBottomColor: P.border }}>
             <div className="flex items-center justify-between">
@@ -4431,9 +4431,8 @@ export default function VitalDashboard() {
             </div>
           </div>
 
-          </div>
-          {/* Sticky comment input */}
-          <div className="px-5 pt-3 pb-4 border-t" style={{ borderTopColor: P.border }}>
+          {/* Sticky comment input - inside scroll area */}
+          <div className="px-5 pt-3 pb-4 border-t" style={{ position: "sticky", bottom: 0, borderTopColor: P.border, backgroundColor: P.bgCard, zIndex: 10 }}>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -4462,6 +4461,7 @@ export default function VitalDashboard() {
                 <ChevronRight size={14} />
               </button>
             </div>
+          </div>
           </div>
         </aside>
       )}
