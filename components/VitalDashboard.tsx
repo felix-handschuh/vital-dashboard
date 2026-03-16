@@ -4164,6 +4164,7 @@ export default function VitalDashboard() {
       {/* Right sidebar - Device Info */}
       {devicesOpen && (
         <aside className="flex flex-col border-l h-full overflow-hidden" style={{ width: 340, backgroundColor: P.bgCard, borderLeftColor: P.border }}>
+          <div className="flex-1 overflow-y-auto">
           {/* Header with patient name + case number */}
           <div className="px-5 py-4 border-b" style={{ borderBottomColor: P.border }}>
             <div className="flex items-center justify-between">
@@ -4384,8 +4385,8 @@ export default function VitalDashboard() {
             </div>
           ))}
 
-          {/* Comments section - takes remaining space */}
-          <div className="flex-1 overflow-y-auto px-5 py-3">
+          {/* Comments section */}
+          <div className="px-5 py-3">
             <span className="text-xs font-semibold" style={{ color: P.textMuted }}>Kommentare</span>
             <div className="mt-2 space-y-3">
               {comments.map((c) => (
@@ -4430,6 +4431,7 @@ export default function VitalDashboard() {
             </div>
           </div>
 
+          </div>
           {/* Sticky comment input */}
           <div className="px-5 py-3 border-t" style={{ borderTopColor: P.border }}>
             <div className="flex gap-2">
