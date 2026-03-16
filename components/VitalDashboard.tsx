@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, useMemo, createContext, useContext } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo, createContext, useContext, Fragment } from "react";
 import * as d3 from "d3";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -4298,10 +4298,10 @@ export default function VitalDashboard() {
                   <div className="font-semibold mb-1.5 text-xs" style={{ color: "#FF5C00" }}>Anteil Stim. /%</div>
                   <div className="grid grid-cols-2 gap-x-3 gap-y-1">
                     {patient.implant.leads.map((lead: any, li: number) => (
-                      <React.Fragment key={`stim-${li}`}>
+                      <Fragment key={`stim-${li}`}>
                         <span>{lead.position}</span>
                         <span className="font-semibold" style={{ color: P.text }}>{lead.position === "RA" ? "17" : lead.position === "LV" ? "99" : "99"} %</span>
-                      </React.Fragment>
+                      </Fragment>
                     ))}
                   </div>
                 </div>
