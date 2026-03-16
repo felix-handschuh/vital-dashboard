@@ -4162,10 +4162,9 @@ export default function VitalDashboard() {
 
       {/* Right sidebar - Device Info */}
       {devicesOpen && (
-        <aside className="relative border-l" style={{ width: 340, minWidth: 340, backgroundColor: P.bgCard, borderLeftColor: P.border, height: "100vh" }}>
-          <div className="overflow-y-auto" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 59 }}>
-          {/* Header with patient name + case number */}
-          <div className="px-5 py-4 border-b" style={{ borderBottomColor: P.border }}>
+        <aside className="flex flex-col border-l" style={{ width: 340, minWidth: 340, backgroundColor: P.bgCard, borderLeftColor: P.border, height: "100%", minHeight: 0 }}>
+          {/* Fixed header with patient name + case number */}
+          <div className="px-5 py-4 border-b" style={{ borderBottomColor: P.border, flexShrink: 0 }}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <User size={18} color={P.textMuted} />
@@ -4180,6 +4179,8 @@ export default function VitalDashboard() {
             </div>
           </div>
 
+          {/* Scrollable content area */}
+          <div className="overflow-y-auto" style={{ flex: "1 1 0%", minHeight: 0 }}>
           {/* Patient info rows - like screenshot */}
           <div className="px-5 py-3 space-y-2 border-b" style={{ borderBottomColor: P.border }}>
             <div className="flex items-center justify-between">
@@ -4432,7 +4433,7 @@ export default function VitalDashboard() {
 
           </div>
           {/* Sticky comment input */}
-          <div className="px-5 py-3 border-t" style={{ position: "absolute", bottom: 0, left: 0, right: 0, borderTopColor: P.border, backgroundColor: P.bgCard }}>
+          <div className="px-5 py-3 border-t" style={{ flexShrink: 0, borderTopColor: P.border }}>
             <div className="flex gap-2">
               <input
                 type="text"
