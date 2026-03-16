@@ -1069,17 +1069,14 @@ export default function VitalDashboard() {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [overviewVisible, setOverviewVisible] = useState({ sys: true, dia: true, hr: true, weight: true, mood: true });
   const [overviewHover, setOverviewHover] = useState<{ xPos: number; yPos: number; data: Record<string, any> } | null>(null);
-  const [notesText, setNotesText] = useState(PATIENTS_DATA[0].notes);
-  const [notesOpen, setNotesOpen] = useState(false);
-  const notesRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!notesOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (notesRef.current && !notesRef.current.contains(e.target as Node)) setNotesOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [notesOpen]);
+  const [comments, setComments] = useState<{ id: number; text: string; author: string; time: string }[]>([
+    { id: 1, text: PATIENTS_DATA[0].notes, author: "Dr. Schmidt", time: "14.03.2026 09:15" },
+    { id: 2, text: "Telemonitoringdaten unauffällig. Weiter beobachten.", author: "Sr. Weber", time: "12.03.2026 14:30" },
+    { id: 3, text: "Patient berichtet über gelegentliches Schwindelgefühl bei schnellem Aufstehen.", author: "Dr. Müller", time: "10.03.2026 11:00" },
+  ]);
+  const [commentInput, setCommentInput] = useState("");
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
   const [crossHairDate, setCrossHairDate] = useState<Date | null>(null);
 
   /* ── Threshold settings state ── */
@@ -3854,7 +3851,10 @@ export default function VitalDashboard() {
                   const newIdx = idx === 0 ? -1 : idx - 1;
                   setSelectedPatientIdx(newIdx);
                   const pd = PATIENTS_DATA[idx];
-                  setNotesText(pd.notes);
+                  setComments([
+                    { id: 1, text: pd.notes, author: "Dr. Schmidt", time: "14.03.2026 09:15" },
+                    { id: 2, text: "Telemonitoringdaten unauffällig.", author: "Sr. Weber", time: "12.03.2026 14:30" },
+                  ]);
                   setAllData(generateData());
                 }}
               >
@@ -3943,81 +3943,22 @@ export default function VitalDashboard() {
           </div>
         </div>
 
-        {/* Patient header */}
-        <div className="px-6 py-4 border-b" style={{ borderBottomColor: P.border }}>
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "rgba(22,163,74,0.15)", color: "#16A34A" }}>
-                  {tr.monitoring}
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold" style={{ color: P.text }}>{patient.name}</h1>
-                <div className="relative" ref={notesRef}>
-                  <button
-                    onClick={() => setNotesOpen(!notesOpen)}
-                    className="px-2 py-1 rounded text-xs cursor-pointer truncate max-w-[200px] inline-block align-middle text-left"
-                    style={{ backgroundColor: "#fef9c3", color: "#713f12", border: "1px solid #fde68a" }}
-                  >
-                    📝 {notesText.slice(0, 30)}{notesText.length > 30 ? "…" : ""}
-                  </button>
-                  {notesOpen && (
-                    <div className="absolute left-0 top-full mt-1 z-50">
-                      <div className="rounded-lg p-3 w-[320px]" style={{ backgroundColor: "#fef9c3", color: "#713f12", border: "1px solid #fde68a" }}>
-                        <textarea
-                          className="w-full text-sm resize-none bg-transparent border-none outline-none"
-                          style={{ color: "#713f12", minHeight: 80, fontFamily: "'IBM Plex Sans', sans-serif" }}
-                          value={notesText}
-                          onChange={(e) => setNotesText(e.target.value)}
-                          placeholder="Notizen zum Patienten..."
-                          autoFocus
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                <span className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: P.bgInput, color: P.text }}>{patient.age} {tr.years}</span>
-                <span className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: P.bgInput, color: P.text }}>{patient.gender === "Männlich" ? tr.male : tr.female}</span>
-                <span className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: P.bgInput, color: P.text }}>NYHA {patient.nyha}</span>
-                <span className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: P.bgInput, color: patient.lvef < 40 ? P.danger : patient.lvef < 50 ? P.warning : P.text }}>LVEF {patient.lvef}%</span>
-                <span className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: P.bgInput, color: patient.anticoag ? P.text : P.textMuted }}>{tr.anticoagulation}: {patient.anticoag ? tr.yes : tr.no}</span>
-                <span className="mx-0.5 text-sm" style={{ color: P.border }}>|</span>
-                {patient.icd10.map((d, i) => {
-                  const icdText = (tr as any).icd10Texts?.[d.code] || d.text;
-                  return (
-                    <span key={i} className="text-xs font-mono font-semibold px-2 py-1 rounded-md cursor-default" style={{ backgroundColor: P.bgInput, color: P.text }} title={icdText}>
-                      {d.code}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-            {/* FABs as ButtonGroup - inline with patient info */}
-            <div className="inline-flex items-center rounded-lg overflow-hidden" style={{ border: `1px solid ${P.border}` }}>
-              {[
-                { icon: <ImplantIcon size={14} color={P.textSecondary} />, label: "ICD-Abfrage", action: () => setDevicesOpen(true) },
-                { icon: <Weight size={14} color={P.textSecondary} />, label: "Messung starten" },
-                { icon: <Activity size={14} color={P.textSecondary} />, label: "BP Messung" },
-              ].map((fab, i) => (
-                <button
-                  key={i}
-                  onClick={fab.action}
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors hover:opacity-80"
-                  style={{
-                    backgroundColor: P.bgCard,
-                    color: P.textSecondary,
-                    borderRight: i < 2 ? `1px solid ${P.border}` : "none",
-                  }}
-                >
-                  {fab.icon}
-                  {fab.label}
-                </button>
-              ))}
-            </div>
+        {/* Patient header - simplified */}
+        <div className="px-6 py-3 border-b flex items-center justify-between" style={{ borderBottomColor: P.border }}>
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-bold" style={{ color: P.text }}>{patient.name}</h1>
+            <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "rgba(22,163,74,0.15)", color: "#16A34A" }}>
+              {tr.monitoring}
+            </span>
           </div>
+          <button
+            onClick={() => setDevicesOpen(!devicesOpen)}
+            className="w-9 h-9 rounded-full flex items-center justify-center transition-all"
+            style={{ backgroundColor: devicesOpen ? P.accent : P.bgInput, color: devicesOpen ? "#fff" : P.textMuted }}
+            title="Patientenprofil"
+          >
+            <User size={18} />
+          </button>
         </div>
 
         {/* Tab bar */}
@@ -4217,7 +4158,7 @@ export default function VitalDashboard() {
 
       {/* Right sidebar - Device Info */}
       {devicesOpen && (
-        <aside className="flex flex-col border-l overflow-y-auto" style={{ width: 340, backgroundColor: P.bgCard, borderLeftColor: P.border }}>
+        <aside className="flex flex-col border-l" style={{ width: 340, backgroundColor: P.bgCard, borderLeftColor: P.border }}>
           {/* Header with patient name + case number */}
           <div className="px-5 py-4 border-b" style={{ borderBottomColor: P.border }}>
             <div className="flex items-center justify-between">
@@ -4257,6 +4198,36 @@ export default function VitalDashboard() {
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium" style={{ color: P.textMuted }}>E-Mail</span>
               <span className="text-xs" style={{ color: P.text }}>patient@home.de</span>
+            </div>
+          </div>
+
+          {/* Clinical parameters */}
+          <div className="px-5 py-3 space-y-2 border-b" style={{ borderBottomColor: P.border }}>
+            <span className="text-xs font-semibold" style={{ color: P.textMuted }}>Klinische Parameter</span>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium" style={{ color: P.textMuted }}>NYHA-Klasse</span>
+              <span className="text-xs font-semibold" style={{ color: P.text }}>{patient.nyha}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium" style={{ color: P.textMuted }}>LVEF</span>
+              <span className="text-xs font-semibold" style={{ color: patient.lvef < 40 ? P.danger : patient.lvef < 50 ? P.warning : P.text }}>{patient.lvef}%</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium" style={{ color: P.textMuted }}>{tr.anticoagulation}</span>
+              <span className="text-xs font-semibold" style={{ color: patient.anticoag ? P.good : P.textMuted }}>{patient.anticoag ? tr.yes : tr.no}</span>
+            </div>
+            <div className="mt-1">
+              <span className="text-xs font-medium block mb-1.5" style={{ color: P.textMuted }}>ICD-10</span>
+              <div className="flex flex-wrap gap-1">
+                {patient.icd10.map((d, i) => {
+                  const icdText = (tr as any).icd10Texts?.[d.code] || d.text;
+                  return (
+                    <span key={i} className="text-xs font-mono font-semibold px-2 py-0.5 rounded cursor-default" style={{ backgroundColor: P.bgInput, color: P.text }} title={icdText}>
+                      {d.code}
+                    </span>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
@@ -4357,6 +4328,84 @@ export default function VitalDashboard() {
               </div>
             </div>
           ))}
+
+          {/* Comments section - takes remaining space */}
+          <div className="flex-1 overflow-y-auto px-5 py-3">
+            <span className="text-xs font-semibold" style={{ color: P.textMuted }}>Kommentare</span>
+            <div className="mt-2 space-y-3">
+              {comments.map((c) => (
+                <div key={c.id} className="group">
+                  {editingCommentId === c.id ? (
+                    <div className="space-y-1.5">
+                      <textarea
+                        className="w-full text-xs rounded-md p-2 resize-none"
+                        style={{ backgroundColor: P.bgInput, color: P.text, border: `1px solid ${P.border}`, minHeight: 60 }}
+                        value={editingCommentText}
+                        onChange={(e) => setEditingCommentText(e.target.value)}
+                        autoFocus
+                      />
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={() => { setComments(prev => prev.map(cc => cc.id === c.id ? { ...cc, text: editingCommentText } : cc)); setEditingCommentId(null); }}
+                          className="text-xs px-2 py-1 rounded"
+                          style={{ backgroundColor: P.accent, color: "#fff" }}
+                        >Speichern</button>
+                        <button
+                          onClick={() => setEditingCommentId(null)}
+                          className="text-xs px-2 py-1 rounded"
+                          style={{ color: P.textMuted }}
+                        >Abbrechen</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold" style={{ color: P.text }}>{c.author}</span>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => { setEditingCommentId(c.id); setEditingCommentText(c.text); }} className="p-0.5 rounded" style={{ color: P.textMuted }}><Edit size={11} /></button>
+                          <button onClick={() => setComments(prev => prev.filter(cc => cc.id !== c.id))} className="p-0.5 rounded" style={{ color: P.danger }}><X size={11} /></button>
+                        </div>
+                      </div>
+                      <div className="text-xs mt-0.5" style={{ color: P.textSecondary }}>{c.text}</div>
+                      <div className="text-[10px] mt-1" style={{ color: P.textMuted }}>{c.time}</div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Sticky comment input */}
+          <div className="px-5 py-3 border-t" style={{ borderTopColor: P.border }}>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={commentInput}
+                onChange={(e) => setCommentInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && commentInput.trim()) {
+                    setComments(prev => [{ id: Date.now(), text: commentInput.trim(), author: "Dr. Schmidt", time: new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) + " " + new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) }, ...prev]);
+                    setCommentInput("");
+                  }
+                }}
+                placeholder="Kommentar hinzufügen..."
+                className="flex-1 text-xs rounded-md px-3 py-2"
+                style={{ backgroundColor: P.bgInput, color: P.text, border: `1px solid ${P.border}` }}
+              />
+              <button
+                onClick={() => {
+                  if (commentInput.trim()) {
+                    setComments(prev => [{ id: Date.now(), text: commentInput.trim(), author: "Dr. Schmidt", time: new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) + " " + new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) }, ...prev]);
+                    setCommentInput("");
+                  }
+                }}
+                className="p-2 rounded-md transition-colors"
+                style={{ backgroundColor: commentInput.trim() ? P.accent : P.bgInput, color: commentInput.trim() ? "#fff" : P.textMuted }}
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
         </aside>
       )}
 
