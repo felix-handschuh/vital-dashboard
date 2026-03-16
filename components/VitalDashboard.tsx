@@ -231,6 +231,7 @@ const translations = {
     save: "Speichern",
     cancel: "Abbrechen",
     monitoring: "Monitoring",
+    telemonitoring: "Telemonitoring",
     years: "Jahre",
     class: "Klasse",
     details: "Details",
@@ -303,6 +304,7 @@ const translations = {
     save: "Save",
     cancel: "Cancel",
     monitoring: "Monitoring",
+    telemonitoring: "Telemonitoring",
     years: "years",
     class: "Class",
     details: "Details",
@@ -375,6 +377,7 @@ const translations = {
     save: "Save",
     cancel: "Mégse",
     monitoring: "Monitoring",
+    telemonitoring: "Telemonitoring",
     years: "év",
     class: "Osztály",
     details: "Részletek",
@@ -445,6 +448,7 @@ const translations = {
     save: "Зачувај",
     cancel: "Откажи",
     monitoring: "Надзирање",
+    telemonitoring: "Телемониторинг",
     years: "години",
     class: "Класа",
     details: "Детали",
@@ -515,6 +519,7 @@ const translations = {
     save: "Зберегти",
     cancel: "Скасувати",
     monitoring: "Моніторинг",
+    telemonitoring: "Телемоніторинг",
     years: "років",
     class: "Клас",
     details: "Подробиці",
@@ -3948,7 +3953,7 @@ export default function VitalDashboard() {
           <div className="flex items-center gap-3">
             <h1 className="text-xl font-bold" style={{ color: P.text }}>{patient.name}</h1>
             <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: "rgba(22,163,74,0.15)", color: "#16A34A" }}>
-              {tr.monitoring}
+              {tr.telemonitoring || "Telemonitoring"}
             </span>
           </div>
           <button
@@ -4276,36 +4281,77 @@ export default function VitalDashboard() {
               Elektroden & Details
             </button>
             {implantDetailOpen && (
-              <div className="mt-3 space-y-3 text-xs" style={{ color: P.textSecondary }}>
+              <div className="mt-3 space-y-4 text-xs" style={{ color: P.textSecondary }}>
+                {/* Rhythmus */}
                 <div>
-                  <div className="font-semibold mb-1" style={{ color: P.text }}>Serial</div>
-                  <div className="font-mono">{patient.implant.serial}</div>
+                  <div className="font-semibold mb-1.5 text-xs" style={{ color: "#FF5C00" }}>Rhythmus</div>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+                    <span>Abhängig</span><span className="font-semibold" style={{ color: P.text }}>Nein</span>
+                    <span>Eigenrhythmus</span><span className="font-semibold" style={{ color: P.text }}>Sinusrhythmus</span>
+                    <span>Eigenfrequenz</span><span className="font-semibold" style={{ color: P.text }}>65 /min</span>
+                    <span>VA-Leitung</span><span className="font-semibold" style={{ color: P.text }}>— ms</span>
+                  </div>
                 </div>
+
+                {/* Anteil Stim. /% */}
                 <div>
-                  <div className="font-semibold mb-1" style={{ color: P.text }}>Implantiert</div>
-                  <div>{patient.implant.implantDate}</div>
+                  <div className="font-semibold mb-1.5 text-xs" style={{ color: "#FF5C00" }}>Anteil Stim. /%</div>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+                    {patient.implant.leads.map((lead: any, li: number) => (
+                      <React.Fragment key={`stim-${li}`}>
+                        <span>{lead.position}</span>
+                        <span className="font-semibold" style={{ color: P.text }}>{lead.position === "RA" ? "17" : lead.position === "LV" ? "99" : "99"} %</span>
+                      </React.Fragment>
+                    ))}
+                  </div>
                 </div>
+
+                {/* Programm */}
                 <div>
-                  <div className="font-semibold mb-1" style={{ color: P.text }}>Letzte Kontrolle</div>
-                  <div>{patient.implant.lastCheck}</div>
+                  <div className="font-semibold mb-1.5 text-xs" style={{ color: "#FF5C00" }}>Programm</div>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+                    <span>Betriebsart</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.leads.length >= 3 ? "DDD" : patient.implant.leads.length === 2 ? "DDD" : "VVI"}</span>
+                    <span>Frequenz (L/H/N-U)</span><span className="font-semibold" style={{ color: P.text }}>50/50/50 – 130</span>
+                    <span>Sensor</span><span className="font-semibold" style={{ color: P.text }}>Off</span>
+                    <span>Mode-Switch</span><span className="font-semibold" style={{ color: P.text }}>DDIR/160</span>
+                    <span>AVD min</span><span className="font-semibold" style={{ color: P.text }}>240 ms</span>
+                    <span>AVD max</span><span className="font-semibold" style={{ color: P.text }}>240 ms</span>
+                    <span>VV-Delay</span><span className="font-semibold" style={{ color: P.text }}>— ms</span>
+                  </div>
                 </div>
+
+                {/* Messung */}
                 <div>
-                  <div className="font-semibold mb-1" style={{ color: P.text }}>Elektroden</div>
-                  {patient.implant.leads.map((lead: any, i: number) => (
-                    <div key={i} className="flex items-center gap-3 py-0.5">
-                      <span className="font-mono font-semibold" style={{ color: P.text }}>{lead.position}</span>
-                      <span>{lead.impedance} Ω</span>
-                      {lead.threshold != null && <span>Thr: {lead.threshold} V</span>}
-                      {lead.sensing != null && <span>Sens: {lead.sensing} mV</span>}
-                    </div>
-                  ))}
+                  <div className="font-semibold mb-1.5 text-xs" style={{ color: "#FF5C00" }}>Messung</div>
+                  <div className="space-y-3">
+                    {patient.implant.leads.map((lead: any, li: number) => (
+                      <div key={`meas-${li}`}>
+                        <div className="font-semibold mb-1" style={{ color: P.text }}>{lead.position === "RA" ? "Rechter Vorhof" : lead.position === "RV" ? "Rechter Ventrikel" : lead.position === "LV" ? "Linker Ventrikel" : lead.position}</div>
+                        <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+                          <span>Polarität Sens/Stim</span><span className="font-semibold" style={{ color: P.text }}>Bip/Bip</span>
+                          <span>Impulsdauer (ms)</span><span className="font-semibold" style={{ color: P.text }}>0,40</span>
+                          <span>Output (V)</span><span className="font-semibold" style={{ color: P.text }}>{lead.threshold != null ? (lead.threshold * 2.5).toFixed(1) : "—"}</span>
+                          <span>Empfindlichkeit (mV)</span><span className="font-semibold" style={{ color: P.text }}>{lead.sensing != null ? lead.sensing.toFixed(2).replace(".", ",") : "—"}</span>
+                          <span>Impedanz (Ω)</span><span className="font-semibold" style={{ color: P.text }}>{lead.impedance}</span>
+                          <span>Amplitude (mV)</span><span className="font-semibold" style={{ color: P.text }}>{lead.sensing != null ? (lead.sensing * 0.87).toFixed(2).replace(".", ",") : "—"}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Meta info */}
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1 pt-2" style={{ borderTop: `1px solid ${P.border}` }}>
+                  <span>Serial</span><span className="font-mono font-semibold" style={{ color: P.text }}>{patient.implant.serial}</span>
+                  <span>Implantiert</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.implantDate}</span>
+                  <span>Letzte Kontrolle</span><span className="font-semibold" style={{ color: P.text }}>{patient.implant.lastCheck}</span>
                 </div>
               </div>
             )}
           </div>
 
           {/* External devices */}
-          {patient.externalDevices.map((dev, i) => (
+          {patient.externalDevices.filter((dev) => !dev.type.includes("ICD") && !dev.type.includes("Defibrillator") && !dev.type.includes("Herzschrittmacher")).map((dev, i) => (
             <div key={i} className="px-5 py-3 space-y-2 border-b last:border-b-0" style={{ borderBottomColor: P.border }}>
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
@@ -4325,6 +4371,11 @@ export default function VitalDashboard() {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium" style={{ color: P.textMuted }}>Last transmission</span>
                 <span className="text-xs" style={{ color: P.text }}>{timeSince(dev.lastTransmission)}</span>
+              </div>
+              <div className="flex items-center justify-end mt-1">
+                <span className="text-xs flex items-center gap-1 cursor-pointer transition-colors" style={{ color: P.textSecondary }}>
+                  Go to device <ExternalLink size={11} />
+                </span>
               </div>
             </div>
           ))}
