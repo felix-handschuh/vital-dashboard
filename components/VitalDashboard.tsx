@@ -299,6 +299,16 @@ const translations = {
     commentNote1: "Telefonat am 04.03. — Patient berichtet über Schwindel bei Lagewechsel. Medikation prüfen.",
     commentNote2: "Telemonitoringdaten unauffällig. Weiter beobachten.",
     commentNote3: "Patient berichtet über gelegentliches Schwindelgefühl bei schnellem Aufstehen.",
+    // Table view
+    tableView: "Tabellenansicht",
+    timestamp: "Zeitstempel",
+    source: "Quelle",
+    afBurden: "AF Burden",
+    afDetected: "AF Burden erkannt",
+    afUncertain: "Verdacht auf AF Burden",
+    bpCuff: "Blutdruckmanschette",
+    scale: "Waage",
+    appMood: "App (Befinden)",
     // Electrodes & Details section
     rhythm: "Rhythmus",
     dependent: "Abhängig",
@@ -432,6 +442,15 @@ const translations = {
     commentNote1: "Phone call on 04.03. — Patient reports dizziness during position changes. Review medication.",
     commentNote2: "Telemonitoring data unremarkable. Continue observation.",
     commentNote3: "Patient reports occasional dizziness when standing up quickly.",
+    tableView: "Table View",
+    timestamp: "Timestamp",
+    source: "Source",
+    afBurden: "AF Burden",
+    afDetected: "AF Burden detected",
+    afUncertain: "Suspected AF Burden",
+    bpCuff: "Blood Pressure Cuff",
+    scale: "Scale",
+    appMood: "App (Wellbeing)",
     rhythm: "Rhythm",
     dependent: "Dependent",
     no: "No",
@@ -564,6 +583,15 @@ const translations = {
     commentNote1: "Telefonhívás 03.04-én — A páciens szédülésről számol be helyzetváltoztatáskor. Gyógyszerezés ellenőrzése.",
     commentNote2: "Távolmonitorozási adatok feltűnés nélküliek. Továbbra is megfigyelés alatt.",
     commentNote3: "A páciens alkalmi szédülésről számol be gyors felálláskor.",
+    tableView: "Táblázat nézet",
+    timestamp: "Időbélyeg",
+    source: "Forrás",
+    afBurden: "AF Burden",
+    afDetected: "AF Burden észlelve",
+    afUncertain: "AF Burden gyanú",
+    bpCuff: "Vérnyomásmérő",
+    scale: "Mérleg",
+    appMood: "App (Közérzet)",
     rhythm: "Ritmus",
     dependent: "Függő",
     no: "Nem",
@@ -704,6 +732,15 @@ const translations = {
     commentNote1: "Телефонски повик на 04.03. — Пациентот пријавува вртоглавица при промена на положбата. Проверка на лекови.",
     commentNote2: "Податоците од телемониторингот се без забелешки. Продолжи со набљудување.",
     commentNote3: "Пациентот пријавува повремена вртоглавица при брзо станување.",
+    tableView: "Табеларен преглед",
+    timestamp: "Временски печат",
+    source: "Извор",
+    afBurden: "AF Burden",
+    afDetected: "AF Burden детектиран",
+    afUncertain: "Сомнеж за AF Burden",
+    bpCuff: "Манжетна за крвен притисок",
+    scale: "Вага",
+    appMood: "Апликација (Состојба)",
     rhythm: "Ритам",
     dependent: "Зависен",
     no: "Не",
@@ -844,6 +881,15 @@ const translations = {
     commentNote1: "Телефонний дзвінок 04.03. — Пацієнт повідомляє про запаморочення при зміні положення. Перевірити медикаменти.",
     commentNote2: "Дані телемоніторингу без відхилень. Продовжити спостереження.",
     commentNote3: "Пацієнт повідомляє про періодичне запаморочення при швидкому вставанні.",
+    tableView: "Табличний вигляд",
+    timestamp: "Мітка часу",
+    source: "Джерело",
+    afBurden: "AF Burden",
+    afDetected: "AF Burden виявлено",
+    afUncertain: "Підозра на AF Burden",
+    bpCuff: "Манжета для тиску",
+    scale: "Ваги",
+    appMood: "Додаток (Самопочуття)",
     rhythm: "Ритм",
     dependent: "Залежний",
     no: "Ні",
@@ -1064,13 +1110,13 @@ const createDefaultTemplate = (): ThresholdTemplate => ({
 /* ═══════════════════════════════════════════════════════════════════════════════
    DATA TYPES — measurements support multiple per day
    ═══════════════════════════════════════════════════════════════════════════════ */
-interface BpReading { time: string; systolic: number; diastolic: number; }
+interface BpReading { time: string; systolic: number; diastolic: number; afBurden?: "detected" | "uncertain" | "none"; }
 interface BpPoint { date: string; readings: BpReading[]; systolic: number; diastolic: number; alarm?: string; outlier?: boolean; outlierValidated?: boolean; }
 interface HrReading { time: string; value: number; }
 interface HrPoint { date: string; readings: HrReading[]; value: number; alarm?: string; outlier?: boolean; outlierValidated?: boolean; }
 interface WeightReading { time: string; value: number; }
 interface WeightPoint { date: string; readings: WeightReading[]; value: number; alarm?: string; outlier?: boolean; outlierValidated?: boolean; }
-interface MoodPoint { date: string; value: number; }
+interface MoodPoint { date: string; time: string; value: number; }
 interface EcgEvent { date: string; time: string; duration: number; atrialBurden?: number; atrialUncertain?: boolean; alarm?: string; acknowledgedBy?: string; acknowledgedAt?: string; waveform?: number[]; trigger?: string; }
 interface EventItem { date: string; type: string; label: string; alarm?: string; acknowledgedBy?: string; acknowledgedAt?: string; linkedId?: string; }
 interface AllData { bp: BpPoint[]; hr: HrPoint[]; weight: WeightPoint[]; mood: MoodPoint[]; events: EventItem[]; ecgs: EcgEvent[]; missed: string[]; }
@@ -1095,7 +1141,8 @@ const generateEcgWaveform = (len: number): number[] => {
 const randTime = (hourMin = 6, hourMax = 22): string => {
   const h = hourMin + Math.floor(Math.random() * (hourMax - hourMin));
   const m = Math.floor(Math.random() * 60);
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  const s = Math.floor(Math.random() * 60);
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 };
 
 const generateData = (): AllData => {
@@ -1125,7 +1172,9 @@ const generateData = (): AllData => {
       const extremeSpike = isExtremeBp && r === 0 ? 40 + Math.random() * 15 : 0; // systolic up to ~180
       const s = Math.round(bS + drift + (Math.random() - 0.5) * 12 + (isOutlierBp && r === 0 ? 35 : 0) + extremeSpike);
       const d = Math.round(bD + drift * 0.6 + (Math.random() - 0.5) * 8 + (isOutlierBp && r === 0 ? -10 : 0));
-      bpReadings.push({ time: randTime(6 + r * 2, 8 + r * 2), systolic: s, diastolic: d });
+      const afRoll = Math.random();
+      const afBurden: "detected" | "uncertain" | "none" = afRoll < 0.05 ? "detected" : afRoll < 0.08 ? "uncertain" : "none";
+      bpReadings.push({ time: randTime(6 + r * 2, 8 + r * 2), systolic: s, diastolic: d, afBurden });
     }
     bpReadings.sort((a, b) => a.time.localeCompare(b.time));
     const avgSys = Math.round(bpReadings.reduce((s, r) => s + r.systolic, 0) / bpReadings.length);
@@ -1159,7 +1208,7 @@ const generateData = (): AllData => {
     data.weight.push({ date: ds, readings: wReadings, value: avgW, alarm: isOutlierW ? "warning" : undefined, outlier: false });
 
     if (Math.random() < 0.96) {
-      data.mood.push({ date: ds, value: Math.min(5, Math.max(1, Math.round(3 + Math.sin(i / 8) + (Math.random() - 0.5) * 2))) });
+      data.mood.push({ date: ds, time: randTime(8, 21), value: Math.min(5, Math.max(1, Math.round(3 + Math.sin(i / 8) + (Math.random() - 0.5) * 2))) });
     }
 
     // --- MANY MORE EVENTS ---
@@ -3124,21 +3173,85 @@ export default function VitalDashboard() {
     </div>
   );
 
-  /* ─── Table View ─── */
+  /* ─── Table View — flattened individual measurements ─── */
+  const formatTs = (dateStr: string, timeStr: string): string => {
+    const [y, mo, d] = dateStr.split("-");
+    return `${d}.${mo}.${y.slice(2)}, ${timeStr}`;
+  };
+
+  type TableRow = {
+    type: "bp" | "weight" | "mood";
+    date: string;
+    time: string;
+    ts: string;
+    systolic?: number;
+    diastolic?: number;
+    hr?: number;
+    weight?: number;
+    mood?: number;
+    afBurden?: "detected" | "uncertain" | "none";
+    alarm?: string;
+  };
+
+  const tableRows = useMemo((): TableRow[] => {
+    const rows: TableRow[] = [];
+    /* BP readings — each individual reading becomes a row (Withings Blutdruckmanschette) */
+    filteredData.bp.forEach(bp => {
+      const hrPoint = filteredData.hr.find(h => h.date === bp.date);
+      bp.readings.forEach((r, ri) => {
+        const hrReading = hrPoint?.readings[ri] ?? hrPoint?.readings[0];
+        rows.push({
+          type: "bp", date: bp.date, time: r.time,
+          ts: formatTs(bp.date, r.time),
+          systolic: r.systolic, diastolic: r.diastolic,
+          hr: hrReading?.value,
+          afBurden: r.afBurden,
+          alarm: bp.alarm,
+        });
+      });
+    });
+    /* Weight readings — each individual reading (Withings Waage) */
+    filteredData.weight.forEach(w => {
+      w.readings.forEach(r => {
+        rows.push({
+          type: "weight", date: w.date, time: r.time,
+          ts: formatTs(w.date, r.time),
+          weight: r.value,
+          alarm: w.alarm,
+        });
+      });
+    });
+    /* Mood readings — from the App */
+    filteredData.mood.forEach(m => {
+      rows.push({
+        type: "mood", date: m.date, time: m.time,
+        ts: formatTs(m.date, m.time),
+        mood: m.value,
+      });
+    });
+    /* Sort by timestamp descending (newest first) */
+    rows.sort((a, b) => {
+      const cmp = b.date.localeCompare(a.date);
+      if (cmp !== 0) return cmp;
+      return b.time.localeCompare(a.time);
+    });
+    return rows;
+  }, [filteredData]);
+
   const tableView = (
     <div className="rounded-xl overflow-hidden" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
       <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${P.border}` }}>
-        <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>Tabellenansicht</span>
+        <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>{tr.tableView || "Tabellenansicht"}</span>
         <div className="flex gap-2">
           <button onClick={() => {
-            const rows = [["Datum", "Sys (mmHg)", "Dia (mmHg)", "HR (bpm)", "Gewicht (kg)", "Befinden", "Messungen", "Alarm"]];
-            filteredData.bp.forEach(bp => {
-              const hr = filteredData.hr.find(h => h.date === bp.date);
-              const w = filteredData.weight.find(wt => wt.date === bp.date);
-              const m = filteredData.mood.find(mo => mo.date === bp.date);
-              rows.push([bp.date, String(bp.systolic), String(bp.diastolic), hr ? String(hr.value) : "", w ? String(w.value) : "", m ? String(m.value) : "", String(bp.readings.length), bp.alarm || ""]);
+            const hdr = [tr.timestamp || "Zeitstempel", tr.source || "Quelle", "Sys (mmHg)", "Dia (mmHg)", "HR (bpm)", tr.weight || "Gewicht (kg)", tr.wellbeing || "Befinden", tr.afBurden || "AF Burden", "Alarm"];
+            const csvRows = [hdr];
+            tableRows.forEach(r => {
+              const src = r.type === "bp" ? (tr.bpCuff || "Blutdruckmanschette") : r.type === "weight" ? (tr.scale || "Waage") : (tr.appMood || "App (Befinden)");
+              const afLabel = r.afBurden === "detected" ? (tr.afDetected || "AF Burden erkannt") : r.afBurden === "uncertain" ? (tr.afUncertain || "Verdacht auf AF Burden") : "";
+              csvRows.push([r.ts, src, r.systolic != null ? String(r.systolic) : "", r.diastolic != null ? String(r.diastolic) : "", r.hr != null ? String(r.hr) : "", r.weight != null ? String(r.weight) : "", r.mood != null ? String(r.mood) : "", afLabel, r.alarm || ""]);
             });
-            const csv = rows.map(r => r.join(";")).join("\n");
+            const csv = csvRows.map(row => row.join(";")).join("\n");
             const blob = new Blob([csv], { type: "text/csv" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a"); a.href = url; a.download = "vital-daten.csv"; a.click();
@@ -3155,45 +3268,61 @@ export default function VitalDashboard() {
       </div>
       <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
         <table className="w-full text-sm">
-          <thead className="sticky top-0" style={{ backgroundColor: P.bgCard }}>
+          <thead className="sticky top-0" style={{ backgroundColor: P.bgCard, zIndex: 2 }}>
             <tr style={{ borderBottom: `1px solid ${P.border}` }}>
-              <th className="text-left px-4 py-3 font-medium" style={{ color: P.textMuted }}>Datum</th>
+              <th className="text-left px-4 py-3 font-medium whitespace-nowrap" style={{ color: P.textMuted }}>{tr.timestamp || "Zeitstempel"}</th>
+              <th className="text-left px-4 py-3 font-medium whitespace-nowrap" style={{ color: P.textMuted }}>{tr.source || "Quelle"}</th>
               <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>Sys</th>
               <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>Dia</th>
               <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>HR</th>
-              <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>Gewicht</th>
-              <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>Befinden</th>
-              <th className="text-center px-4 py-3 font-medium" style={{ color: P.textMuted }}>Mess.</th>
+              <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>{tr.weight || "Gewicht"}</th>
+              <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>{tr.wellbeing || "Befinden"}</th>
+              <th className="text-left px-4 py-3 font-medium whitespace-nowrap" style={{ color: P.textMuted }}>{tr.afBurden || "AF Burden"}</th>
               <th className="text-center px-4 py-3 font-medium" style={{ color: P.textMuted }}>Alarm</th>
-              <th className="text-center px-4 py-3 font-medium" style={{ color: P.textMuted }}>Outlier</th>
             </tr>
           </thead>
           <tbody>
-            {filteredData.bp.map((bp, i) => {
-              const hr = filteredData.hr.find(h => h.date === bp.date);
-              const w = filteredData.weight.find(wt => wt.date === bp.date);
-              const m = filteredData.mood.find(mo => mo.date === bp.date);
-              const highestAlarm = [bp.alarm, hr?.alarm, w?.alarm].filter(Boolean).sort((a, b) => {
-                const order: Record<string, number> = { critical: 0, warning: 1, change: 2, info: 3 };
-                return (order[a!] ?? 4) - (order[b!] ?? 4);
-              })[0];
-              const hasOutlier = bp.outlier || hr?.outlier || w?.outlier;
+            {tableRows.map((row, i) => {
+              const isBp = row.type === "bp";
+              const isWeight = row.type === "weight";
+              const isMood = row.type === "mood";
+              const showAf = isBp && row.afBurden && row.afBurden !== "none";
+              const sourceLabel = isBp ? (tr.bpCuff || "Blutdruckmanschette") : isWeight ? (tr.scale || "Waage") : (tr.appMood || "App (Befinden)");
+              const sourceColor = isBp ? P.bpSystolic : isWeight ? P.weight : P.mood;
               return (
                 <tr key={i} className="cursor-pointer transition-colors"
                   style={{ borderBottom: `1px solid ${theme === "dark" ? "rgba(39,39,42,0.5)" : "rgba(228,228,231,0.5)"}` }}
-                  onClick={() => setSidePanel({ type: "bp", date: bp.date, data: bp })}>
-                  <td className="px-4 py-2" style={{ color: P.textSecondary }}>{bp.date}</td>
-                  <td className="px-4 py-2 text-right font-medium" style={{ color: P.bpSystolic }}>{bp.systolic}</td>
-                  <td className="px-4 py-2 text-right font-medium" style={{ color: P.bpDiastolic }}>{bp.diastolic}</td>
-                  <td className="px-4 py-2 text-right font-medium" style={{ color: P.heartRate }}>{hr?.value ?? "—"}</td>
-                  <td className="px-4 py-2 text-right font-medium" style={{ color: P.weight }}>{w?.value ?? "—"}</td>
-                  <td className="px-4 py-2 text-right font-medium" style={{ color: P.mood }}>{m?.value ?? "—"}</td>
-                  <td className="px-4 py-2 text-center" style={{ color: P.textMuted }}>{bp.readings.length}</td>
-                  <td className="px-4 py-2 text-center">
-                    {highestAlarm && <span className="w-3 h-3 rounded-full inline-block" style={{ backgroundColor: ALARM_COLORS[highestAlarm] }} />}
+                  onClick={() => { if (isBp || isWeight) { const bp = filteredData.bp.find(b => b.date === row.date); if (bp) setSidePanel({ type: "bp", date: row.date, data: bp }); } }}>
+                  <td className="px-4 py-2 whitespace-nowrap font-mono text-xs" style={{ color: P.textSecondary }}>{row.ts}</td>
+                  <td className="px-4 py-2 whitespace-nowrap">
+                    <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: `${sourceColor}15`, color: sourceColor }}>
+                      {sourceLabel}
+                    </span>
                   </td>
+                  {/* Sys/Dia/HR — only for BP rows */}
+                  <td className="px-4 py-2 text-right font-medium" style={{ color: P.bpSystolic }}>{isBp ? row.systolic : ""}</td>
+                  <td className="px-4 py-2 text-right font-medium" style={{ color: P.bpDiastolic }}>{isBp ? row.diastolic : ""}</td>
+                  <td className="px-4 py-2 text-right font-medium" style={{ color: P.heartRate }}>{isBp ? (row.hr ?? "—") : ""}</td>
+                  {/* Gewicht — only for weight rows */}
+                  <td className="px-4 py-2 text-right font-medium" style={{ color: P.weight }}>{isWeight ? row.weight : ""}</td>
+                  {/* Befinden — only for mood rows */}
+                  <td className="px-4 py-2 text-right font-medium" style={{ color: P.mood }}>{isMood ? row.mood : ""}</td>
+                  {/* AF Burden — conditional: only show if detected or uncertain */}
+                  <td className="px-4 py-2 text-left whitespace-nowrap text-xs">
+                    {showAf && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-medium"
+                        style={{
+                          backgroundColor: row.afBurden === "detected" ? `${P.alarmRed}18` : `${P.alarmYellow}18`,
+                          color: row.afBurden === "detected" ? P.alarmRed : P.alarmYellow,
+                        }}>
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: row.afBurden === "detected" ? P.alarmRed : P.alarmYellow }} />
+                        {row.afBurden === "detected" ? (tr.afDetected || "AF Burden erkannt") : (tr.afUncertain || "Verdacht auf AF Burden")}
+                      </span>
+                    )}
+                  </td>
+                  {/* Alarm */}
                   <td className="px-4 py-2 text-center">
-                    {hasOutlier && <span className="w-3 h-3 rounded-full inline-block" style={{ backgroundColor: P.outlier }} />}
+                    {row.alarm && <span className="w-3 h-3 rounded-full inline-block" style={{ backgroundColor: ALARM_COLORS[row.alarm] }} />}
                   </td>
                 </tr>
               );
