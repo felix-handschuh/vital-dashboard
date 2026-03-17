@@ -4626,8 +4626,7 @@ export default function VitalDashboard() {
           {patientTab === "dashboard" && (
             <div className="space-y-5 pt-4">
 
-                {/* ── Time range selector — chart mode only ── */}
-                {viewMode === "chart" && (
+                {/* ── Time range selector (always visible) ── */}
                 <div className="sticky top-0 z-20 flex items-center gap-3 py-2 -mx-6 px-6" style={{ backgroundColor: theme === "dark" ? "rgba(9,9,11,0.85)" : "rgba(248,248,248,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                   <div className="inline-flex items-center rounded-lg p-1" style={{ backgroundColor: theme === "dark" ? "rgba(39,39,42,0.6)" : "rgba(244,244,245,0.8)" }}>
                     {RANGES.map((r) => {
@@ -4650,7 +4649,6 @@ export default function VitalDashboard() {
                   </div>
                   <span className="text-xs font-medium" style={{ color: P.textMuted }}>{tr.daysLabel}</span>
                 </div>
-                )}
 
                 {/* ── Episoden-Zeitleiste — chart mode only ── */}
                 {viewMode === "chart" && episodeTimelineChart}
@@ -4757,8 +4755,8 @@ export default function VitalDashboard() {
           )}
         </div>
 
-        {/* Shortcut Bar - always visible */}
-        {shortcutBar}
+        {/* Shortcut Bar — hidden in table mode */}
+        {viewMode === "chart" && shortcutBar}
 
         {/* Bottom status bar */}
         <div
