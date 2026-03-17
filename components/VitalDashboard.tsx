@@ -3305,9 +3305,14 @@ export default function VitalDashboard() {
   const zebraA = theme === "dark" ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.01)";
   const zebraB = theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)";
 
-  /* Missing vital parameters per day */
+  /* Missing vital parameters per day — only flag if we've ever seen that parameter */
   const missingPerDay = useMemo(() => {
     const map = new Map<string, string[]>();
+    /* Determine which parameters are "known" (have ever arrived in allData) */
+    const hasBp = allData.bp.length > 0;
+    const hasWeight = allData.weight.length > 0;
+    const hasMood = allData.mood.length > 0;
+    /* Collect all dates that appear in the filtered range */
     const allDates = new Set<string>();
     filteredData.bp.forEach(p => allDates.add(p.date));
     filteredData.weight.forEach(p => allDates.add(p.date));
@@ -3317,13 +3322,55 @@ export default function VitalDashboard() {
     const moodDates = new Set(filteredData.mood.map(p => p.date));
     allDates.forEach(d => {
       const missing: string[] = [];
-      if (!bpDates.has(d)) missing.push("RR");
-      if (!weightDates.has(d)) missing.push("Gewicht");
-      if (!moodDates.has(d)) missing.push("Befinden");
+      if (hasBp && !bpDates.has(d)) missing.push("RR");
+      if (hasWeight && !weightDates.has(d)) missing.push("Gewicht");
+      if (hasMood && !moodDates.has(d)) missing.push("Befinden");
       if (missing.length > 0) map.set(d, missing);
     });
     return map;
-  }, [filteredData]);
+  }, [filteredData, allData]);
+
+  /* Compute multi-day gap spans for missing parameters */
+  type GapSpan = { param: string; startDate: string; endDate: string; days: number };
+  const gapSpans = useMemo((): Map<string, GapSpan[]> => {
+    /* For each missing param on each day, merge consecutive days into spans */
+    const sortedDates = [...new Set(tableRows.map(r => r.date))].sort((a, b) => b.localeCompare(a)); // descending
+    const paramGaps = new Map<string, { start: string; end: string; days: number }[]>();
+    const params = ["RR", "Gewicht", "Befinden"];
+    params.forEach(p => {
+      const gaps: { start: string; end: string; days: number }[] = [];
+      let currentGap: { start: string; end: string; days: number } | null = null;
+      /* Walk dates in ascending order for gap merging */
+      const asc = [...sortedDates].reverse();
+      asc.forEach(d => {
+        const dayMissing = missingPerDay.get(d);
+        if (dayMissing?.includes(p)) {
+          if (currentGap) {
+            currentGap.end = d;
+            currentGap.days++;
+          } else {
+            currentGap = { start: d, end: d, days: 1 };
+          }
+        } else {
+          if (currentGap) { gaps.push(currentGap); currentGap = null; }
+        }
+      });
+      if (currentGap) gaps.push(currentGap);
+      paramGaps.set(p, gaps);
+    });
+    /* Index by the start date (newest date = first appearance in descending table) */
+    const byDate = new Map<string, GapSpan[]>();
+    paramGaps.forEach((gaps, param) => {
+      gaps.forEach(g => {
+        /* In descending table, the gap appears at the END date (newest) */
+        const entry: GapSpan = { param, startDate: g.start, endDate: g.end, days: g.days };
+        const existing = byDate.get(g.end) || [];
+        existing.push(entry);
+        byDate.set(g.end, existing);
+      });
+    });
+    return byDate;
+  }, [tableRows, missingPerDay]);
 
   /* Track first row per day for date display */
   const firstRowPerDay = useMemo(() => {
@@ -3377,7 +3424,8 @@ export default function VitalDashboard() {
           <table className="w-full text-sm">
             <thead className="sticky top-0" style={{ backgroundColor: P.bgCard, zIndex: 2 }}>
               <tr style={{ borderBottom: `2px solid ${P.border}` }}>
-                <th className="text-left px-4 py-3 font-medium whitespace-nowrap" style={{ color: P.textMuted }}>Zeitstempel</th>
+                <th className="text-left px-4 py-3 font-medium whitespace-nowrap" style={{ color: P.textMuted }}>Datum</th>
+                <th className="text-left px-4 py-3 font-medium whitespace-nowrap" style={{ color: P.textMuted }}>Zeit</th>
                 <th className="text-left px-4 py-3 font-medium whitespace-nowrap" style={{ color: P.textMuted }}>Quelle</th>
                 <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>Sys</th>
                 <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>Dia</th>
@@ -3396,31 +3444,33 @@ export default function VitalDashboard() {
                 const sourceLabel = isBp ? "Blutdruckmanschette" : isWeight ? "Waage" : "App (Befinden)";
                 const isStripeB = dayColorMap.get(`${row.date}-${row.time}-${row.type}`);
                 const isFirstOfDay = firstRowPerDay.has(i);
-                const dayMissing = isFirstOfDay ? missingPerDay.get(row.date) : undefined;
+                const dayGaps = isFirstOfDay ? gapSpans.get(row.date) : undefined;
                 return (
                   <Fragment key={i}>
-                    {/* Day separator with missing-parameter warning */}
-                    {isFirstOfDay && dayMissing && (
-                      <tr style={{ backgroundColor: isStripeB ? zebraB : zebraA }}>
-                        <td colSpan={8} className="px-4 py-1.5">
+                    {/* Gap rows — missing parameters that have been seen before */}
+                    {dayGaps && dayGaps.map((gap, gi) => (
+                      <tr key={`gap-${gi}`} style={{ backgroundColor: isStripeB ? zebraB : zebraA }}>
+                        {gi === 0 && !isFirstOfDay ? <td /> : gi === 0 ? (
+                          <td className="px-4 py-1.5 align-top whitespace-nowrap font-mono text-xs font-semibold" style={{ color: P.text }}>{formatDate(row.date)}</td>
+                        ) : <td />}
+                        <td className="px-4 py-1.5" />
+                        <td colSpan={7} className="px-4 py-1.5">
                           <span className="inline-flex items-center gap-1.5 text-xs" style={{ color: P.alarmYellow }}>
-                            <AlertTriangle size={12} />
-                            Fehlend: {dayMissing.join(", ")}
+                            <span className="w-2 h-0.5 rounded-full" style={{ backgroundColor: P.alarmYellow }} />
+                            {gap.param} — keine Messung{gap.days > 1 ? ` (${gap.days} Tage)` : ""}
                           </span>
                         </td>
                       </tr>
-                    )}
+                    ))}
                     <tr className="cursor-pointer transition-colors"
                       style={{ backgroundColor: isStripeB ? zebraB : zebraA }}
                       onClick={() => { const bp = filteredData.bp.find(b => b.date === row.date); if (bp) setSidePanel({ type: "bp", date: row.date, data: bp }); }}>
-                      {/* Timestamp: show date only on first row of each day */}
-                      <td className="px-4 py-2.5 whitespace-nowrap font-mono text-xs" style={{ color: isFirstOfDay ? P.textSecondary : P.textDim }}>
-                        {isFirstOfDay ? (
-                          <><span className="font-semibold" style={{ color: P.text }}>{formatDate(row.date)}</span><span style={{ color: P.textMuted }}>{" "}{formatTime(row.time)}</span></>
-                        ) : (
-                          <span style={{ paddingLeft: "5.5ch", color: P.textDim }}>{formatTime(row.time)}</span>
-                        )}
+                      {/* Date column — only on first row of each day (skip if gap rows already showed it) */}
+                      <td className="px-4 py-2.5 whitespace-nowrap font-mono text-xs align-top" style={{ color: P.text }}>
+                        {isFirstOfDay && !dayGaps ? formatDate(row.date) : ""}
                       </td>
+                      {/* Time column */}
+                      <td className="px-4 py-2.5 whitespace-nowrap font-mono text-xs" style={{ color: P.textMuted }}>{formatTime(row.time)}</td>
                       <td className="px-4 py-2.5 whitespace-nowrap text-xs" style={{ color: P.textMuted }}>{sourceLabel}</td>
                       <td className="px-4 py-2.5 text-right font-medium tabular-nums" style={{ color: P.text }}>{isBp ? row.systolic : ""}</td>
                       <td className="px-4 py-2.5 text-right font-medium tabular-nums" style={{ color: P.text }}>{isBp ? row.diastolic : ""}</td>
