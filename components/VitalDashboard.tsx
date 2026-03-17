@@ -1168,13 +1168,14 @@ const generateData = (): AllData => {
     const bpCount = Math.random() < 0.08 ? Math.floor(Math.random() * 2) + 2 : 1; // ~8% chance of 2-3 readings, otherwise 1
     const bpReadings: BpReading[] = [];
     const isExtremeBp = extremeBpDays.has(i);
+    /* AF Burden is a per-day event — ~15% detected, ~8% uncertain (every few days, irregular) */
+    const afDayRoll = Math.random();
+    const dayAfBurden: "detected" | "uncertain" | "none" = afDayRoll < 0.15 ? "detected" : afDayRoll < 0.23 ? "uncertain" : "none";
     for (let r = 0; r < bpCount; r++) {
       const extremeSpike = isExtremeBp && r === 0 ? 40 + Math.random() * 15 : 0; // systolic up to ~180
       const s = Math.round(bS + drift + (Math.random() - 0.5) * 12 + (isOutlierBp && r === 0 ? 35 : 0) + extremeSpike);
       const d = Math.round(bD + drift * 0.6 + (Math.random() - 0.5) * 8 + (isOutlierBp && r === 0 ? -10 : 0));
-      const afRoll = Math.random();
-      const afBurden: "detected" | "uncertain" | "none" = afRoll < 0.05 ? "detected" : afRoll < 0.08 ? "uncertain" : "none";
-      bpReadings.push({ time: randTime(6 + r * 2, 8 + r * 2), systolic: s, diastolic: d, afBurden });
+      bpReadings.push({ time: randTime(6 + r * 2, 8 + r * 2), systolic: s, diastolic: d, afBurden: r === 0 ? dayAfBurden : "none" });
     }
     bpReadings.sort((a, b) => a.time.localeCompare(b.time));
     const avgSys = Math.round(bpReadings.reduce((s, r) => s + r.systolic, 0) / bpReadings.length);
@@ -3174,10 +3175,14 @@ export default function VitalDashboard() {
   );
 
   /* ─── Table View — flattened individual measurements ─── */
-  const formatTs = (dateStr: string, timeStr: string): string => {
+  const formatDate = (dateStr: string): string => {
     const [y, mo, d] = dateStr.split("-");
-    return `${d}.${mo}.${y.slice(2)}, ${timeStr}`;
+    return `${d}.${mo}.${y.slice(2)}`;
   };
+  const formatTs = (dateStr: string, timeStr: string): string => {
+    return `${formatDate(dateStr)}, ${timeStr}`;
+  };
+  const formatTime = (timeStr: string): string => timeStr;
 
   const moodLabel = (v: number): string => {
     if (v >= 4) return "gut";
@@ -3300,6 +3305,36 @@ export default function VitalDashboard() {
   const zebraA = theme === "dark" ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.01)";
   const zebraB = theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)";
 
+  /* Missing vital parameters per day */
+  const missingPerDay = useMemo(() => {
+    const map = new Map<string, string[]>();
+    const allDates = new Set<string>();
+    filteredData.bp.forEach(p => allDates.add(p.date));
+    filteredData.weight.forEach(p => allDates.add(p.date));
+    filteredData.mood.forEach(p => allDates.add(p.date));
+    const bpDates = new Set(filteredData.bp.map(p => p.date));
+    const weightDates = new Set(filteredData.weight.map(p => p.date));
+    const moodDates = new Set(filteredData.mood.map(p => p.date));
+    allDates.forEach(d => {
+      const missing: string[] = [];
+      if (!bpDates.has(d)) missing.push("RR");
+      if (!weightDates.has(d)) missing.push("Gewicht");
+      if (!moodDates.has(d)) missing.push("Befinden");
+      if (missing.length > 0) map.set(d, missing);
+    });
+    return map;
+  }, [filteredData]);
+
+  /* Track first row per day for date display */
+  const firstRowPerDay = useMemo(() => {
+    const set = new Set<number>();
+    let lastDate = "";
+    tableRows.forEach((r, i) => {
+      if (r.date !== lastDate) { set.add(i); lastDate = r.date; }
+    });
+    return set;
+  }, [tableRows]);
+
   const tableView = (
     <div className="rounded-xl overflow-hidden" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
       {/* Header */}
@@ -3360,30 +3395,52 @@ export default function VitalDashboard() {
                 const showAf = isBp && row.afBurden && row.afBurden !== "none";
                 const sourceLabel = isBp ? "Blutdruckmanschette" : isWeight ? "Waage" : "App (Befinden)";
                 const isStripeB = dayColorMap.get(`${row.date}-${row.time}-${row.type}`);
+                const isFirstOfDay = firstRowPerDay.has(i);
+                const dayMissing = isFirstOfDay ? missingPerDay.get(row.date) : undefined;
                 return (
-                  <tr key={i} className="cursor-pointer transition-colors"
-                    style={{ backgroundColor: isStripeB ? zebraB : zebraA }}
-                    onClick={() => { const bp = filteredData.bp.find(b => b.date === row.date); if (bp) setSidePanel({ type: "bp", date: row.date, data: bp }); }}>
-                    <td className="px-4 py-2.5 whitespace-nowrap font-mono text-xs" style={{ color: P.textSecondary }}>{row.ts}</td>
-                    <td className="px-4 py-2.5 whitespace-nowrap text-xs" style={{ color: P.textMuted }}>{sourceLabel}</td>
-                    <td className="px-4 py-2.5 text-right font-medium tabular-nums" style={{ color: P.text }}>{isBp ? row.systolic : ""}</td>
-                    <td className="px-4 py-2.5 text-right font-medium tabular-nums" style={{ color: P.text }}>{isBp ? row.diastolic : ""}</td>
-                    <td className="px-4 py-2.5 text-right font-medium tabular-nums" style={{ color: P.text }}>{isBp ? (row.hr ?? "—") : ""}</td>
-                    <td className="px-4 py-2.5 text-right font-medium tabular-nums" style={{ color: P.text }}>{isWeight ? row.weight : ""}</td>
-                    <td className="px-4 py-2.5 text-right font-medium" style={{ color: P.text }}>{isMoodRow ? moodLabel(row.mood!) : ""}</td>
-                    <td className="px-4 py-2.5 text-left whitespace-nowrap text-xs">
-                      {showAf && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-medium"
-                          style={{
-                            backgroundColor: row.afBurden === "detected" ? `${P.alarmRed}18` : `${P.alarmYellow}18`,
-                            color: row.afBurden === "detected" ? P.alarmRed : P.alarmYellow,
-                          }}>
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: row.afBurden === "detected" ? P.alarmRed : P.alarmYellow }} />
-                          {row.afBurden === "detected" ? "AF Burden erkannt" : "Verdacht auf AF Burden"}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
+                  <Fragment key={i}>
+                    {/* Day separator with missing-parameter warning */}
+                    {isFirstOfDay && dayMissing && (
+                      <tr style={{ backgroundColor: isStripeB ? zebraB : zebraA }}>
+                        <td colSpan={8} className="px-4 py-1.5">
+                          <span className="inline-flex items-center gap-1.5 text-xs" style={{ color: P.alarmYellow }}>
+                            <AlertTriangle size={12} />
+                            Fehlend: {dayMissing.join(", ")}
+                          </span>
+                        </td>
+                      </tr>
+                    )}
+                    <tr className="cursor-pointer transition-colors"
+                      style={{ backgroundColor: isStripeB ? zebraB : zebraA }}
+                      onClick={() => { const bp = filteredData.bp.find(b => b.date === row.date); if (bp) setSidePanel({ type: "bp", date: row.date, data: bp }); }}>
+                      {/* Timestamp: show date only on first row of each day */}
+                      <td className="px-4 py-2.5 whitespace-nowrap font-mono text-xs" style={{ color: isFirstOfDay ? P.textSecondary : P.textDim }}>
+                        {isFirstOfDay ? (
+                          <><span className="font-semibold" style={{ color: P.text }}>{formatDate(row.date)}</span><span style={{ color: P.textMuted }}>{" "}{formatTime(row.time)}</span></>
+                        ) : (
+                          <span style={{ paddingLeft: "5.5ch", color: P.textDim }}>{formatTime(row.time)}</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5 whitespace-nowrap text-xs" style={{ color: P.textMuted }}>{sourceLabel}</td>
+                      <td className="px-4 py-2.5 text-right font-medium tabular-nums" style={{ color: P.text }}>{isBp ? row.systolic : ""}</td>
+                      <td className="px-4 py-2.5 text-right font-medium tabular-nums" style={{ color: P.text }}>{isBp ? row.diastolic : ""}</td>
+                      <td className="px-4 py-2.5 text-right font-medium tabular-nums" style={{ color: P.text }}>{isBp ? (row.hr ?? "—") : ""}</td>
+                      <td className="px-4 py-2.5 text-right font-medium tabular-nums" style={{ color: P.text }}>{isWeight ? row.weight : ""}</td>
+                      <td className="px-4 py-2.5 text-right font-medium" style={{ color: P.text }}>{isMoodRow ? moodLabel(row.mood!) : ""}</td>
+                      <td className="px-4 py-2.5 text-left whitespace-nowrap text-xs">
+                        {showAf && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-medium"
+                            style={{
+                              backgroundColor: row.afBurden === "detected" ? `${P.alarmRed}18` : `${P.alarmYellow}18`,
+                              color: row.afBurden === "detected" ? P.alarmRed : P.alarmYellow,
+                            }}>
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: row.afBurden === "detected" ? P.alarmRed : P.alarmYellow }} />
+                            {row.afBurden === "detected" ? "AF Burden erkannt" : "Verdacht auf AF Burden"}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  </Fragment>
                 );
               })}
             </tbody>
@@ -3399,14 +3456,28 @@ export default function VitalDashboard() {
             const showAf = isBp && row.afBurden && row.afBurden !== "none";
             const sourceLabel = isBp ? "Blutdruckmanschette" : isWeight ? "Waage" : "App (Befinden)";
             const isStripeB = dayColorMap.get(`${row.date}-${row.time}-${row.type}`);
+            const isFirstOfDay = firstRowPerDay.has(i);
+            const dayMissing = isFirstOfDay ? missingPerDay.get(row.date) : undefined;
             return (
-              <div key={i} className="rounded-lg px-4 py-3"
-                style={{ backgroundColor: isStripeB ? zebraB : zebraA, border: `1px solid ${P.border}` }}
-                onClick={() => { const bp = filteredData.bp.find(b => b.date === row.date); if (bp) setSidePanel({ type: "bp", date: row.date, data: bp }); }}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-mono text-xs" style={{ color: P.textSecondary }}>{row.ts}</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: `${P.accent}12`, color: P.accent }}>{sourceLabel}</span>
-                </div>
+              <Fragment key={i}>
+                {/* Day header on mobile */}
+                {isFirstOfDay && (
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-xs font-semibold" style={{ color: P.text }}>{formatDate(row.date)}</span>
+                    {dayMissing && (
+                      <span className="inline-flex items-center gap-1 text-xs" style={{ color: P.alarmYellow }}>
+                        <AlertTriangle size={11} /> Fehlend: {dayMissing.join(", ")}
+                      </span>
+                    )}
+                  </div>
+                )}
+                <div className="rounded-lg px-4 py-3"
+                  style={{ backgroundColor: isStripeB ? zebraB : zebraA, border: `1px solid ${P.border}` }}
+                  onClick={() => { const bp = filteredData.bp.find(b => b.date === row.date); if (bp) setSidePanel({ type: "bp", date: row.date, data: bp }); }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-mono text-xs" style={{ color: P.textSecondary }}>{formatTime(row.time)}</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: `${P.accent}12`, color: P.accent }}>{sourceLabel}</span>
+                  </div>
                 {isBp && (
                   <div className="flex items-center gap-4 text-sm">
                     <div><span style={{ color: P.textMuted }}>Sys </span><span className="font-semibold" style={{ color: P.text }}>{row.systolic}</span></div>
@@ -3433,6 +3504,7 @@ export default function VitalDashboard() {
                   </div>
                 )}
               </div>
+              </Fragment>
             );
           })}
         </div>
