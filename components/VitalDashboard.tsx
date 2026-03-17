@@ -3179,6 +3179,12 @@ export default function VitalDashboard() {
     return `${d}.${mo}.${y.slice(2)}, ${timeStr}`;
   };
 
+  const moodLabel = (v: number): string => {
+    if (v >= 4) return "gut";
+    if (v >= 2) return "mittel";
+    return "schlecht";
+  };
+
   type TableRow = {
     type: "bp" | "weight" | "mood";
     date: string;
@@ -3193,11 +3199,10 @@ export default function VitalDashboard() {
     alarm?: string;
   };
 
-  const tableRows = useMemo((): TableRow[] => {
+  const buildTableRows = (data: typeof filteredData): TableRow[] => {
     const rows: TableRow[] = [];
-    /* BP readings — each individual reading becomes a row (Withings Blutdruckmanschette) */
-    filteredData.bp.forEach(bp => {
-      const hrPoint = filteredData.hr.find(h => h.date === bp.date);
+    data.bp.forEach(bp => {
+      const hrPoint = data.hr.find(h => h.date === bp.date);
       bp.readings.forEach((r, ri) => {
         const hrReading = hrPoint?.readings[ri] ?? hrPoint?.readings[0];
         rows.push({
@@ -3210,8 +3215,7 @@ export default function VitalDashboard() {
         });
       });
     });
-    /* Weight readings — each individual reading (Withings Waage) */
-    filteredData.weight.forEach(w => {
+    data.weight.forEach(w => {
       w.readings.forEach(r => {
         rows.push({
           type: "weight", date: w.date, time: r.time,
@@ -3221,115 +3225,218 @@ export default function VitalDashboard() {
         });
       });
     });
-    /* Mood readings — from the App */
-    filteredData.mood.forEach(m => {
+    data.mood.forEach(m => {
       rows.push({
         type: "mood", date: m.date, time: m.time,
         ts: formatTs(m.date, m.time),
         mood: m.value,
       });
     });
-    /* Sort by timestamp descending (newest first) */
     rows.sort((a, b) => {
       const cmp = b.date.localeCompare(a.date);
       if (cmp !== 0) return cmp;
       return b.time.localeCompare(a.time);
     });
     return rows;
-  }, [filteredData]);
+  };
+
+  const tableRows = useMemo(() => buildTableRows(filteredData), [filteredData]);
+
+  /* CSV download with selectable time range */
+  const [csvMenuOpen, setCsvMenuOpen] = useState(false);
+  const csvRanges = [7, 14, 30, 60, 90, 0] as const; // 0 = all
+  const csvRangeLabels: Record<number, string> = { 7: "7 Tage", 14: "14 Tage", 30: "30 Tage", 60: "60 Tage", 90: "90 Tage", 0: "Alles" };
+
+  const downloadCsv = (days: number) => {
+    /* Build data for the requested range */
+    const endDate = new Date(NOW);
+    const startDate = days > 0 ? new Date(endDate.getTime() - days * 86400000) : DATA_START;
+    const cs = startDate.toISOString().split("T")[0];
+    const ce = endDate.toISOString().split("T")[0];
+    const rangeData = {
+      bp: allData.bp.filter(p => p.date >= cs && p.date <= ce),
+      hr: allData.hr.filter(p => p.date >= cs && p.date <= ce),
+      weight: allData.weight.filter(p => p.date >= cs && p.date <= ce),
+      mood: allData.mood.filter(p => p.date >= cs && p.date <= ce),
+    };
+    const rows = buildTableRows(rangeData as typeof filteredData);
+    const hdr = ["Zeitstempel", "Quelle", "Sys (mmHg)", "Dia (mmHg)", "HR (bpm)", "Gewicht (kg)", "Befinden", "Finding", "Alarm"];
+    const csvRows = [hdr];
+    rows.forEach(r => {
+      const src = r.type === "bp" ? "Blutdruckmanschette" : r.type === "weight" ? "Waage" : "App (Befinden)";
+      const finding = r.afBurden === "detected" ? "AF Burden erkannt" : r.afBurden === "uncertain" ? "Verdacht auf AF Burden" : "";
+      csvRows.push([r.ts, src, r.systolic != null ? String(r.systolic) : "", r.diastolic != null ? String(r.diastolic) : "", r.hr != null ? String(r.hr) : "", r.weight != null ? String(r.weight) : "", r.mood != null ? moodLabel(r.mood) : "", finding, r.alarm || ""]);
+    });
+    const csv = csvRows.map(row => row.join(";")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `vital-daten-${days > 0 ? days + "d" : "all"}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    setCsvMenuOpen(false);
+  };
+
+  /* Mobile breakpoint detection */
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 768px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  /* Zebra stripe color — alternate by day */
+  const dayColorMap = useMemo(() => {
+    const map = new Map<string, boolean>();
+    let toggle = false;
+    let lastDate = "";
+    tableRows.forEach(r => {
+      if (r.date !== lastDate) { toggle = !toggle; lastDate = r.date; }
+      map.set(`${r.date}-${r.time}-${r.type}`, toggle);
+    });
+    return map;
+  }, [tableRows]);
+
+  const zebraA = theme === "dark" ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.01)";
+  const zebraB = theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)";
 
   const tableView = (
     <div className="rounded-xl overflow-hidden" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
+      {/* Header */}
       <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${P.border}` }}>
-        <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>{tr.tableView || "Tabellenansicht"}</span>
-        <div className="flex gap-2">
-          <button onClick={() => {
-            const hdr = [tr.timestamp || "Zeitstempel", tr.source || "Quelle", "Sys (mmHg)", "Dia (mmHg)", "HR (bpm)", tr.weight || "Gewicht (kg)", tr.wellbeing || "Befinden", tr.afBurden || "AF Burden", "Alarm"];
-            const csvRows = [hdr];
-            tableRows.forEach(r => {
-              const src = r.type === "bp" ? (tr.bpCuff || "Blutdruckmanschette") : r.type === "weight" ? (tr.scale || "Waage") : (tr.appMood || "App (Befinden)");
-              const afLabel = r.afBurden === "detected" ? (tr.afDetected || "AF Burden erkannt") : r.afBurden === "uncertain" ? (tr.afUncertain || "Verdacht auf AF Burden") : "";
-              csvRows.push([r.ts, src, r.systolic != null ? String(r.systolic) : "", r.diastolic != null ? String(r.diastolic) : "", r.hr != null ? String(r.hr) : "", r.weight != null ? String(r.weight) : "", r.mood != null ? String(r.mood) : "", afLabel, r.alarm || ""]);
-            });
-            const csv = csvRows.map(row => row.join(";")).join("\n");
-            const blob = new Blob([csv], { type: "text/csv" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a"); a.href = url; a.download = "vital-daten.csv"; a.click();
-            URL.revokeObjectURL(url);
-          }} className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-lg transition-colors"
-            style={{ backgroundColor: P.bgInput, color: P.textSecondary }}>
-            <Download size={14} /> CSV
-          </button>
-          <button onClick={() => window.print()} className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-lg transition-colors"
-            style={{ backgroundColor: P.bgInput, color: P.textSecondary }}>
-            <Download size={14} /> PDF
-          </button>
+        <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>Tabellenansicht</span>
+        {/* CSV download button with range dropdown */}
+        <div className="relative">
+          <div className="inline-flex items-center rounded-lg overflow-hidden" style={{ backgroundColor: P.bgInput }}>
+            <button onClick={() => downloadCsv(30)}
+              className="inline-flex items-center gap-2 text-sm px-4 py-2 transition-colors"
+              style={{ color: P.textSecondary }}>
+              <Download size={14} /> CSV
+            </button>
+            <button onClick={() => setCsvMenuOpen(v => !v)}
+              className="px-2 py-2 transition-colors border-l"
+              style={{ color: P.textSecondary, borderLeftColor: P.border }}>
+              <ChevronDown size={14} />
+            </button>
+          </div>
+          {csvMenuOpen && (
+            <div className="absolute right-0 top-full mt-1 rounded-lg shadow-lg overflow-hidden z-30"
+              style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}`, minWidth: 140 }}>
+              {csvRanges.map(d => (
+                <button key={d} onClick={() => downloadCsv(d)}
+                  className="block w-full text-left px-4 py-2 text-sm transition-colors"
+                  style={{ color: P.text }}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = P.bgInput)}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}>
+                  {csvRangeLabels[d]}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
-      <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
-        <table className="w-full text-sm">
-          <thead className="sticky top-0" style={{ backgroundColor: P.bgCard, zIndex: 2 }}>
-            <tr style={{ borderBottom: `1px solid ${P.border}` }}>
-              <th className="text-left px-4 py-3 font-medium whitespace-nowrap" style={{ color: P.textMuted }}>{tr.timestamp || "Zeitstempel"}</th>
-              <th className="text-left px-4 py-3 font-medium whitespace-nowrap" style={{ color: P.textMuted }}>{tr.source || "Quelle"}</th>
-              <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>Sys</th>
-              <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>Dia</th>
-              <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>HR</th>
-              <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>{tr.weight || "Gewicht"}</th>
-              <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>{tr.wellbeing || "Befinden"}</th>
-              <th className="text-left px-4 py-3 font-medium whitespace-nowrap" style={{ color: P.textMuted }}>{tr.afBurden || "AF Burden"}</th>
-              <th className="text-center px-4 py-3 font-medium" style={{ color: P.textMuted }}>Alarm</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tableRows.map((row, i) => {
-              const isBp = row.type === "bp";
-              const isWeight = row.type === "weight";
-              const isMood = row.type === "mood";
-              const showAf = isBp && row.afBurden && row.afBurden !== "none";
-              const sourceLabel = isBp ? (tr.bpCuff || "Blutdruckmanschette") : isWeight ? (tr.scale || "Waage") : (tr.appMood || "App (Befinden)");
-              const sourceColor = isBp ? P.bpSystolic : isWeight ? P.weight : P.mood;
-              return (
-                <tr key={i} className="cursor-pointer transition-colors"
-                  style={{ borderBottom: `1px solid ${theme === "dark" ? "rgba(39,39,42,0.5)" : "rgba(228,228,231,0.5)"}` }}
-                  onClick={() => { if (isBp || isWeight) { const bp = filteredData.bp.find(b => b.date === row.date); if (bp) setSidePanel({ type: "bp", date: row.date, data: bp }); } }}>
-                  <td className="px-4 py-2 whitespace-nowrap font-mono text-xs" style={{ color: P.textSecondary }}>{row.ts}</td>
-                  <td className="px-4 py-2 whitespace-nowrap">
-                    <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: `${sourceColor}15`, color: sourceColor }}>
-                      {sourceLabel}
+
+      {/* ── Desktop: Table ── */}
+      {!isMobile ? (
+        <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0" style={{ backgroundColor: P.bgCard, zIndex: 2 }}>
+              <tr style={{ borderBottom: `2px solid ${P.border}` }}>
+                <th className="text-left px-4 py-3 font-medium whitespace-nowrap" style={{ color: P.textMuted }}>Zeitstempel</th>
+                <th className="text-left px-4 py-3 font-medium whitespace-nowrap" style={{ color: P.textMuted }}>Quelle</th>
+                <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>Sys</th>
+                <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>Dia</th>
+                <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>HR</th>
+                <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>Gewicht</th>
+                <th className="text-right px-4 py-3 font-medium" style={{ color: P.textMuted }}>Befinden</th>
+                <th className="text-left px-4 py-3 font-medium whitespace-nowrap" style={{ color: P.textMuted }}>Finding</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tableRows.map((row, i) => {
+                const isBp = row.type === "bp";
+                const isWeight = row.type === "weight";
+                const isMoodRow = row.type === "mood";
+                const showAf = isBp && row.afBurden && row.afBurden !== "none";
+                const sourceLabel = isBp ? "Blutdruckmanschette" : isWeight ? "Waage" : "App (Befinden)";
+                const isStripeB = dayColorMap.get(`${row.date}-${row.time}-${row.type}`);
+                return (
+                  <tr key={i} className="cursor-pointer transition-colors"
+                    style={{ backgroundColor: isStripeB ? zebraB : zebraA }}
+                    onClick={() => { const bp = filteredData.bp.find(b => b.date === row.date); if (bp) setSidePanel({ type: "bp", date: row.date, data: bp }); }}>
+                    <td className="px-4 py-2.5 whitespace-nowrap font-mono text-xs" style={{ color: P.textSecondary }}>{row.ts}</td>
+                    <td className="px-4 py-2.5 whitespace-nowrap text-xs" style={{ color: P.textMuted }}>{sourceLabel}</td>
+                    <td className="px-4 py-2.5 text-right font-medium tabular-nums" style={{ color: P.text }}>{isBp ? row.systolic : ""}</td>
+                    <td className="px-4 py-2.5 text-right font-medium tabular-nums" style={{ color: P.text }}>{isBp ? row.diastolic : ""}</td>
+                    <td className="px-4 py-2.5 text-right font-medium tabular-nums" style={{ color: P.text }}>{isBp ? (row.hr ?? "—") : ""}</td>
+                    <td className="px-4 py-2.5 text-right font-medium tabular-nums" style={{ color: P.text }}>{isWeight ? row.weight : ""}</td>
+                    <td className="px-4 py-2.5 text-right font-medium" style={{ color: P.text }}>{isMoodRow ? moodLabel(row.mood!) : ""}</td>
+                    <td className="px-4 py-2.5 text-left whitespace-nowrap text-xs">
+                      {showAf && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-medium"
+                          style={{
+                            backgroundColor: row.afBurden === "detected" ? `${P.alarmRed}18` : `${P.alarmYellow}18`,
+                            color: row.afBurden === "detected" ? P.alarmRed : P.alarmYellow,
+                          }}>
+                          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: row.afBurden === "detected" ? P.alarmRed : P.alarmYellow }} />
+                          {row.afBurden === "detected" ? "AF Burden erkannt" : "Verdacht auf AF Burden"}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        /* ── Mobile: Card View ── */
+        <div className="max-h-[600px] overflow-y-auto px-4 py-3 space-y-2">
+          {tableRows.map((row, i) => {
+            const isBp = row.type === "bp";
+            const isWeight = row.type === "weight";
+            const isMoodRow = row.type === "mood";
+            const showAf = isBp && row.afBurden && row.afBurden !== "none";
+            const sourceLabel = isBp ? "Blutdruckmanschette" : isWeight ? "Waage" : "App (Befinden)";
+            const isStripeB = dayColorMap.get(`${row.date}-${row.time}-${row.type}`);
+            return (
+              <div key={i} className="rounded-lg px-4 py-3"
+                style={{ backgroundColor: isStripeB ? zebraB : zebraA, border: `1px solid ${P.border}` }}
+                onClick={() => { const bp = filteredData.bp.find(b => b.date === row.date); if (bp) setSidePanel({ type: "bp", date: row.date, data: bp }); }}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-mono text-xs" style={{ color: P.textSecondary }}>{row.ts}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: `${P.accent}12`, color: P.accent }}>{sourceLabel}</span>
+                </div>
+                {isBp && (
+                  <div className="flex items-center gap-4 text-sm">
+                    <div><span style={{ color: P.textMuted }}>Sys </span><span className="font-semibold" style={{ color: P.text }}>{row.systolic}</span></div>
+                    <div><span style={{ color: P.textMuted }}>Dia </span><span className="font-semibold" style={{ color: P.text }}>{row.diastolic}</span></div>
+                    <div><span style={{ color: P.textMuted }}>HR </span><span className="font-semibold" style={{ color: P.text }}>{row.hr ?? "—"}</span></div>
+                  </div>
+                )}
+                {isWeight && (
+                  <div className="text-sm"><span style={{ color: P.textMuted }}>Gewicht </span><span className="font-semibold" style={{ color: P.text }}>{row.weight} kg</span></div>
+                )}
+                {isMoodRow && (
+                  <div className="text-sm"><span style={{ color: P.textMuted }}>Befinden </span><span className="font-semibold" style={{ color: P.text }}>{moodLabel(row.mood!)}</span></div>
+                )}
+                {showAf && (
+                  <div className="mt-2">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                      style={{
+                        backgroundColor: row.afBurden === "detected" ? `${P.alarmRed}18` : `${P.alarmYellow}18`,
+                        color: row.afBurden === "detected" ? P.alarmRed : P.alarmYellow,
+                      }}>
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: row.afBurden === "detected" ? P.alarmRed : P.alarmYellow }} />
+                      {row.afBurden === "detected" ? "AF Burden erkannt" : "Verdacht auf AF Burden"}
                     </span>
-                  </td>
-                  {/* Sys/Dia/HR — only for BP rows */}
-                  <td className="px-4 py-2 text-right font-medium" style={{ color: P.bpSystolic }}>{isBp ? row.systolic : ""}</td>
-                  <td className="px-4 py-2 text-right font-medium" style={{ color: P.bpDiastolic }}>{isBp ? row.diastolic : ""}</td>
-                  <td className="px-4 py-2 text-right font-medium" style={{ color: P.heartRate }}>{isBp ? (row.hr ?? "—") : ""}</td>
-                  {/* Gewicht — only for weight rows */}
-                  <td className="px-4 py-2 text-right font-medium" style={{ color: P.weight }}>{isWeight ? row.weight : ""}</td>
-                  {/* Befinden — only for mood rows */}
-                  <td className="px-4 py-2 text-right font-medium" style={{ color: P.mood }}>{isMood ? row.mood : ""}</td>
-                  {/* AF Burden — conditional: only show if detected or uncertain */}
-                  <td className="px-4 py-2 text-left whitespace-nowrap text-xs">
-                    {showAf && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-medium"
-                        style={{
-                          backgroundColor: row.afBurden === "detected" ? `${P.alarmRed}18` : `${P.alarmYellow}18`,
-                          color: row.afBurden === "detected" ? P.alarmRed : P.alarmYellow,
-                        }}>
-                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: row.afBurden === "detected" ? P.alarmRed : P.alarmYellow }} />
-                        {row.afBurden === "detected" ? (tr.afDetected || "AF Burden erkannt") : (tr.afUncertain || "Verdacht auf AF Burden")}
-                      </span>
-                    )}
-                  </td>
-                  {/* Alarm */}
-                  <td className="px-4 py-2 text-center">
-                    {row.alarm && <span className="w-3 h-3 rounded-full inline-block" style={{ backgroundColor: ALARM_COLORS[row.alarm] }} />}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 
@@ -4519,7 +4626,8 @@ export default function VitalDashboard() {
           {patientTab === "dashboard" && (
             <div className="space-y-5 pt-4">
 
-                {/* ── Time range selector (segmented control) ── */}
+                {/* ── Time range selector — chart mode only ── */}
+                {viewMode === "chart" && (
                 <div className="sticky top-0 z-20 flex items-center gap-3 py-2 -mx-6 px-6" style={{ backgroundColor: theme === "dark" ? "rgba(9,9,11,0.85)" : "rgba(248,248,248,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
                   <div className="inline-flex items-center rounded-lg p-1" style={{ backgroundColor: theme === "dark" ? "rgba(39,39,42,0.6)" : "rgba(244,244,245,0.8)" }}>
                     {RANGES.map((r) => {
@@ -4542,25 +4650,30 @@ export default function VitalDashboard() {
                   </div>
                   <span className="text-xs font-medium" style={{ color: P.textMuted }}>{tr.daysLabel}</span>
                 </div>
+                )}
 
-                {/* ── Episoden-Zeitleiste (always shown) ── */}
-                {episodeTimelineChart}
+                {/* ── Episoden-Zeitleiste — chart mode only ── */}
+                {viewMode === "chart" && episodeTimelineChart}
 
                   {/* ── Toggles + View mode ── */}
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span
-                      className="text-sm uppercase tracking-wider font-semibold mr-1"
-                      style={{ color: P.textMuted }}
-                    >
-                      {tr.display.toUpperCase()}:
-                    </span>
-                    <ToggleBtn
-                      label={tr.thresholds}
-                      active={vis.thresholds}
-                      onToggle={() => setVis(v => ({ ...v, thresholds: !v.thresholds }))}
-                      shortcut="G"
-                    />
-                    <div className="w-px h-6 mx-1" style={{ backgroundColor: P.borderStrong }} />
+                    {viewMode === "chart" && (
+                      <>
+                        <span
+                          className="text-sm uppercase tracking-wider font-semibold mr-1"
+                          style={{ color: P.textMuted }}
+                        >
+                          {tr.display.toUpperCase()}:
+                        </span>
+                        <ToggleBtn
+                          label={tr.thresholds}
+                          active={vis.thresholds}
+                          onToggle={() => setVis(v => ({ ...v, thresholds: !v.thresholds }))}
+                          shortcut="G"
+                        />
+                        <div className="w-px h-6 mx-1" style={{ backgroundColor: P.borderStrong }} />
+                      </>
+                    )}
                     <button
                       onClick={() => setViewMode(viewMode === "chart" ? "table" : "chart")}
                       className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all"
@@ -4571,7 +4684,8 @@ export default function VitalDashboard() {
                     </button>
                   </div>
 
-                  {/* ── Legend ── */}
+                  {/* ── Legend — chart mode only ── */}
+                  {viewMode === "chart" && (
                   <div className="flex items-center gap-5 text-sm flex-wrap" style={{ color: P.textSecondary }}>
                     <span className="flex items-center gap-1.5">
                       <span
@@ -4617,6 +4731,7 @@ export default function VitalDashboard() {
                       {tr.outlier}
                     </span>
                   </div>
+                  )}
 
                   {/* ── Charts / Table ── */}
                   {viewMode === "chart" ? (
