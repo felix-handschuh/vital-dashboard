@@ -1546,16 +1546,16 @@ export default function VitalDashboard() {
     endDate.setDate(endDate.getDate() - chartOffset);
     const startDate = new Date(endDate);
     startDate.setDate(startDate.getDate() - range);
-    const cs = startDate.toISOString().split("T")[0];
-    const ce = endDate.toISOString().split("T")[0];
+    const rangeStart = startDate.toISOString().split("T")[0];
+    const rangeEnd = endDate.toISOString().split("T")[0];
     return {
-      bp: allData.bp.filter(p => p.date >= cs && p.date <= ce),
-      hr: allData.hr.filter(p => p.date >= cs && p.date <= ce),
-      weight: allData.weight.filter(p => p.date >= cs && p.date <= ce),
-      mood: allData.mood.filter(p => p.date >= cs && p.date <= ce),
-      events: allData.events.filter(p => p.date >= cs && p.date <= ce),
-      ecgs: allData.ecgs.filter(p => p.date >= cs && p.date <= ce),
-      missed: allData.missed.filter(d => d >= cs && d <= ce),
+      bp: allData.bp.filter(p => p.date >= rangeStart && p.date <= rangeEnd),
+      hr: allData.hr.filter(p => p.date >= rangeStart && p.date <= rangeEnd),
+      weight: allData.weight.filter(p => p.date >= rangeStart && p.date <= rangeEnd),
+      mood: allData.mood.filter(p => p.date >= rangeStart && p.date <= rangeEnd),
+      events: allData.events.filter(p => p.date >= rangeStart && p.date <= rangeEnd),
+      ecgs: allData.ecgs.filter(p => p.date >= rangeStart && p.date <= rangeEnd),
+      missed: allData.missed.filter(d => d >= rangeStart && d <= rangeEnd),
     };
   }, [allData, range, chartOffset]);
 
@@ -3245,7 +3245,11 @@ export default function VitalDashboard() {
     return rows;
   };
 
-  const tableRows = useMemo(() => buildTableRows(filteredData), [filteredData]);
+  /* Source filter for table view */
+  const [tableSourceFilter, setTableSourceFilter] = useState<Set<"bp" | "weight" | "mood">>(new Set(["bp", "weight", "mood"]));
+  const [sourceFilterOpen, setSourceFilterOpen] = useState(false);
+
+  const tableRows = useMemo(() => buildTableRows(filteredData).filter(r => tableSourceFilter.has(r.type)), [filteredData, tableSourceFilter]);
 
   /* CSV download with selectable time range */
   const [csvMenuOpen, setCsvMenuOpen] = useState(false);
@@ -3254,15 +3258,15 @@ export default function VitalDashboard() {
 
   const downloadCsv = (days: number) => {
     /* Build data for the requested range */
-    const endDate = new Date(NOW);
-    const startDate = days > 0 ? new Date(endDate.getTime() - days * 86400000) : DATA_START;
-    const cs = startDate.toISOString().split("T")[0];
-    const ce = endDate.toISOString().split("T")[0];
+    const csvEnd = new Date(NOW);
+    const csvStart = days > 0 ? new Date(csvEnd.getTime() - days * 86400000) : DATA_START;
+    const csvS = csvStart.toISOString().split("T")[0];
+    const csvE = csvEnd.toISOString().split("T")[0];
     const rangeData = {
-      bp: allData.bp.filter(p => p.date >= cs && p.date <= ce),
-      hr: allData.hr.filter(p => p.date >= cs && p.date <= ce),
-      weight: allData.weight.filter(p => p.date >= cs && p.date <= ce),
-      mood: allData.mood.filter(p => p.date >= cs && p.date <= ce),
+      bp: allData.bp.filter(p => p.date >= csvS && p.date <= csvE),
+      hr: allData.hr.filter(p => p.date >= csvS && p.date <= csvE),
+      weight: allData.weight.filter(p => p.date >= csvS && p.date <= csvE),
+      mood: allData.mood.filter(p => p.date >= csvS && p.date <= csvE),
     };
     const rows = buildTableRows(rangeData as typeof filteredData);
     const hdr = ["Zeitstempel", "Quelle", "Sys (mmHg)", "Dia (mmHg)", "HR (bpm)", "Gewicht (kg)", "Befinden", "Finding", "Alarm"];
@@ -3386,7 +3390,61 @@ export default function VitalDashboard() {
     <div className="rounded-xl overflow-hidden" style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}` }}>
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${P.border}` }}>
-        <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>Tabellenansicht</span>
+        <div className="flex items-center gap-3">
+          <span className="text-base font-semibold tracking-tight" style={{ color: P.text }}>Tabellenansicht</span>
+          {/* Source filter */}
+          <div className="relative">
+            <button onClick={() => { setSourceFilterOpen(v => !v); setCsvMenuOpen(false); }}
+              className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
+              style={{
+                backgroundColor: tableSourceFilter.size < 3 ? `${P.accent}12` : P.bgInput,
+                color: tableSourceFilter.size < 3 ? P.accent : P.textSecondary,
+                border: tableSourceFilter.size < 3 ? `1px solid ${P.accent}33` : `1px solid transparent`,
+              }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <path d="M1.5 2.5h9M3 5.5h6M4.5 8.5h3" />
+              </svg>
+              Quelle{tableSourceFilter.size < 3 ? ` (${tableSourceFilter.size})` : ""}
+            </button>
+            {sourceFilterOpen && (
+              <div className="absolute left-0 top-full mt-1 rounded-lg shadow-lg overflow-hidden z-30"
+                style={{ backgroundColor: P.bgCard, border: `1px solid ${P.border}`, minWidth: 200 }}>
+                {([["bp", "Blutdruckmanschette"], ["weight", "Waage"], ["mood", "App (Befinden)"]] as const).map(([key, label]) => {
+                  const active = tableSourceFilter.has(key);
+                  return (
+                    <button key={key}
+                      onClick={() => setTableSourceFilter(prev => {
+                        const next = new Set(prev);
+                        if (active && next.size > 1) next.delete(key);
+                        else next.add(key);
+                        return next;
+                      })}
+                      className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-sm transition-colors"
+                      style={{ color: P.text }}
+                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = P.bgInput)}
+                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}>
+                      <span className="w-4 h-4 rounded border flex items-center justify-center text-xs"
+                        style={{
+                          borderColor: active ? P.accent : P.border,
+                          backgroundColor: active ? P.accent : "transparent",
+                          color: active ? "#fff" : "transparent",
+                        }}>
+                        {active ? "✓" : ""}
+                      </span>
+                      {label}
+                    </button>
+                  );
+                })}
+                <div className="border-t px-4 py-2" style={{ borderTopColor: P.border }}>
+                  <button onClick={() => { setTableSourceFilter(new Set(["bp", "weight", "mood"])); setSourceFilterOpen(false); }}
+                    className="text-xs transition-colors" style={{ color: P.textMuted }}>
+                    Alle anzeigen
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
         {/* CSV download button with range dropdown */}
         <div className="relative">
           <div className="inline-flex items-center rounded-lg overflow-hidden" style={{ backgroundColor: P.bgInput }}>
@@ -3395,7 +3453,7 @@ export default function VitalDashboard() {
               style={{ color: P.textSecondary }}>
               <Download size={14} /> CSV
             </button>
-            <button onClick={() => setCsvMenuOpen(v => !v)}
+            <button onClick={() => { setCsvMenuOpen(v => !v); setSourceFilterOpen(false); }}
               className="px-2 py-2 transition-colors border-l"
               style={{ color: P.textSecondary, borderLeftColor: P.border }}>
               <ChevronDown size={14} />
